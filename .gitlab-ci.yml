@@ -1,0 +1,101 @@
+stages:
+  - tagChecking
+  - build
+  - test
+#  - deploy
+
+# Check that the tag matches the expected 'sprintX.Y' format
+tag-checker:
+  stage: tagChecking
+  script:
+    - python3 ./runner-scripts/tag_checker.py $CI_COMMIT_TAG
+  only:
+    - tags
+
+# builds dotnet project for all branches, except dev and main
+# regular builds should not be saved (no artifacts)
+dotnet-build:
+  stage: build
+  script:
+    - cd SENG302Template.Api
+    - dotnet build
+
+# builds svelte project for all branches, except dev and main
+# regular builds should not be saved (no artifacts)
+svelte-build:
+  stage: build
+  script:
+    - cd SENG302Template.App
+    - npm ci
+    - npm run build
+
+# Runs the tests for the dotnet project
+# Later (sprint 2) you will add support for coverage collection and SonarQube
+dotnet-test:
+  stage: test
+  script:
+    - cd SENG302Template.Api.Tests
+    - dotnet test
+
+# During the DevOps workshop in sprint 2 we will cover the deployment configuration below
+#deploy-staging:
+#  stage: deploy
+#  script:
+#    # Build backend api and restart the underlying service
+#    - dotnet publish SENG302Template.Api/SENG302Template.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
+#    - rm -rf /home/gitlab-runner/staging/ || true
+#    - mkdir -p /home/gitlab-runner/staging/
+#    - cp -r ./SENG302Template.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/staging/
+#    - cp runner-scripts/staging.sh /home/gitlab-runner/staging.sh
+#    - chmod u+x /home/gitlab-runner/staging.sh
+#    - sudo systemctl restart staging
+#
+#    # Build and deploy frontend
+#    - cd ./SENG302Template.App
+#    - npm ci
+#    - NODE_ENV=test npm run build
+#    - rm -rf /home/gitlab-runner/staging-frontend/ || true
+#    - mkdir -p /home/gitlab-runner/staging-frontend/
+#    - cp -r ./build/* /home/gitlab-runner/staging-frontend/
+#    
+#    # Ensure the folder is owned by the group nginx belongs to
+#    - chgrp -R gitlab-runner /home/gitlab-runner/staging-frontend/
+#    # Give the group Read and Execute permissions
+#    - chmod -R 750 /home/gitlab-runner/staging-frontend/
+#  artifacts:
+#    paths:
+#      - SENG302Template.Api/bin/Release/net10.0/linux-x64/publish/
+#      - SENG302Template.App/build/
+#  only:
+#    - dev
+#
+#deploy-production:
+#  stage: deploy
+#  script:
+#    # Build backend api and restart the underlying service
+#    - dotnet publish SENG302Template.Api/SENG302Template.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
+#    - rm -rf /home/gitlab-runner/production/ || true
+#    - mkdir -p /home/gitlab-runner/production/
+#    - cp -r ./SENG302Template.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/production/
+#    - cp runner-scripts/production.sh /home/gitlab-runner/production.sh
+#    - chmod u+x /home/gitlab-runner/production.sh
+#    - sudo systemctl restart production
+#      
+#    # Build and deploy frontend
+#    - cd ./SENG302Template.App
+#    - npm ci
+#    - NODE_ENV=production npm run build
+#    - rm -rf /home/gitlab-runner/production-frontend/ || true
+#    - mkdir -p /home/gitlab-runner/production-frontend/
+#    - cp -r ./build/* /home/gitlab-runner/production-frontend/
+#
+#    # Ensure the folder is owned by the group nginx belongs to
+#    - chgrp -R gitlab-runner /home/gitlab-runner/production-frontend/
+#    # Give the group Read and Execute permissions
+#    - chmod -R 750 /home/gitlab-runner/production-frontend/
+#  artifacts:
+#    paths:
+#      - SENG302Template.Api/bin/Release/net10.0/linux-x64/publish/
+#      - SENG302Template.App/build/
+#  only:
+#    - tags

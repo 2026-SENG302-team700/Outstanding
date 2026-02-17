@@ -1,0 +1,21 @@
+# IDE
+.idea/
+.vscode/
+.DS_Store
+
+## C# build
+**/bin/
+**/obj/
+
+# C# user settings
+*.DotSettings.user
+
+# Sveltekit
+SENG302Template.App/.svelte-kit
+node_modules/
+SENG302Template.App/build
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
