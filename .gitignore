@@ -19,3 +19,9 @@ SENG302Template.App/build
 *.db
 *.db-shm
 *.db-wal
+
+# Ignore all package-lock.json files everywhere
+**/package-lock.json
+
+# Allow the specific one in the template directory
+!/SENG302Template.App/package-lock.json
