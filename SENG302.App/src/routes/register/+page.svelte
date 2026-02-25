@@ -55,7 +55,8 @@
                 return;
             }
 
-            goto(resolve(`/home/${data.userId}`));
+            localStorage.setItem("userEmail", email);
+            goto(resolve(`/home`));
         } catch (err) {
             error = "Failed to register user: " + (err as Error).message;
             console.error(err);
@@ -72,7 +73,7 @@
         <div class="alert alert-danger" role="alert">{error}</div>
     {/if}
 
-    <form onsubmit={registerUser}>
+    <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
             <input
                 type="email"
@@ -118,9 +119,15 @@
                 disabled={loading}
             />
         </div>
-        <button type="submit" class="login-button" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
-        </button>
+        <div>
+            <button
+                type="submit"
+                class="btn btn-primary w-100"
+                disabled={loading}
+            >
+                {loading ? "Registering..." : "Register"}
+            </button>
+        </div>
     </form>
 </div>
 

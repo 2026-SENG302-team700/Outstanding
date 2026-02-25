@@ -12,7 +12,7 @@
 <div class="container">
     <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
     <button
-        class="btn btn-primary mb-4"
+        class="btn btn-primary w-100"
         on:click={() => goto(resolve("/register"))}
     >
         Register
