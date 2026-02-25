@@ -10,19 +10,7 @@
 </script>
 
 <div class="container">
-    <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
-    <button
-        class="btn btn-primary mb-4"
-        on:click={() => goto(resolve("/register"))}
-    >
-        Register
-    </button>
-    <button
-        class="btn btn-primary mb-4"
-        on:click={() => goto(resolve("/login"))}
-    >
-        Login
-    </button>
+    <h1 class="text-center mb-4">Register</h1>
 </div>
 
 <style>
