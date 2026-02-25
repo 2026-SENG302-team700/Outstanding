@@ -4,11 +4,12 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { countries } from "$lib/countries";
 
     let user = $state(null);
     let email = $state("");
     let displayName = $state("");
-    let country = $state("");
+    let selectedCountryCode = $state("");
     let password = $state("");
     let passwordConfirm = $state("");
     let loading = $state(false);
@@ -23,7 +24,7 @@
         if (
             !email ||
             !displayName ||
-            !country ||
+            !selectedCountryCode ||
             !password ||
             !passwordConfirm
         ) {
@@ -42,7 +43,7 @@
                 body: JSON.stringify({
                     email,
                     displayName,
-                    country,
+                    country: selectedCountryCode,
                     password,
                     passwordConfirm,
                 }),
@@ -93,13 +94,19 @@
             />
         </div>
         <div class="mb-3">
-            <input
-                type="text"
+            <select
                 class="form-control"
-                placeholder="Country"
-                bind:value={country}
+                bind:value={selectedCountryCode}
                 disabled={loading}
-            />
+                required
+            >
+                <option value="">Select Country</option>
+                {#each countries as country}
+                    <option value={country.code}>
+                        {country.name}
+                    </option>
+                {/each}
+            </select>
         </div>
         <div class="mb-3">
             <input
