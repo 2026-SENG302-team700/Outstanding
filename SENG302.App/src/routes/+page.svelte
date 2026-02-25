@@ -9,7 +9,9 @@
     let error = $state("");
 </script>
 
-<div class="container"></div>
+<div class="container">
+    <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
+</div>
 
 <style>
     .cursor-pointer {
