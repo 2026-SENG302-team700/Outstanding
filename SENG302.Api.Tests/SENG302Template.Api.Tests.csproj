@@ -31,7 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SENG302Template.Api\SENG302Template.Api.csproj" />
+      <ProjectReference Include="..\SENG302.Api\SENG302.Api.csproj" />
     </ItemGroup>
 
 </Project>

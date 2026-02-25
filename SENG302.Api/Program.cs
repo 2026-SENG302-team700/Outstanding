@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using SENG302Template.Api.DataAccess;
-using SENG302Template.Api.Services;
+using SENG302.Api.DataAccess;
+//using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
-namespace SENG302Template.Api;
+namespace SENG302.Api;
 
 public class Program
 {
@@ -25,21 +25,21 @@ public class Program
 
         // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
-        
+
         // Configure database context with factory pattern
         builder.Services.AddDbContextFactory<DatabaseContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         builder.Services.AddHttpContextAccessor();
-        
+
         // Register custom services
         RegisterServices(builder.Services);
-        
+
         // Setup antiforgery (CSRF)
-        var cookiePolicy = builder.Environment.IsProduction() || builder.Environment.IsStaging() 
-            ? CookieSecurePolicy.Always 
+        var cookiePolicy = builder.Environment.IsProduction() || builder.Environment.IsStaging()
+            ? CookieSecurePolicy.Always
             : CookieSecurePolicy.SameAsRequest;
-        
+
         builder.Services.AddAntiforgery(options =>
         {
             options.HeaderName = "X-CSRF-TOKEN";
@@ -49,7 +49,7 @@ public class Program
 
             options.Cookie.SecurePolicy = cookiePolicy;
         });
-        
+
         // Add CORS for development only
         if (builder.Environment.IsDevelopment())
         {
@@ -109,13 +109,13 @@ public class Program
         });
 
         app.MapControllers();
-        
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("/openapi/v1.json", "SENG302 Template API v1");
+                options.SwaggerEndpoint("/openapi/v1.json", "SENG302  API v1");
             });
         }
 
@@ -135,10 +135,9 @@ public class Program
     {
         // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
-        
+
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped)
-        services.AddScoped<IBookService, BookService>();
     }
 
 }

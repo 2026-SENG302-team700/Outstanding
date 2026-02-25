@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
-using SENG302Template.Api.Models.Entities;
+//using SENG302.Api.Models.Entities;
 
-namespace SENG302Template.Api.DataAccess;
+namespace SENG302.Api.DataAccess;
 
 public class DatabaseContext : DbContext
 {
     public DatabaseContext(DbContextOptions options) : base(options)
     {
-        
+
     }
 
-    public DbSet<Book> Books { get; set; }
 }

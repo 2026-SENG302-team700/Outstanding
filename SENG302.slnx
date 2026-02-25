@@ -1,0 +1,4 @@
+<Solution>
+    <Project Path="SENG302.Api.Tests/SENG302.Api.Tests.csproj" />
+    <Project Path="SENG302.Api/SENG302.Api.csproj" />
+</Solution>

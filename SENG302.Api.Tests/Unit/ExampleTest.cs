@@ -1,6 +1,6 @@
 using Shouldly;
 
-namespace SENG302Template.Api.Tests.Unit;
+namespace SENG302.Api.Tests.Unit;
 
 public class ExampleTest
 {

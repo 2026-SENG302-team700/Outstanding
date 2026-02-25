@@ -8,7 +8,7 @@
     <!-- Ensure native dependencies (like libe_sqlite3.so) work with single-file publish -->
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <RootNamespace>SENG302Template.Api</RootNamespace>
+    <RootNamespace>SENG302.Api</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
