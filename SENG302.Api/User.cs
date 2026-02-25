@@ -1,6 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SENG302.Api;
 
 public class User
 {
-    
+    [Key]
+    public required string Email { get; set; }
+
+    public required string DisplayName { get; set; }
+
+    public string PasswordKey { get; set; } = String.Empty;
+
+    public required string Country { get; set; }
+
+    public DateTimeOffset TimeCreated { get; set; }
 }
