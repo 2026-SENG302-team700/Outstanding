@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
-//using SENG302.Api.Services;
+using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
 namespace SENG302.Api;

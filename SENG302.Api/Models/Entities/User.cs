@@ -9,7 +9,7 @@ public class User
 
     public required string DisplayName { get; set; }
 
-    public required string PasswordKey { get; set; }
+    public string PasswordKey { get; set; } = String.Empty;
 
     public required string Country { get; set; }
 
