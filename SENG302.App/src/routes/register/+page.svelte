@@ -68,6 +68,13 @@
 </script>
 
 <div class="container">
+    <div class="mb-3">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            on:click={() => goto(resolve("/"))}
+        >Cancel</button>
+    </div>
     <h1 class="text-center mb-4">Register</h1>
 
     {#if error}
