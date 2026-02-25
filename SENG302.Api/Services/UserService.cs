@@ -7,6 +7,7 @@ namespace SENG302.Api.Services;
 
 public interface IUserService
 {
+    Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string country);
 }
 
