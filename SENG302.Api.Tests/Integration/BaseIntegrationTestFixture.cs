@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Services;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -25,6 +26,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
     protected DateTimeOffset TestNow;
     protected readonly FakeTimeProvider FakeTimeProvider;
+    protected readonly UserService TestUserService;
 
     protected HttpClient HttpClient { get; private init; }
 
@@ -32,6 +34,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     {
         TestNow = DateTimeOffset.Now;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
+        TestUserService = new UserService(DbContextFactory, FakeTimeProvider);
 
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
@@ -52,6 +55,10 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.RemoveAll<TimeProvider>();
                 // Replace it with our fake time provider, which keeps a consistent time throughout
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
+
+                // Remove the existing UserService and add a new one
+                services.RemoveAll<IUserService>();
+                services.AddSingleton<IUserService>(TestUserService);
             });
         });
 
