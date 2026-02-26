@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SENG302Template.Api.Models.Entities;
+namespace SENG302.Api.Models.Entities;
 
 /** 
     A basic task list with a Name between 3 and 128 characters, 
