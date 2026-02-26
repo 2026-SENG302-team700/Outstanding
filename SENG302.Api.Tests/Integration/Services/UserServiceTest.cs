@@ -19,7 +19,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("@#$password123shrek")]
     [InlineData("b1er0l14m")]
     [InlineData("hindi-ko-alam")]
-    public async Task CreateNewUser_HashPassword_PasswordVerifies(string passwordString)
+    public async Task GenerateNewUser_HashPassword_PasswordVerifies(string passwordString)
     {
         User user = await ServiceUnderTest.GenerateNewUserAsync("j@d.com", "Jedidiah Smith", passwordString, "NZ");
 
@@ -35,7 +35,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("fencer@fencing.com", "FENC101", "GER")]
     [InlineData("jacob.cantebury@mail.ac.nz", "Jacob (Uni)", "AUS")]
     [InlineData("jason@jasonwhitaker.net", "Jason Whitaker", "NZ")]
-    public async Task CreateNewUser_AddInformation_InformationAccurate(string email, string displayName, string country)
+    public async Task GenerateNewUser_AddInformation_InformationAccurate(string email, string displayName, string country)
     {
         User user = await ServiceUnderTest.GenerateNewUserAsync(email, displayName, "password", country);
 
