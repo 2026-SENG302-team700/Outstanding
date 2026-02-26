@@ -12,8 +12,14 @@ export type Toast = {
 
 export const toasts = writable<Toast[]>([]);
 
+/**
+ * Add a new toast notification to the store and automatically remove after 5 seconds
+ * @param message the text to display within the toast
+ * @param type the type of toast (success, error, info). This changes the background colour of the toast
+ */
 export function addToast(message: string, type: ToastType = "success") {
   toasts.update((currentToasts) => [...currentToasts, { message, type }]);
+  // display the toast for 5 seconds
   setTimeout(() => {
     toasts.update((currentToasts) =>
       currentToasts.filter((toast) => toast.message !== message),
