@@ -26,7 +26,7 @@
             class="btn btn-primary"
             on:click={() => goto(resolve("/home/new-list"))}
         >
-            Create New Task List
+            Add Task List
         </button>
     </div>
     {#if loading && taskLists.length === 0}
