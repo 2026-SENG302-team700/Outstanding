@@ -27,17 +27,21 @@
             loading = true;
             error = "";
             const response = await fetchWithCsrf(resolve(`/api/login`), {
-                method: "GET",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                
+                body: JSON.stringify({
+                    email,
+                    password
+                }),
+ 
             });
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                error = data?.message || "Registration failed.";
+                error = data?.message || "I failed.";
                 return;
             }
 
