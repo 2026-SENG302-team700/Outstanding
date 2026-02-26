@@ -4,7 +4,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/countries";
+    import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
 
     let user = $state(null);
     let email = $state("");
@@ -14,8 +15,6 @@
     let passwordConfirm = $state("");
     let loading = $state(false);
     let error = $state("");
-    let showToast = $state(false);
-    let toastMessage = $state("");
 
     /**
      * Handles user registration by sending a POST request to the server with the user's details.
@@ -59,10 +58,7 @@
             // }
 
             localStorage.setItem("userEmail", email);
-            
-            toastMessage = "Registration successful! Please log in.";
-            showToast = true;
-            setTimeout(() => (showToast = false), 3000);
+            addToast("Registration successful! Please log in.", "success");
             goto(resolve(`/login`));
         } catch (err) {
             error = "Failed to register user: " + (err as Error).message;
@@ -87,11 +83,6 @@
         <div class="alert alert-danger" role="alert">{error}</div>
     {/if}
 
-    {#if showToast}
-        <div class="toast-notification">
-            {toastMessage}
-        </div>
-    {/if}
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
@@ -160,17 +151,5 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
-    }
-
-    .toast-notification {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: #28a745;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
     }
 </style>

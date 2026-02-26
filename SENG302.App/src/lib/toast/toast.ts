@@ -18,5 +18,5 @@ export function addToast(message: string, type: ToastType = "success") {
     toasts.update((currentToasts) =>
       currentToasts.filter((toast) => toast.message !== message),
     );
-  }, 3000);
+  }, 5000);
 }
