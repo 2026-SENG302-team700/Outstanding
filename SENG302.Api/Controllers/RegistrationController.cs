@@ -38,9 +38,8 @@ public class RegistrationController : ControllerBase
         string.IsNullOrWhiteSpace(user.PasswordKey)) {
             return BadRequest("User registration is missing information");
         }
-
-        Console.WriteLine("Does it reach this point");
-        var newUser = await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        
+        await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
         
         // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
         return Ok("User created successfully");
