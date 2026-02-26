@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -8,8 +7,45 @@
     let error = $state("");
     let name = $state("");
 
+    /**
+     * Handles the creation of a new task list by sending a
+     * POST request to the server with the list's name and
+     * the user's email. Validates that the name field is filled
+     */
     async function createList() {
-        // TODO - implement list creation logic
+        if (!name) {
+            error = "Please enter a name for the list.";
+            return;
+        }
+
+        try {
+            loading = true;
+            error = "";
+            let userEmail = localStorage.getItem("userEmail");
+            const response = await fetchWithCsrf(resolve(`/api/lists`), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name,
+                    userEmail,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                error = data?.message || "Failed to create list.";
+                return;
+            }
+
+            goto(resolve(`/home`));
+        } catch (err) {
+            error = "An unexpected error occurred.";
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
