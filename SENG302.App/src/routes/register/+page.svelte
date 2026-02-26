@@ -43,8 +43,8 @@
         body: JSON.stringify({
           email,
           displayName,
+          passwordKey: password,
           country: selectedCountryCode,
-          password,
         }),
       });
 
