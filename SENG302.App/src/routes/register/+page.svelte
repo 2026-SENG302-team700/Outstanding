@@ -58,7 +58,7 @@
             // }
 
             localStorage.setItem("userEmail", email);
-            addToast("Registration successful! Please log in.", "success");
+            addToast("Registration successful. Please log in.", "success");
             goto(resolve(`/login`));
         } catch (err) {
             error = "Failed to register user: " + (err as Error).message;
