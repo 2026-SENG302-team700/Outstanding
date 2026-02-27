@@ -22,7 +22,7 @@
             loading = true;
             error = "";
             let userEmail = localStorage.getItem("userEmail");
-            const response = await fetchWithCsrf(resolve(`/api/lists`), {
+            const response = await fetchWithCsrf(resolve(`/api/task`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -42,7 +42,7 @@
 
             goto(resolve(`/home`));
         } catch (err) {
-            error = "An unexpected error occurred.";
+            error = "Failed to create list: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -77,6 +77,9 @@
             >
                 {loading ? "Creating..." : "Create List"}
             </button>
+            {#if error}
+                <div class="alert alert-danger" role="alert">{error}</div>
+            {/if}
         </div>
     </form>
 </div>

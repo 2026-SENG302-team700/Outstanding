@@ -15,4 +15,6 @@ public class TaskList
     public string Name { get; set; } = string.Empty;
     public Task[] Tasks { get; set; } = Array.Empty<Task>();
 
+    public string UserEmail { get; set; } = string.Empty; // Foreign key to the User that owns this task list
+
 }
