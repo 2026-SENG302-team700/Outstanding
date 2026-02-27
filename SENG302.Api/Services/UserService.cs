@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Text.RegularExpressions;
+using System.Net.Mail;
 
 namespace SENG302.Api.Services;
 
@@ -38,6 +39,15 @@ public class InvalidDisplayNameCharsException : Exception
     public InvalidDisplayNameCharsException(string message) : base(message) {} 
     
     public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) {}
+}
+
+public class InvalidEmailFormatException : Exception
+{
+    public InvalidEmailFormatException() {}
+    
+    public InvalidEmailFormatException(string message) : base(message) {}
+    
+    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) {}
 }
 
 public class UserService : IUserService
@@ -85,9 +95,12 @@ public class UserService : IUserService
 
         if (DisplayNameChars(displayName))
         {
-            throw new InvalidDisplayNameCharsException(
-                "Display name must only include letters, spaces, hyphens or apostrophes"
-                );
+            throw new InvalidDisplayNameCharsException("Display name must only include letters, spaces, hyphens or apostrophes");
+        }
+
+        if (!CheckEmailFormat(email))
+        {
+            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
         }
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
@@ -108,9 +121,24 @@ public class UserService : IUserService
         var validCharsRegex = new Regex(
             "^[a-zA-Z\\-']+$",
             RegexOptions.None, // Regex Options, can ignore, 
-            TimeSpan.FromSeconds(2)); // TimeSpan until regex times out);
+            TimeSpan.FromSeconds(2) // TimeSpan until regex times out
+            ); 
         return (validCharsRegex.IsMatch(displayName));
     }
+
+    private bool CheckEmailFormat(string email)
+    {
+        try
+        {
+            MailAddress m = new MailAddress(email); // throws exception if not in form of e-mail
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
