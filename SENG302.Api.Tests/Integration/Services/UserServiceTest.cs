@@ -87,18 +87,35 @@ public class UserServiceTest : BaseIntegrationTestFixture
     {
         Should.Throw<InvalidDisplayNameLengthException>(async () =>
         {
-            await ServiceUnderTest.CreateNewUserAsync("vlad@nistor.email", "v", "p4ukS__45`k%", "RO");
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.email", 
+                "v", // Should throw exception
+                "12345678Ab$", 
+                "RO");
         });
     }
 
     public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
     {
+        Should.Throw<InvalidDisplayNameLengthException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.email",
+                "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan-ABCDEFGHIJKL", // Should throw exception
+                "12345678Ab$",
+                "RO"
+            );
+        });
+    }
+
+    public async Task CreateNewUser_InvalidChars_InvalidDisplayNameCharsException()
+    {
         Should.Throw<InvalidDisplayNameCharsException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.email",
-                "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan",
-                "p4ukS__45`k%",
+                "Vlad Ni$tor", // Should throw exception
+                "12345678Ab$",
                 "RO"
             );
         });
