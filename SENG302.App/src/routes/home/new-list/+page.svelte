@@ -22,7 +22,13 @@
             loading = true;
             error = "";
             let userEmail = localStorage.getItem("userEmail");
-            const response = await fetchWithCsrf(resolve(`/api/task`), {
+            console.log(
+                "Creating list with name:",
+                name,
+                "for user:",
+                userEmail,
+            );
+            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

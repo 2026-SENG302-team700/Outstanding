@@ -6,9 +6,15 @@ using SENG302.Api.Models.Requests;
 namespace SENG302.Api.Controllers;
 
 [ApiController]
+[Route("api/tasks")]
 public class TaskController : ControllerBase
 {
     private readonly ITaskService _taskService;
+
+    public TaskController(ITaskService taskService)
+    {
+        _taskService = taskService;
+    }
 
     [HttpGet("{id:int}")]
     [ValidateAntiForgeryToken]
