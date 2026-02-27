@@ -81,4 +81,26 @@ public class UserServiceTest : BaseIntegrationTestFixture
         await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "4365pass", "US");
         Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%", "US"));
     }
+
+    [Fact]
+    public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
+    {
+        Should.Throw<InvalidDisplayNameLengthException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync("vlad@nistor.email", "v", "p4ukS__45`k%", "RO");
+        });
+    }
+
+    public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
+    {
+        Should.Throw<InvalidDisplayNameCharsException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.email",
+                "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan",
+                "p4ukS__45`k%",
+                "RO"
+            );
+        });
+    }
 }
