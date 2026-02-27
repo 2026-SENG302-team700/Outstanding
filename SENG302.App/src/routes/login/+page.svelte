@@ -3,7 +3,6 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
 
-
     let email = $state("");
     let password = $state("");
     let loading = $state(false);
@@ -15,10 +14,7 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function loginUser() {
-        if (
-            !email ||
-            !password )
-        {
+        if (!email || !password) {
             error = "Please fill in all fields.";
             return;
         }
@@ -32,15 +28,15 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  email,
-                  password
+                    email,
+                    passwordKey: password,
                 }),
             });
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                error = data?.message || "I failed.";
+                error = data?.message || "Email or Password is incorrect";
                 return;
             }
 
@@ -60,8 +56,8 @@
         <button
             type="button"
             class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}
-        >Cancel</button>
+            on:click={() => goto(resolve("/"))}>Cancel</button
+        >
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
