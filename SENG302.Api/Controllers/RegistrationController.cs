@@ -17,9 +17,9 @@ public class RegistrationController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet ("{id:int}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<User>> getUser(int id)
-    {   
+    {
         /*
         var user = await _userService.GetUserByIdAsync(id);
         if (user == null) {
@@ -44,12 +44,13 @@ public class RegistrationController : ControllerBase
         if (string.IsNullOrWhiteSpace(user.Email) ||
         string.IsNullOrWhiteSpace(user.DisplayName) ||
         string.IsNullOrWhiteSpace(user.Country) ||
-        string.IsNullOrWhiteSpace(user.PasswordKey)) {
+        string.IsNullOrWhiteSpace(user.PasswordKey))
+        {
             return BadRequest("User registration is missing information");
         }
-        
+
         await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
-        
+
         // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
         return Ok("User created successfully");
     }
