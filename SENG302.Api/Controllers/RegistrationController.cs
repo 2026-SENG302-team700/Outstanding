@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api;
+using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 
@@ -38,7 +40,7 @@ public class RegistrationController : ControllerBase
     /// bad request if any fields are empty
     /// </returns>
     [HttpPost]
-    // [ValidateAntiForgeryToken]
+    [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> RegisterUser([FromBody] User user)
     {
         if (string.IsNullOrWhiteSpace(user.Email) ||
