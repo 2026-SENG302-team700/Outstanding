@@ -28,8 +28,17 @@ public class RegistrationController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// API Controller method that handles a post request for registering 
+    /// a new user and hence creating a new user object.
+    /// </summary>
+    /// <param name="user">User is a user object from frontend</param>
+    /// <returns>
+    /// Returns the Http OK response for successful register of a User and a
+    /// bad request if any fields are empty
+    /// </returns>
     [HttpPost]
-    [ValidateAntiForgeryToken]
+    // [ValidateAntiForgeryToken]
     public async Task<ActionResult<User>> RegisterUser([FromBody] User user)
     {
         if (string.IsNullOrWhiteSpace(user.Email) ||

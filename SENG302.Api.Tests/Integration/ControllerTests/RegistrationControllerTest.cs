@@ -25,16 +25,16 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
     {
-        object data = new
+        var data = new User
         {
-            email = "great.person@gmail.com",
-            displayName = "Great Person",
+            Email = "great.person@gmail.com",
+            DisplayName = "Great Person",
             PasswordKey = "GreatPerson69",
-            country = "NZ",
+            Country = "NZ",
         };
 
-        HttpContent myContent = JsonContent.Create(data);
-        var message = await HttpClient.PostAsync("/api/register/", myContent);
+        // HttpContent myContent = JsonContent.Create(data);
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -46,7 +46,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [InlineData("", "Porcupine", "JohnPork", "US")]
     public async Task RegisterUser_MissingFields_ReturnBadRequest(String userEmail, String userDisplayName, String passwordKey, String userCountry)
     {
-        object data = new
+        var data = new
         {
             email = userEmail,
             displayName = userDisplayName,
@@ -55,7 +55,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         };
 
         HttpContent myContent = JsonContent.Create(data);
-        var message = await HttpClient.PostAsync("/api/register/", myContent);
+        var message = await HttpClient.PostAsync("/api/register", myContent);
 
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
