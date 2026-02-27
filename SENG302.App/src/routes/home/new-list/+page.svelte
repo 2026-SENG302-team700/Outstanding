@@ -9,7 +9,7 @@
 
     /**
      * Handles the creation of a new task list by sending a
-     * POST request to the server with the list's name and
+     * POST request to the server with the list's Name and
      * the user's email. Validates that the name field is filled
      */
     async function createList() {
@@ -34,8 +34,8 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    name,
-                    userEmail,
+                    Name: name,
+                    userEmail: userEmail,
                 }),
             });
 
