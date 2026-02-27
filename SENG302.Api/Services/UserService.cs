@@ -11,6 +11,16 @@ public interface IUserService
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string country);
 }
 
+public class DuplicateEmailException : Exception
+{
+    public DuplicateEmailException() {}
+
+    public DuplicateEmailException(string message) : base(message) {}
+
+    public DuplicateEmailException(string message, Exception inner) : base(message, inner) {}
+}
+
+
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -44,10 +54,20 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
+        if (EmailAlreadyExists(context, email))
+        {
+            throw new DuplicateEmailException("This email already exists!");
+        }
+
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
 
         await context.SaveChangesAsync();
+    }
+
+    private bool EmailAlreadyExists(DatabaseContext context, string email)
+    {
+        return context.Users.Where((t) => t.Email == email).Count() > 0;
     }
 }

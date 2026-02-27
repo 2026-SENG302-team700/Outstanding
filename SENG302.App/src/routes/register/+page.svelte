@@ -43,8 +43,8 @@
                 body: JSON.stringify({
                     email,
                     displayName,
+                    passwordKey: password,
                     country: selectedCountryCode,
-                    password,
                 }),
             });
 
@@ -54,9 +54,8 @@
                 error = data?.message || "Registration failed.";
                 return;
             }
-
-            localStorage.setItem("userEmail", email);
-            goto(resolve(`/home`));
+            localStorage.setItem("justRegistered", "true");
+            goto(resolve(`/login`));
         } catch (err) {
             error = "Failed to register user: " + (err as Error).message;
             console.error(err);
