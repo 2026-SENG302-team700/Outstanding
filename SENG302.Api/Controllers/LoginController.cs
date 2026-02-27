@@ -1,29 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
-
+using SENG302.Api.Services;
+using SENG302.Api.Models.Entities;
+using Microsoft.AspNetCore.Identity;
 namespace SENG302.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/login")]
 public class LoginController: ControllerBase 
 {
     private readonly IUserService _userService;
 
-    public UserController(IUserService userService) 
+    public LoginController(IUserService userService) 
     {
         _userService = userService;
     }
 
-    [HttpPost("{id:string}")]
-    public async Task<ActionResult<User>> CheckCredentials(string id, [FromBody] string passwordString) 
+    [HttpPost]
+    public async Task<ActionResult<User>> CheckCredentials(UserCredentials userCredentials) 
     {
-        var user = await GetUserByIdAsync(id);
-        if (user == null) 
+        var verification = await _userService.CheckUserCredentialsAsync(userCredentials.Email, userCredentials.PasswordKey);
+        if (verification == UserVerificationResult.DoesNotExist) 
         {
             return NotFound();
-        } else if (user.passwordString != passwordString) {
-            return Unauthorized();
-        } else {
+        } 
+        else if (verification == UserVerificationResult.Success) 
+        {
             return Ok(); //needs replacing later on
+        } 
+        else if (verification == UserVerificationResult.SuccessRehashNeeded)
+        {
+            return Ok(); //will need somthing else here
+        }
+        else 
+        {
+            return Unauthorized(); 
         }
     }
 }

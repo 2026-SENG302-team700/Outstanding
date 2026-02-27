@@ -17,8 +17,8 @@
     async function loginUser() {
         if (
             !email ||
-            !password ||
-        ) {
+            !password )
+        {
             error = "Please fill in all fields.";
             return;
         }
@@ -32,10 +32,9 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email,
-                    password
+                  email,
+                  password
                 }),
- 
             });
 
             const data = await response.json().catch(() => null);
@@ -48,7 +47,7 @@
             localStorage.setItem("userEmail", email);
             goto(resolve(`/home`));
         } catch (err) {
-            error = "Failed to register user: " + (err as Error).message;
+            error = "Failed to login user: " + (err as Error).message;
             console.error(err);
         } finally {
             loading = false;
@@ -70,7 +69,7 @@
         <div class="alert alert-danger" role="alert">{error}</div>
     {/if}
 
-    <form on:submit|preventDefault={registerUser}>
+    <form on:submit|preventDefault={loginUser}>
         <div class="mb-3">
             <input
                 type="email"
@@ -85,7 +84,7 @@
                 type="password"
                 class="form-control"
                 placeholder="Confirm Password"
-                bind:value={passwordConfirm}
+                bind:value={password}
                 disabled={loading}
             />
         </div>
