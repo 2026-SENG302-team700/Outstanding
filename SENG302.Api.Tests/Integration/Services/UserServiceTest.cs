@@ -85,7 +85,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
     {
-        Should.Throw<InvalidDisplayNameLengthException>(async () =>
+        Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me", 
@@ -95,9 +95,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
         });
     }
 
+    [Fact]
     public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
     {
-        Should.Throw<InvalidDisplayNameLengthException>(async () =>
+        Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
@@ -107,28 +108,52 @@ public class UserServiceTest : BaseIntegrationTestFixture
             );
         });
     }
-
+    [Fact]
     public async Task CreateNewUser_InvalidChars_InvalidDisplayNameCharsException()
     {
-        Should.Throw<InvalidDisplayNameCharsException>(async () =>
+        Should.ThrowAsync<InvalidDisplayNameCharsException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
-                "Vlad Ni$tor", // Should throw exception
+                "Vlad Ni$tor",
                 "12345678Ab$",
                 "RO"
             );
         });
     }
 
-    public async Task CreateNewUser_BadEmail_InvalidEmailFormatException()
+    [Fact]
+    public async Task CreateNewUser_NoEmail_InvalidEmailFormatException()
     {
-        Should.Throw<InvalidEmailFormatException>(async () =>
+        Should.ThrowAsync<InvalidEmailFormatException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad.nistor.email",
                 "Vlad Nistor",
                 "12345678Ab$",
+                "RO"
+            );
+        });
+    }
+
+    [Theory]
+    [InlineData("1234")] // Short Password
+    [InlineData("abcdefghi")] // All Lower Case
+    [InlineData("ABCDEFGHI")] // All Upper Case
+    [InlineData("123456789")] // All numeric
+    [InlineData("!@#$%^&*(")] // All special char
+    [InlineData("ABCdef123")] // Missing Special Char
+    [InlineData("ABCdef!@#")] // Missing numeric
+    [InlineData("abc123$%^")] // Missing Upper Case
+    [InlineData("ABC123$%^")] // Missing Lower Case
+    public async Task CreateNewUser_ShortPassword_InvalidPasswordException(string passwordString)
+    {
+        Should.ThrowAsync<InvalidPasswordException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.email",
+                "Vlad Nistor",
+                passwordString,
                 "RO"
             );
         });

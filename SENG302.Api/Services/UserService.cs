@@ -50,6 +50,15 @@ public class InvalidEmailFormatException : Exception
     public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) {}
 }
 
+public class InvalidPasswordException : Exception
+{
+    public InvalidPasswordException() {}
+    
+    public InvalidPasswordException(string message) : base(message) {}
+    
+    public InvalidPasswordException(string message, Exception inner) : base(message, inner) {}
+}
+
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -119,7 +128,7 @@ public class UserService : IUserService
     {
         // regex below allow a-z, A-Z, - and ' -- 
         var validCharsRegex = new Regex(
-            "^[a-zA-Z\\-']+$",
+            @"^[a-zA-Z\-']+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
             ); 
@@ -139,6 +148,54 @@ public class UserService : IUserService
         }
     }
 
+    private bool CheckPassword(string password)
+    {
+        Regex lowerCharRegex = new Regex(
+            @"[a-z]+",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(2)
+        );
+        
+        Regex upperCharRegex = new Regex(
+            @"[A-Z]+",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(2)
+        );
+
+        Regex numCharRegex = new Regex(
+            @"[0-9]+",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(2)
+        );
+
+        Regex specialCharRegex = new Regex(
+            @"[^a-zA-Z0-9]+",
+            RegexOptions.None,
+            TimeSpan.FromSeconds(2)
+        );
+        
+        if (password.Length < 8)
+        {
+            return false;
+        }
+        if (!lowerCharRegex.IsMatch(password))
+        {
+            return false;
+        }
+        if (!upperCharRegex.IsMatch(password))
+        {
+            return false;
+        }
+        if (!numCharRegex.IsMatch(password))
+        {
+            return false;
+        }
+        if (!specialCharRegex.IsMatch(password))
+        {
+            return false;
+        }
+        return true;
+    }
     
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
