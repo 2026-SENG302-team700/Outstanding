@@ -8,8 +8,18 @@ namespace SENG302.Api.Services;
 public interface IUserService
 {
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
-    Task<User> CreateNewUserAsync(string email, string displayName, string passwordString, string country);
+    Task CreateNewUserAsync(string email, string displayName, string passwordString, string country);
 }
+
+public class DuplicateEmailException : Exception
+{
+    public DuplicateEmailException() {}
+
+    public DuplicateEmailException(string message) : base(message) {}
+
+    public DuplicateEmailException(string message, Exception inner) : base(message, inner) {}
+}
+
 
 public class UserService : IUserService
 {
@@ -40,16 +50,24 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<User> CreateNewUserAsync(string email, string displayName, string passwordString, string country)
+    public async Task CreateNewUserAsync(string email, string displayName, string passwordString, string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        if (EmailAlreadyExists(context, email))
+        {
+            throw new DuplicateEmailException("This email already exists!");
+        }
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
 
         await context.SaveChangesAsync();
+    }
 
-        return user;
+    private bool EmailAlreadyExists(DatabaseContext context, string email)
+    {
+        return context.Users.Where((t) => t.Email == email).Count() > 0;
     }
 }
