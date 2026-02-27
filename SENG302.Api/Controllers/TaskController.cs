@@ -17,7 +17,6 @@ public class TaskController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ValidateAntiForgeryToken]
     public async Task<ActionResult<TaskList>> getTaskList(int id)
     {
         var taskList = await _taskService.GetTaskListByIdAsync(id);
@@ -29,13 +28,12 @@ public class TaskController : ControllerBase
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<ActionResult<TaskList>> CreateTaskList([FromBody] NewTaskListRequest taskListRequest)
     {
         try
         {
-            var newTaskList = await _taskService.CreateNewTaskListAsync(taskListRequest.Name, taskListRequest.UserEmail);
-            return CreatedAtAction(nameof(getTaskList), new { id = newTaskList.Id }, newTaskList);
+            await _taskService.CreateNewTaskListAsync(taskListRequest.Name, taskListRequest.UserEmail);
+            return Ok("Task list created successfully");
         }
         catch (ArgumentException e)
         {
