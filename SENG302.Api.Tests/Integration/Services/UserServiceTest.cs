@@ -16,10 +16,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
     public UserServiceTest(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 
     [Theory]
-    [InlineData("password")]
-    [InlineData("@#$password123shrek")]
-    [InlineData("b1er0l14m")]
-    [InlineData("hindi-ko-alam")]
+    [InlineData("password432$#$@^PSOTH")]
+    [InlineData("@#$password123SHREK")]
+    [InlineData("B1er0l14m@67")]
+    [InlineData("hindi-ko-alam-T4G4L0G")]
     public async Task GenerateNewUser_HashPassword_PasswordVerifies(string passwordString)
     {
         User user = await ServiceUnderTest.GenerateNewUserAsync("j@d.com", "Jedidiah Smith", passwordString, "NZ");
@@ -37,7 +37,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("jason@jasonwhitaker.net", "Jason Whitaker", "NZ")]
     public async Task GenerateNewUser_AddInformation_InformationAccurate(string email, string displayName, string country)
     {
-        User user = await ServiceUnderTest.GenerateNewUserAsync(email, displayName, "password", country);
+        User user = await ServiceUnderTest.GenerateNewUserAsync(email, displayName, "paSSWord123#@%", country);
 
         user.Email.ShouldBe(email);
         user.DisplayName.ShouldBe(displayName);
@@ -51,7 +51,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         var email = "jon@bler.com";
         var name = "Jon Bler";
         var country = "SK";
-        var password = "password";
+        var password = "paSSWord123#@%";
 
         // Use the UserService function to create and add a user to the database using the information
         await ServiceUnderTest.CreateNewUserAsync(email, name, password, country);
@@ -78,7 +78,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_DuplicateEmail_DuplicateEmailException()
     {
-        await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "4365pass", "US");
-        Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%", "US"));
+        await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "4365passTOEHKT$%^&$%^", "US");
+        Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%NNNS", "US"));
     }
 }
