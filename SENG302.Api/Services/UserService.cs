@@ -126,7 +126,7 @@ public class UserService : IUserService
             throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
         }
 
-        if (DisplayNameChars(displayName))
+        if (!DisplayNameChars(displayName))
         {
             throw new InvalidDisplayNameCharsException(
                 "Display name must only include letters, spaces, hyphens or apostrophes"
@@ -173,7 +173,7 @@ public class UserService : IUserService
     {
         // regex below allow a-z, A-Z, - and ' -- 
         var validCharsRegex = new Regex(
-            @"^[a-zA-Z\-']+$",
+            @"^[a-zA-Z\-'\s]+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
             ); 
@@ -234,26 +234,12 @@ public class UserService : IUserService
 
     private bool PasswordMatching(string passwordString, string passwordConfirmation)
     {
-        if (passwordString == passwordConfirmation)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return passwordString == passwordConfirmation;
     }
 
     private bool ValidCountry(string country)
     {
-        if (CountryCodes.All.Contains(country))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return CountryCodes.All.Contains(country);
     }
     
     private bool EmailAlreadyExists(DatabaseContext context, string email)

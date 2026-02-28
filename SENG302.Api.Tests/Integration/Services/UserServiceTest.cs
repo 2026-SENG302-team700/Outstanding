@@ -85,7 +85,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
     {
-        Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
+        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me", 
@@ -99,7 +99,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
     {
-        Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
+        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
@@ -113,7 +113,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_InvalidChars_InvalidDisplayNameCharsException()
     {
-        Should.ThrowAsync<InvalidDisplayNameCharsException>(async () =>
+        await Should.ThrowAsync<InvalidDisplayNameCharsException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
@@ -128,7 +128,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_NoEmail_InvalidEmailFormatException()
     {
-        Should.ThrowAsync<InvalidEmailFormatException>(async () =>
+        await Should.ThrowAsync<InvalidEmailFormatException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad.nistor.email",
