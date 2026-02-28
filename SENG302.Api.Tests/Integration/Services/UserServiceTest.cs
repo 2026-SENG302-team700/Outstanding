@@ -51,10 +51,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
         var email = "jon@bler.com";
         var name = "Jon Bler";
         var country = "SK";
-        var password = "password";
+        var password = "P@ssw0rd";
 
         // Use the UserService function to create and add a user to the database using the information
-        await ServiceUnderTest.CreateNewUserAsync(email, name, password, country);
+        await ServiceUnderTest.CreateNewUserAsync(email, name, password, password, country);
 
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
@@ -78,8 +78,8 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_DuplicateEmail_DuplicateEmailException()
     {
-        await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "4365pass", "US");
-        Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%", "US"));
+        await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "P@ssw0rd", "P@ssw0rd", "US");
+        Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%", "p4ukS__45`k%", "US"));
     }
 
     [Fact]
@@ -90,6 +90,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me", 
                 "v", // Should throw exception
+                "12345678Ab$", 
                 "12345678Ab$", 
                 "RO");
         });
@@ -104,6 +105,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad@nistor.me",
                 "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan-ABCDEFGHIJKL", // Should throw exception
                 "12345678Ab$",
+                "12345678Ab$", 
                 "RO"
             );
         });
@@ -117,6 +119,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad@nistor.me",
                 "Vlad Ni$tor",
                 "12345678Ab$",
+                "12345678Ab$", 
                 "RO"
             );
         });
@@ -131,6 +134,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad.nistor.email",
                 "Vlad Nistor",
                 "12345678Ab$",
+                "12345678Ab$", 
                 "RO"
             );
         });
@@ -146,16 +150,31 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("ABCdef!@#")] // Missing numeric
     [InlineData("abc123$%^")] // Missing Upper Case
     [InlineData("ABC123$%^")] // Missing Lower Case
-    public async Task CreateNewUser_ShortPassword_InvalidPasswordException(string passwordString)
+    public async Task CreateNewUser_InvalidPassword_InvalidPasswordException(string passwordString)
     {
-        Should.ThrowAsync<InvalidPasswordException>(async () =>
+        await Should.ThrowAsync<InvalidPasswordException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.email",
                 "Vlad Nistor",
                 passwordString,
+                passwordString,
                 "RO"
             );
+        });
+    }
+
+    [Fact]
+    public async Task CreateNewUser_MismatchedPasswords_MismatchedPasswordException()
+    {
+        await Should.ThrowAsync<MismatchedPasswordException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.email",
+                "Vlad Nistor",
+                "ABCdef123!@#",
+                "abcDEF123!@#",
+                "RO");
         });
     }
 }

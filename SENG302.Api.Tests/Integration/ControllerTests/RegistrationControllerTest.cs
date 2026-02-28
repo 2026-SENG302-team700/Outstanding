@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Controllers;
 using Shouldly;
@@ -17,19 +18,15 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
 
-
-
-
-
-
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
     {
-        var data = new User
+        var data = new PostUserRequest
         {
             Email = "great.person@gmail.com",
             DisplayName = "Great Person",
-            PasswordKey = "GreatPerson69",
+            PasswordKey = "Gre@tPerson69",
+            PasswordConfirm = "Gre@tPerson69",
             Country = "NZ",
         };
 

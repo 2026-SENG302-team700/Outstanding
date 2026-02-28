@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
+
 
 namespace SENG302.Api.Controllers;
 
@@ -41,17 +43,24 @@ public class RegistrationController : ControllerBase
     /// </returns>
     [HttpPost]
     [ConditionalValidateAntiForgeryToken]
-    public async Task<ActionResult<User>> RegisterUser([FromBody] User user)
+    public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
         if (string.IsNullOrWhiteSpace(user.Email) ||
         string.IsNullOrWhiteSpace(user.DisplayName) ||
         string.IsNullOrWhiteSpace(user.Country) ||
-        string.IsNullOrWhiteSpace(user.PasswordKey))
+        string.IsNullOrWhiteSpace(user.PasswordKey) ||
+        string.IsNullOrWhiteSpace(user.PasswordConfirm)
+        ) 
         {
             return BadRequest("User registration is missing information");
         }
 
-        await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        await _userService.CreateNewUserAsync(
+            user.Email, 
+            user.DisplayName, 
+            user.PasswordKey, 
+            user.PasswordConfirm, 
+            user.Country);
 
         // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
         return Ok("User created successfully");

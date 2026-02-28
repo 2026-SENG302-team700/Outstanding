@@ -11,7 +11,7 @@ namespace SENG302.Api.Services;
 public interface IUserService
 {
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
-    Task CreateNewUserAsync(string email, string displayName, string passwordString, string country);
+    Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
 }
 
 public class DuplicateEmailException : Exception
@@ -59,6 +59,15 @@ public class InvalidPasswordException : Exception
     public InvalidPasswordException(string message, Exception inner) : base(message, inner) {}
 }
 
+public class MismatchedPasswordException : Exception
+{
+    public MismatchedPasswordException() {}
+
+    public MismatchedPasswordException(string message) : base(message) {}
+    
+    public MismatchedPasswordException(string message, Exception inner) : base(message, inner) {}
+}
+
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -88,7 +97,12 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task CreateNewUserAsync(string email, string displayName, string passwordString, string country)
+    public async Task CreateNewUserAsync(
+        string email, 
+        string displayName, 
+        string passwordString, 
+        string passwordConfirm,
+        string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         
@@ -114,11 +128,16 @@ public class UserService : IUserService
             throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
         }
 
-        if (CheckPassword(passwordString))
+        if (!CheckPassword(passwordString))
         {
             throw new InvalidPasswordException(
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
             );
+        }
+
+        if (!PasswordMatching(passwordString, passwordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
         }
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
@@ -194,6 +213,18 @@ public class UserService : IUserService
             return false;
         }
         return true;
+    }
+
+    private bool PasswordMatching(string passwordString, string passwordConfirmation)
+    {
+        if (passwordString == passwordConfirmation)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     
     private bool EmailAlreadyExists(DatabaseContext context, string email)
