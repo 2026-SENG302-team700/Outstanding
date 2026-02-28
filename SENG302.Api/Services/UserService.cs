@@ -104,12 +104,21 @@ public class UserService : IUserService
 
         if (DisplayNameChars(displayName))
         {
-            throw new InvalidDisplayNameCharsException("Display name must only include letters, spaces, hyphens or apostrophes");
+            throw new InvalidDisplayNameCharsException(
+                "Display name must only include letters, spaces, hyphens or apostrophes"
+                );
         }
 
         if (!CheckEmailFormat(email))
         {
             throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
+        }
+
+        if (CheckPassword(passwordString))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
         }
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
@@ -150,47 +159,37 @@ public class UserService : IUserService
 
     private bool CheckPassword(string password)
     {
-        Regex lowerCharRegex = new Regex(
+        var lowerCharRegex = new Regex(
             @"[a-z]+",
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
         
-        Regex upperCharRegex = new Regex(
+        var upperCharRegex = new Regex(
             @"[A-Z]+",
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
 
-        Regex numCharRegex = new Regex(
+        var numCharRegex = new Regex(
             @"[0-9]+",
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
 
-        Regex specialCharRegex = new Regex(
+        var specialCharRegex = new Regex(
             @"[^a-zA-Z0-9]+",
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
         
-        if (password.Length < 8)
-        {
-            return false;
-        }
-        if (!lowerCharRegex.IsMatch(password))
-        {
-            return false;
-        }
-        if (!upperCharRegex.IsMatch(password))
-        {
-            return false;
-        }
-        if (!numCharRegex.IsMatch(password))
-        {
-            return false;
-        }
-        if (!specialCharRegex.IsMatch(password))
+        if (
+            (password.Length < 8) || 
+            (!lowerCharRegex.IsMatch(password)) || 
+            (!upperCharRegex.IsMatch(password)) ||
+            (!numCharRegex.IsMatch(password)) ||
+            (!specialCharRegex.IsMatch(password))
+            )
         {
             return false;
         }
