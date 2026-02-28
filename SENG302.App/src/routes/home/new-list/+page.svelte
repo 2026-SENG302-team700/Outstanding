@@ -39,10 +39,9 @@
                 }),
             });
 
-            const data = await response.json().catch(() => null);
-
+            const data = await response.text();
             if (!response.ok) {
-                error = data?.message || "Failed to create list.";
+                error = data || "Failed to create list.";
                 return;
             }
 
