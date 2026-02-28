@@ -177,4 +177,19 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO");
         });
     }
+
+    [Fact]
+    public async Task CreateNewUser_BadCountry_InvalidCountryException()
+    {
+        await Should.ThrowAsync<InvalidCountryException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "Vlad@nistor.email",
+                "Vlad Nistor",
+                "ABCdef123!@#",
+                "ABCdef123!@#",
+                "ROM"
+            );
+        });
+    }
 }

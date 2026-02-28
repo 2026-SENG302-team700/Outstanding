@@ -1,5 +1,6 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -66,6 +67,15 @@ public class MismatchedPasswordException : Exception
     public MismatchedPasswordException(string message) : base(message) {}
     
     public MismatchedPasswordException(string message, Exception inner) : base(message, inner) {}
+}
+
+public class InvalidCountryException : Exception
+{
+    public InvalidCountryException() {}
+    
+    public InvalidCountryException(string message) : base(message) {}
+    
+    public InvalidCountryException(string message, Exception inner) : base(message, inner) {}
 }
 
 public class UserService : IUserService
@@ -138,6 +148,13 @@ public class UserService : IUserService
         if (!PasswordMatching(passwordString, passwordConfirm))
         {
             throw new MismatchedPasswordException("Passwords do not match");
+        }
+
+        if (!ValidCountry(country))
+        {
+            throw new InvalidCountryException(
+                "Invalid Country ISO code -- Front End sending wrong country codes"
+            );
         }
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
@@ -218,6 +235,18 @@ public class UserService : IUserService
     private bool PasswordMatching(string passwordString, string passwordConfirmation)
     {
         if (passwordString == passwordConfirmation)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private bool ValidCountry(string country)
+    {
+        if (CountryCodes.All.Contains(country))
         {
             return true;
         }
