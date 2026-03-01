@@ -12,7 +12,11 @@
         fetchLists();
     });
 
-    // TODO: Implement fetching task lists from the backend
+    /// <summary>
+    /// Fetches the task lists associated with the current user's email from the backend.
+    /// If the request is successful, updates the taskLists state with the retrieved data.
+    /// If there is an error, updates the error state with the error message.
+    /// </summary>
     async function fetchLists() {
         try {
             var userEmail = localStorage.getItem("userEmail");
@@ -36,7 +40,7 @@
 </script>
 
 <div class="container">
-    <h1 class="text-center mb-4">Home Screen (WIP)</h1>
+    <h1 class="text-center mb-4">Home</h1>
     <div class="card-body d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Your Task Lists</h5>
         <button

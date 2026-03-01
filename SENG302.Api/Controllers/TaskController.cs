@@ -16,6 +16,11 @@ public class TaskController : ControllerBase
         _taskService = taskService;
     }
 
+    /// <summary>
+    /// Gets a task list by its ID. Returns 404 if no task list with the given ID exists.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskList>> getTaskList(int id)
     {
@@ -27,6 +32,11 @@ public class TaskController : ControllerBase
         return Ok(taskList);
     }
 
+    /// <summary>
+    /// Gets all task lists associated with a user's email. Returns an empty array if no task lists are found for the given email.
+    /// </summary>
+    /// <param name="userEmail"></param>
+    /// <returns></returns>
     [HttpGet("user/{userEmail}")]
     public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsByUser(string userEmail)
     {
@@ -34,6 +44,13 @@ public class TaskController : ControllerBase
         return Ok(taskLists);
     }
 
+    /// <summary>
+    /// Creates a new task list for a user with the given email and name. 
+    /// Validates the name and user email before creating the task list.
+    /// Returns 400 if validation fails, or 200 if the task list is created successfully.
+    /// </summary>
+    /// <param name="taskListRequest"></param>
+    /// <returns></returns>
     [HttpPost]
     public async Task<ActionResult<TaskList>> CreateTaskList([FromBody] NewTaskListRequest taskListRequest)
     {
