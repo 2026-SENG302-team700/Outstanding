@@ -14,9 +14,6 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 public class RegistrationControllerTest : BaseIntegrationTestFixture
 {
     public RegistrationControllerTest(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
-    
-    private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
-
 
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
