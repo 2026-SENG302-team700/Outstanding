@@ -26,6 +26,10 @@
 
 
 <style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
     .profile-image {
         width: 20%;
         height: 20%;
