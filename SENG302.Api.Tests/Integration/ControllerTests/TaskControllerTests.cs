@@ -62,7 +62,7 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("Name must be between 3 and 128 characters.");
+        message.ShouldContain("List name is required and must be between 3 and 128 characters long");
     }
 
     [Fact]
@@ -78,6 +78,31 @@ public class TaskControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         message.ShouldContain("User with the provided email does not exist.");
+    }
+
+    [Fact]
+    public async Task CreateTaskList_InvalidCharactersInName_ReturnBadRequest()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        var data = new NewTaskListRequest
+        {
+            Name = "test!", // Invalid character in name
+            UserEmail = "test@example.com"
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var message = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        message.ShouldContain("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
     }
 
     [Fact]
