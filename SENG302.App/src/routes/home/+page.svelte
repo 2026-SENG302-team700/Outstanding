@@ -14,7 +14,24 @@
 
     // TODO: Implement fetching task lists from the backend
     async function fetchLists() {
-        return [];
+        try {
+            var userEmail = localStorage.getItem("userEmail");
+            console.log("Fetching task lists for user:", userEmail);
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/tasks/user/${encodeURIComponent(userEmail!)}`),
+            );
+            const data = await response.json();
+            if (!response.ok) {
+                error = data.message || "Failed to fetch task lists.";
+                return;
+            }
+            taskLists = data;
+        } catch (err) {
+            error = "Failed to fetch task lists: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
@@ -37,7 +54,24 @@
         </div>
     {:else}
         <div class="table-responsive">
-            <table class="table table-hover"></table>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each taskLists as list}
+                        <tr
+                            class="cursor-pointer"
+                            on:click={() =>
+                                goto(resolve(`/home/list/${list.id}`))}
+                        >
+                            <td>{list.name}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
         </div>
     {/if}
 </div>

@@ -27,6 +27,13 @@ public class TaskController : ControllerBase
         return Ok(taskList);
     }
 
+    [HttpGet("user/{userEmail}")]
+    public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsByUser(string userEmail)
+    {
+        var taskLists = await _taskService.GetTaskListsByUserEmailAsync(userEmail);
+        return Ok(taskLists);
+    }
+
     [HttpPost]
     public async Task<ActionResult<TaskList>> CreateTaskList([FromBody] NewTaskListRequest taskListRequest)
     {
