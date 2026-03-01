@@ -51,7 +51,15 @@ public class RegistrationController : ControllerBase
             return BadRequest("User registration is missing information");
         }
 
-        await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        try
+        {
+            await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        }
+        catch (DuplicateEmailException)
+        {
+            return BadRequest("This email is already in use");
+        }
+        
 
         // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
         return Ok("User created successfully");

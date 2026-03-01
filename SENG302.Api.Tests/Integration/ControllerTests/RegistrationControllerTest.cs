@@ -18,10 +18,6 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
 
 
-
-
-
-
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
     {
@@ -33,7 +29,6 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Country = "NZ",
         };
 
-        // HttpContent myContent = JsonContent.Create(data);
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -44,19 +39,49 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "")]
     [InlineData("trad.horse@gmail.com", "", "TradTrad", "US")]
     [InlineData("", "Porcupine", "JohnPork", "US")]
-    public async Task RegisterUser_MissingFields_ReturnBadRequest(String userEmail, String userDisplayName, String passwordKey, String userCountry)
+    public async Task RegisterUser_MissingFields_ReturnMissingInfo(string userEmail, string userDisplayName, string passwordKey, string userCountry)
     {
         var data = new
         {
-            email = userEmail,
-            displayName = userDisplayName,
+            Email = userEmail,
+            DisplayName = userDisplayName,
             PasswordKey = passwordKey,
-            country = userCountry,
+            Country = userCountry
         };
 
-        HttpContent myContent = JsonContent.Create(data);
-        var message = await HttpClient.PostAsync("/api/register", myContent);
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await message.Content.ReadAsStringAsync()).ShouldBe("User registration is missing information");
+    }
+
+
+    [Fact]
+    public async Task RegisterUser_SameEmailTwice_ReturnMissingEmail()
+    {
+        var data = new
+        {
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy",
+            PasswordKey = "c00lPasSw0rdon't@ME",
+            Country = "AUS"
+        };
+
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var data2 = new
+        {
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy second account",
+            PasswordKey = "c00lPasSw0rdon't@ME2",
+            Country = "US"
+        };
+
+        var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
+
+        message2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await message2.Content.ReadAsStringAsync()).ShouldBe("This email is already in use");
     }
 }
