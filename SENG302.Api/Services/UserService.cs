@@ -9,7 +9,17 @@ public interface IUserService
 {
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string country);
+    Task<User?> GetUserByIdAsync(string email);
+    Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password);
 }
+
+public enum UserVerificationResult 
+    {
+        DoesNotExist,
+        Failed,
+        Success,
+        SuccessRehashNeeded
+    }
 
 public class DuplicateEmailException : Exception
 {
@@ -70,4 +80,40 @@ public class UserService : IUserService
     {
         return context.Users.Where((t) => t.Email == email).Count() > 0;
     }
+
+    public async Task<User?> GetUserByIdAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password) 
+    {
+        PasswordHasher<User> passwordHasher = new();
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null) 
+        {
+            return UserVerificationResult.DoesNotExist;
+        }
+        
+        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password); 
+        switch (verificationResult) 
+        {
+            case PasswordVerificationResult.Success:
+                return UserVerificationResult.Success;
+            
+            case PasswordVerificationResult.SuccessRehashNeeded:
+                return UserVerificationResult.SuccessRehashNeeded;
+            
+            default:
+                return UserVerificationResult.Failed;
+        }
+    
+        
+        
+    }
 }
+
