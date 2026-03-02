@@ -4,7 +4,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/countries";
+    import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
 
     let user = $state(null);
     let email = $state("");
@@ -15,12 +16,8 @@
     let loading = $state(false);
     let error = $state("");
 
-    /**
-     * Handles user registration by sending a POST request to the server with the user's details.
-     * Validates that all fields are filled in before making the request. If registration is successful,
-     * redirects the user to the home page. If there is an error, displays an appropriate message.
-     */
-    async function registerUser() {
+    function validateInputs(): boolean {
+        // Check all fields are filled
         if (
             !email ||
             !displayName ||
@@ -28,13 +25,58 @@
             !password ||
             !passwordConfirm
         ) {
-            error = "Please fill in all fields.";
-            return;
+            addToast("Please fill in all fields.", "error")
+            return false;
         }
+
+        // Check for malformed emails
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            addToast("Invalid email address. Email must be in the format ‘jane@doe.nz’", "error");
+            return false;
+        }
+
+        // Check for mismatching passwords
+        if (password != passwordConfirm) {
+            addToast("Passwords do not match", "error")
+            return false;
+        }
+
+        // Check password validity
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+        if (!passwordRegex.test(password)) {
+            addToast(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters",
+                "error"
+            );
+            return false;
+        }
+
+        // Check display name length
+        if (displayName.length < 3 || displayName.length > 64) {
+            addToast("Display name must be between 3 and 64 characters", "error");
+            return false;
+        }
+
+        // Check display name validity
+        const displayNameRegex = /^[A-Za-z\s'-]+$/;
+        if (!displayNameRegex.test(displayName)) {
+            addToast("Display name must only include letters, spaces, hyphens or apostrophes", "error");
+            return false;
+        }
+        return true;
+    }
+    /**
+     * Handles user registration by sending a POST request to the server with the user's details.
+     * Validates that all fields are filled in before making the request. If registration is successful,
+     * redirects the user to the home page. If there is an error, displays an appropriate message.
+     */
+    async function registerUser() {
+        if (!validateInputs()) return;
 
         try {
             loading = true;
-            error = "";
+
             const response = await fetchWithCsrf(resolve(`/api/register`), {
                 method: "POST",
                 headers: {
@@ -45,20 +87,31 @@
                     displayName,
                     passwordKey: password,
                     country: selectedCountryCode,
-                }),
+                    password,
+                    passwordConfirm,
+                    }),
             });
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                error = data?.message || "Registration failed.";
+                addToast(data?.message || "Registration failed.", "error");
                 return;
             }
+
+            localStorage.setItem("userEmail", email);
+
+            addToast("Registration successful. Please log in.", "success");
+
+            goto(resolve(`/login`));
+
             localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
-            error = "Failed to register user: " + (err as Error).message;
-            console.error(err);
+            addToast(
+                "Failed to register user: " + (err as Error).message,
+                "error"
+            );
         } finally {
             loading = false;
         }
@@ -79,10 +132,11 @@
         <div class="alert alert-danger" role="alert">{error}</div>
     {/if}
 
+
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
             <input
-                type="email"
+                type="text"
                 class="form-control"
                 placeholder="Email"
                 bind:value={email}
@@ -103,7 +157,6 @@
                 class="form-control"
                 bind:value={selectedCountryCode}
                 disabled={loading}
-                required
             >
                 <option value="">Select Country</option>
                 {#each countries as country}
