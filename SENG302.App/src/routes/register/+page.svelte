@@ -85,10 +85,12 @@
                 body: JSON.stringify({
                     email,
                     displayName,
+                    passwordKey: password,
                     country: selectedCountryCode,
                     password,
                     passwordConfirm,
                     }),
+                }),
             });
 
             const data = await response.json().catch(() => null);
@@ -104,6 +106,8 @@
 
             goto(resolve(`/login`));
 
+            localStorage.setItem("justRegistered", "true");
+            goto(resolve(`/login`));
         } catch (err) {
             addToast(
                 "Failed to register user: " + (err as Error).message,
@@ -120,8 +124,8 @@
         <button
             type="button"
             class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}
-        >Cancel</button>
+            on:click={() => goto(resolve("/"))}>Cancel</button
+        >
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
