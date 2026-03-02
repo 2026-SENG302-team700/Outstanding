@@ -58,4 +58,33 @@ public class TaskServiceTests : BaseIntegrationTestFixture
         // Use the TaskService function to create a new task list with the name and user email and check that it throws an ArgumentException
         await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTaskListAsync(name, userEmail));
     }
+
+    [Fact]
+    public async Task GetTaskListsByUserEmailAsync_RetreiveUsersTaskLists_Success()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        // Add a user to the database with the email that we are testing with
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        // Use the TaskService function to retrieve task lists for the user email
+        var taskLists = await ServiceUnderTest.GetTaskListsByUserEmailAsync("test@example.com");
+        taskLists.Count().ShouldBe(0);
+
+        context.TaskLists.Add(new TaskList
+        {
+            Name = "Test Task List",
+            UserEmail = "test@example.com"
+        });
+        await context.SaveChangesAsync();
+        var updatedTaskLists = await ServiceUnderTest.GetTaskListsByUserEmailAsync("test@example.com");
+        updatedTaskLists.Count().ShouldBe(1);
+        updatedTaskLists.First().Name.ShouldBe("Test Task List");
+    }
 }
