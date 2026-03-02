@@ -7,11 +7,11 @@
     let error = $state("");
     let name = $state("");
 
-    /**
-     * Handles the creation of a new task list by sending a
-     * POST request to the server with the list's Name and
-     * the user's email. Validates that the name field is filled
-     */
+    /// <summary>
+    /// Creates a new task list for the user with the given name. Validates the name
+    /// before sending the request to the backend. If creation is successful, navigates
+    /// back to the home screen. If there is an error, displays the error message.
+    /// </summary>
     async function createList() {
         if (!name) {
             error = "Please enter a name for the list.";

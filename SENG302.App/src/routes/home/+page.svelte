@@ -12,9 +12,30 @@
         fetchLists();
     });
 
-    // TODO: Implement fetching task lists from the backend
+    /// <summary>
+    /// Fetches the task lists associated with the current user's email from the backend.
+    /// If the request is successful, updates the taskLists state with the retrieved data.
+    /// If there is an error, updates the error state with the error message.
+    /// </summary>
     async function fetchLists() {
-        return [];
+        try {
+            var userEmail = localStorage.getItem("userEmail");
+            console.log("Fetching task lists for user:", userEmail);
+            loading = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/tasks/user/${encodeURIComponent(userEmail!)}`),
+            );
+            const data = await response.json();
+            if (!response.ok) {
+                error = data.message || "Failed to fetch task lists.";
+                return;
+            }
+            taskLists = data;
+        } catch (err) {
+            error = "Failed to fetch task lists: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
     }
 </script>
 
@@ -24,7 +45,7 @@
                 class="text-center mb-4"
                 style="flex: 1; justify-content: center"
         >
-            Home Screen (WIP)
+            Home
         </h1>
         <div style="display: flex; flex-direction: column; align-items: center">
             <button
@@ -55,7 +76,24 @@
         </div>
     {:else}
         <div class="table-responsive">
-            <table class="table table-hover"></table>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each taskLists as list}
+                        <tr
+                            class="cursor-pointer"
+                            on:click={() =>
+                                goto(resolve(`/home/list/${list.id}`))}
+                        >
+                            <td>{list.name}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
         </div>
     {/if}
 </div>

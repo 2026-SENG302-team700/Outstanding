@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using System.Text.RegularExpressions;
 
 namespace SENG302.Api.Services;
 
@@ -9,6 +10,7 @@ public interface ITaskService
 {
     Task<TaskList> CreateNewTaskListAsync(string name, string userEmail);
     Task<TaskList> GetTaskListByIdAsync(int id);
+    Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
 
 }
 
@@ -23,18 +25,46 @@ public class TaskService : ITaskService
         _timeProvider = timeProvider;
     }
 
+    /// <summary>
+    /// Gets all task lists associated with a user's email.
+    /// </summary>
+    /// <param name="userEmail"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var taskLists = await context.Set<TaskList>().Where(t => t.UserEmail == userEmail).ToListAsync();
+
+        return taskLists;
+    }
+
+    /// <summary>
+    /// Creates a new task list for a user with the given email and name. Validates the 
+    /// name and user email before creating the task list.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="userEmail"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public async Task<TaskList> CreateNewTaskListAsync(string name, string userEmail)
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        // Validate the name
+        // Validate name length
         if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
         {
-            throw new ArgumentException("Name must be between 3 and 128 characters.");
+            throw new ArgumentException("List name is required and must be between 3 and 128 characters long");
         }
 
-        // Validate the user email
+        // Validate name characters (only allow letters, numbers, spaces, hyphens, and apostrophes)
+        if (!Regex.IsMatch(name, @"^[A-Za-z0-9\s'-]+$"))
+        {
+            throw new ArgumentException("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        }
+
+        // Validate user email exists in db
         var user = await context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync();
         if (user == null)
         {
@@ -52,11 +82,20 @@ public class TaskService : ITaskService
         return newTaskList;
     }
 
+    /// <summary>
+    /// Gets a task list by its ID. Returns null if no task list with the given ID exists.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<TaskList> GetTaskListByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var taskList = await context.Set<TaskList>().Where(t => t.Id == id).FirstOrDefaultAsync();
+        if (taskList == null)
+        {
+            throw new ArgumentException("Task list with the provided ID does not exist.");
+        }
 
         return taskList;
     }

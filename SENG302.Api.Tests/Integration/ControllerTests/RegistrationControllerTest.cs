@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Controllers;
 using Shouldly;
@@ -14,26 +15,19 @@ namespace SENG302.Api.Tests.Integration.ControllerTests;
 public class RegistrationControllerTest : BaseIntegrationTestFixture
 {
     public RegistrationControllerTest(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
-    
-    private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
-
-
-
-
-
 
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
     {
-        var data = new User
+        var data = new PostUserRequest
         {
             Email = "great.person@gmail.com",
             DisplayName = "Great Person",
-            PasswordKey = "GreatPerson69",
+            PasswordKey = "Gre@tPerson69",
+            PasswordConfirm = "Gre@tPerson69",
             Country = "NZ",
         };
 
-        // HttpContent myContent = JsonContent.Create(data);
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -44,19 +38,52 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "")]
     [InlineData("trad.horse@gmail.com", "", "TradTrad", "US")]
     [InlineData("", "Porcupine", "JohnPork", "US")]
-    public async Task RegisterUser_MissingFields_ReturnBadRequest(String userEmail, String userDisplayName, String passwordKey, String userCountry)
+    public async Task RegisterUser_MissingFields_ReturnMissingInfo(string userEmail, string userDisplayName, string passwordKey, string userCountry)
     {
         var data = new
         {
-            email = userEmail,
-            displayName = userDisplayName,
+            Email = userEmail,
+            DisplayName = userDisplayName,
             PasswordKey = passwordKey,
-            country = userCountry,
+            PasswordConfirm = passwordKey,
+            Country = userCountry
         };
 
-        HttpContent myContent = JsonContent.Create(data);
-        var message = await HttpClient.PostAsync("/api/register", myContent);
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
 
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await message.Content.ReadAsStringAsync()).ShouldBe("User registration is missing information");
+    }
+
+
+    [Fact]
+    public async Task RegisterUser_SameEmailTwice_ReturnMissingEmail()
+    {
+        var data = new
+        {
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy",
+            PasswordKey = "c00lPasSw0rdon't@ME",
+            PasswordConfirm = "c00lPasSw0rdon't@ME",
+            Country = "US"
+        };
+
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var data2 = new
+        {
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy second account",
+            PasswordKey = "c00lPasSw0rdon't@ME2",
+            PasswordConfirm = "c00lPasSw0rdon't@ME2",
+            Country = "US"
+        };
+
+        var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
+
+        message2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await message2.Content.ReadAsStringAsync()).ShouldBe("This email is already in use");
     }
 }
