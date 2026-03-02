@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Services;
 
 namespace SENG302.Api.Tests.Integration;
 
