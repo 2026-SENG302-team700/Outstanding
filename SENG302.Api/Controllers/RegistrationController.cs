@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api;
+using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 
@@ -39,7 +41,7 @@ public class RegistrationController : ControllerBase
     /// bad request if any fields are empty
     /// </returns>
     [HttpPost]
-    // [ValidateAntiForgeryToken]
+    [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> RegisterUser([FromBody] User user)
     {
         if (string.IsNullOrWhiteSpace(user.Email) ||
@@ -50,9 +52,15 @@ public class RegistrationController : ControllerBase
             return BadRequest("User registration is missing information");
         }
 
-        await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        try
+        {
+            await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.Country);
+        }
+        catch (DuplicateEmailException)
+        {
+            return BadRequest("This email is already in use");
+        }
 
-        // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
         return Ok("User created successfully");
     }
 }

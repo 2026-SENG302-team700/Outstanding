@@ -32,6 +32,14 @@ public class UserService : IUserService
         _timeProvider = timeProvider;
     }
 
+    /// <summary>
+    /// Creates a User object with the information provided and a hashed version of the password string.
+    /// </summary>
+    /// <param name="email">The User's email</param>
+    /// <param name="displayName">The User's display name</param>
+    /// <param name="passwordString">The User's password in plain text</param>
+    /// <param name="country">The User's country</param>
+    /// <returns>A User filled with the information provided, as well as a hashed version of the password string</returns>
     public async Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country)
     {
         PasswordHasher<User> passwordHasher = new();
@@ -50,6 +58,14 @@ public class UserService : IUserService
         return user;
     }
 
+    /// <summary>
+    /// Creates and adds a User to the database based on the information provided.
+    /// </summary>
+    /// <param name="email">The User's email</param>
+    /// <param name="displayName">The User's display name</param>
+    /// <param name="passwordString">The User's password in plain text</param>
+    /// <param name="country">The User's country</param>
+    /// <exception cref="DuplicateEmailException">If the email is already used in the database then Duplicate Email Exception is thrown</exception>
     public async Task CreateNewUserAsync(string email, string displayName, string passwordString, string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -66,6 +82,12 @@ public class UserService : IUserService
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Check if a email is already in use
+    /// </summary>
+    /// <param name="context">A reference to a database</param>
+    /// <param name="email">We check if this email already exists in the database</param>
+    /// <returns>Whether the email exists in the database</returns>
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
         return context.Users.Where((t) => t.Email == email).Count() > 0;
