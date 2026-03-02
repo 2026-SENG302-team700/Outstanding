@@ -5,7 +5,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/countries";
+    import { countries } from "$lib/country/countries";
     
     let email = localStorage.getItem("userEmail");
     let username = localStorage.getItem("username");
