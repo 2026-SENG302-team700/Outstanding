@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using SENG302.Api.Controllers;
 using Shouldly;
@@ -18,11 +19,12 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task RegisterUser_SuccessfulRegistration_ReturnOk()
     {
-        var data = new User
+        var data = new PostUserRequest
         {
             Email = "great.person@gmail.com",
             DisplayName = "Great Person",
-            PasswordKey = "GreatPerson69",
+            PasswordKey = "Gre@tPerson69",
+            PasswordConfirm = "Gre@tPerson69",
             Country = "NZ",
         };
 
@@ -43,6 +45,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = userEmail,
             DisplayName = userDisplayName,
             PasswordKey = passwordKey,
+            PasswordConfirm = passwordKey,
             Country = userCountry
         };
 
@@ -61,7 +64,8 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
             PasswordKey = "c00lPasSw0rdon't@ME",
-            Country = "AUS"
+            PasswordConfirm = "c00lPasSw0rdon't@ME",
+            Country = "US"
         };
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
@@ -73,6 +77,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy second account",
             PasswordKey = "c00lPasSw0rdon't@ME2",
+            PasswordConfirm = "c00lPasSw0rdon't@ME2",
             Country = "US"
         };
 
