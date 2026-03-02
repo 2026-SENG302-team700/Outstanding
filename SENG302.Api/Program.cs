@@ -27,6 +27,16 @@ public class Program
         // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
+        // Add authentication service and configure it to use cookies
+        builder.Services.AddAuthentication("cookie").AddCookie("cookie", options =>
+        {
+            options.Cookie.Name = "SENG302_AUTH_COOKIE";
+            options.Cookie.HttpOnly = true;
+            options.LoginPath = "/login";
+            options.LogoutPath = "/logout";
+            options.AccessDeniedPath = "/api/auth/access-denied";
+        });
+
         // Configure database context with factory pattern
         builder.Services.AddDbContextFactory<DatabaseContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
@@ -101,6 +111,10 @@ public class Program
 
 
         app.UseAntiforgery();
+
+        // Tell app to use authentication and authorization middleware
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         // CSRF token endpoint
         app.MapGet("/api/csrf-token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext context) =>
