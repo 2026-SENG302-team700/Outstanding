@@ -21,17 +21,6 @@ public class RegistrationController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<User>> getUser(int id)
-    {
-        /*
-        var user = await _userService.GetUserByIdAsync(id);
-        if (user == null) {
-            return NotFound();
-        } */
-        return Ok();
-    }
-
     /// <summary>
     /// API Controller method that handles a post request for registering 
     /// a new user and hence creating a new user object.
@@ -54,15 +43,16 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest("User registration is missing information");
         }
-
-        await _userService.CreateNewUserAsync(
-            user.Email, 
-            user.DisplayName, 
-            user.PasswordKey, 
-            user.PasswordConfirm, 
-            user.Country);
-
-        // return CreatedAtAction(nameof(getUser), new { id = newUser.TimeCreated }, newUser);
+        
+        try
+        {
+            await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.PasswordConfirm, user.Country);
+        }
+        catch (DuplicateEmailException)
+        {
+            return BadRequest("This email is already in use");
+        }
+        
         return Ok("User created successfully");
     }
 }
