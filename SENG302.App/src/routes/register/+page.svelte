@@ -43,9 +43,8 @@
                 body: JSON.stringify({
                     email,
                     displayName,
+                    passwordKey: password,
                     country: selectedCountryCode,
-                    password,
-                    passwordConfirm,
                 }),
             });
 
@@ -55,9 +54,8 @@
                 error = data?.message || "Registration failed.";
                 return;
             }
-
-            localStorage.setItem("userEmail", email);
-            goto(resolve(`/home`));
+            localStorage.setItem("justRegistered", "true");
+            goto(resolve(`/login`));
         } catch (err) {
             error = "Failed to register user: " + (err as Error).message;
             console.error(err);
@@ -72,8 +70,8 @@
         <button
             type="button"
             class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}
-        >Cancel</button>
+            on:click={() => goto(resolve("/"))}>Cancel</button
+        >
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
