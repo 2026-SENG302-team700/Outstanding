@@ -144,7 +144,6 @@ public class UserService : IUserService
     /// <param name="passwordString">Password String - Plaintext password of user to be hashed</param>
     /// <param name="passwordConfirm">Password Confirm String - Plaintext confirmation of the password, should match passwordString</param>
     /// <param name="country">Country - 2 Letter Country Code of user to be generated</param>
-    /// <exception cref="DuplicateEmailException"></exception>
     public async Task CreateNewUserAsync(
         string email, 
         string displayName, 
