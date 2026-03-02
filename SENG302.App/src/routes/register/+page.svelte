@@ -90,7 +90,6 @@
                     password,
                     passwordConfirm,
                     }),
-                }),
             });
 
             const data = await response.json().catch(() => null);
