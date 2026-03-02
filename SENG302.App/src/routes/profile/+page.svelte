@@ -7,6 +7,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/countries";
     
+    let email = localStorage.getItem("userEmail");
+    let username = localStorage.getItem("username");
     
 </script>
 
@@ -19,8 +21,8 @@
     </button>
     <div class="profile-box">
         <img class="profile-image", src="/defaultProfile.png" alt="No Profile Picture">
-        <p class="username">Shivam</p>
-        <p class="user_email">Email: panda.sickomode@gmail.com</p>
+        <p class="username">{username}</p>
+        <p class="user_email">Email: {email}</p>
     </div>
 </div>
 

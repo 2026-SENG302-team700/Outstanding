@@ -25,9 +25,10 @@ public class LoginController: ControllerBase
         {
             return NotFound("User does not exist");
         } 
-        else if (verification == UserVerificationResult.Success) 
+        else if (verification == UserVerificationResult.Success)
         {
-            return Ok("Login success"); //needs replacing later on
+            var user = await _userService.GetUserByIdAsync(userCredentials.Email);
+            return Ok(new {username = user.DisplayName}); //needs replacing later on
         } 
         else if (verification == UserVerificationResult.SuccessRehashNeeded)
         {

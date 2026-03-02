@@ -26,7 +26,7 @@
         >
             Home Screen (WIP)
         </h1>
-        <div style="display: flex; flex-direction: column">
+        <div style="display: flex; flex-direction: column; align-items: center">
             <button
                     class="profile-button"
                     on:click={() => goto(resolve("/profile"))}
@@ -34,7 +34,7 @@
                 <img class="profile-image" src="/defaultProfile.png" alt="Profile">
 
             </button>
-            <p style="font-size: 14px; vertical-align: center; ">Profile</p>
+            <p style="font-size: 14px; vertical-align: center; font-weight: 500;">{localStorage.getItem("username")}</p>
         </div>
     </div>
     

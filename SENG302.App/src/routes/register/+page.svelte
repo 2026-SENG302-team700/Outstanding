@@ -54,6 +54,8 @@
                 error = data?.message || "Registration failed.";
                 return;
             }
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("username", displayName);
             localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
