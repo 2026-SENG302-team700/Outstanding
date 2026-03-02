@@ -21,6 +21,18 @@ public class RegistrationController : ControllerBase
         _userService = userService;
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<User>> getUser(int id)
+    {
+        /*
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        } */
+        return Ok();
+    }
+
     /// <summary>
     /// API Controller method that handles a post request for registering 
     /// a new user and hence creating a new user object.
@@ -52,7 +64,7 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest("This email is already in use");
         }
-        
+
         return Ok("User created successfully");
     }
 }
