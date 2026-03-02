@@ -45,6 +45,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = userEmail,
             DisplayName = userDisplayName,
             PasswordKey = passwordKey,
+            PasswordConfirm = passwordKey,
             Country = userCountry
         };
 
@@ -63,7 +64,8 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
             PasswordKey = "c00lPasSw0rdon't@ME",
-            Country = "AUS"
+            PasswordConfirm = "c00lPasSw0rdon't@ME",
+            Country = "US"
         };
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
@@ -75,6 +77,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy second account",
             PasswordKey = "c00lPasSw0rdon't@ME2",
+            PasswordConfirm = "c00lPasSw0rdon't@ME2",
             Country = "US"
         };
 
