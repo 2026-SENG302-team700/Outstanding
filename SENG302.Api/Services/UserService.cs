@@ -15,6 +15,9 @@ public interface IUserService
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
 }
 
+/// <summary>
+/// Exception to throw when e-mail already exists in the db.
+/// </summary>
 public class DuplicateEmailException : Exception
 {
     public DuplicateEmailException() {}
@@ -24,6 +27,9 @@ public class DuplicateEmailException : Exception
     public DuplicateEmailException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when the display name has an invalid name length.
+/// </summary>
 public class InvalidDisplayNameLengthException : Exception
 {
     public InvalidDisplayNameLengthException() {}
@@ -33,6 +39,9 @@ public class InvalidDisplayNameLengthException : Exception
     public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when the display name has invalid characters
+/// </summary>
 public class InvalidDisplayNameCharsException : Exception
 {
     public InvalidDisplayNameCharsException() {}
@@ -42,6 +51,9 @@ public class InvalidDisplayNameCharsException : Exception
     public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when the email is of an invalid format
+/// </summary>
 public class InvalidEmailFormatException : Exception
 {
     public InvalidEmailFormatException() {}
@@ -51,6 +63,9 @@ public class InvalidEmailFormatException : Exception
     public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when the password formatting is invalid (doesn't meet requirements)
+/// </summary>
 public class InvalidPasswordException : Exception
 {
     public InvalidPasswordException() {}
@@ -60,6 +75,9 @@ public class InvalidPasswordException : Exception
     public InvalidPasswordException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when passwords are mismatched
+/// </summary>
 public class MismatchedPasswordException : Exception
 {
     public MismatchedPasswordException() {}
@@ -69,6 +87,9 @@ public class MismatchedPasswordException : Exception
     public MismatchedPasswordException(string message, Exception inner) : base(message, inner) {}
 }
 
+/// <summary>
+/// Exception to throw when the country code given from the front-end is invalid
+/// </summary>
 public class InvalidCountryException : Exception
 {
     public InvalidCountryException() {}
@@ -89,6 +110,14 @@ public class UserService : IUserService
         _timeProvider = timeProvider;
     }
 
+    /// <summary>
+    /// Creates a new user object + hashes password
+    /// </summary>
+    /// <param name="email">E-mail string - e-mail of user to be generated</param> 
+    /// <param name="displayName">Display Name String - Display Name of user to be generated</param>
+    /// <param name="passwordString">Password String - Plaintext password of user to be hashed</param>
+    /// <param name="country">Country - 2 Letter Country Code of user to be generated</param>
+    /// <returns>A user object from the given information</returns>
     public async Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country)
     {
         PasswordHasher<User> passwordHasher = new();
@@ -107,6 +136,15 @@ public class UserService : IUserService
         return user;
     }
 
+    /// <summary>
+    /// Validates user details then calls GenerateNewUserAsync
+    /// </summary>
+    /// <param name="email">E-mail string - e-mail of user to be generated</param>
+    /// <param name="displayName">Display Name String - Display Name of user to be generated</param>
+    /// <param name="passwordString">Password String - Plaintext password of user to be hashed</param>
+    /// <param name="passwordConfirm">Password Confirm String - Plaintext confirmation of the password, should match passwordString</param>
+    /// <param name="country">Country - 2 Letter Country Code of user to be generated</param>
+    /// <exception cref="DuplicateEmailException"></exception>
     public async Task CreateNewUserAsync(
         string email, 
         string displayName, 
@@ -164,11 +202,27 @@ public class UserService : IUserService
         await context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Checks to see if display name length is between 3-64 characters
+    /// </summary>
+    /// <param name="displayName">String representing display name of the user</param>
+    /// <returns>
+    /// True: If display name is between 3-64 characters
+    /// False: If display name is less than 3 characters or greater than 64 characters
+    /// </returns>
     private bool DisplayNameLength(string displayName)
     {
         return ((displayName.Length < 3) || (displayName.Length > 64));
     }
 
+    /// <summary>
+    /// Checks to see if the display name characters are valid
+    /// </summary>
+    /// <param name="displayName">String representing display name of the user</param>
+    /// <returns>
+    /// True: If display name only contains allowed characters
+    /// False: If display name contains any disallowed characters
+    /// </returns>
     private bool DisplayNameChars(string displayName)
     {
         // regex below allow a-z, A-Z, - and ' -- 
@@ -180,6 +234,14 @@ public class UserService : IUserService
         return (validCharsRegex.IsMatch(displayName));
     }
 
+    /// <summary>
+    /// Checks to see if the e-mail string is in a valid format
+    /// </summary>
+    /// <param name="email"> String representing e-mail of the user</param>
+    /// <returns>
+    /// True: E-mail is a valid format
+    /// False: E-mail is an invalid format
+    /// </returns>
     private bool CheckEmailFormat(string email)
     {
         try
@@ -193,6 +255,14 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>
+    /// Checks to see if password meets strength requirements
+    /// </summary>
+    /// <param name="password">Plaintext string representation of the users password</param>
+    /// <returns>
+    /// True: Password meets password strength requirements
+    /// False: Password does not meet password strength requirements
+    /// </returns>
     private bool CheckPassword(string password)
     {
         var lowerCharRegex = new Regex(
@@ -232,16 +302,42 @@ public class UserService : IUserService
         return true;
     }
 
+    /// <summary>
+    /// Checks to see if the two provided passwords are matching
+    /// </summary>
+    /// <param name="passwordString">Plaintext string representation of the users password</param>
+    /// <param name="passwordConfirmation">Plaintext string representation of the password confirmation</param>
+    /// <returns>
+    /// True: passwords match
+    /// False: passwords differ
+    /// </returns>
     private bool PasswordMatching(string passwordString, string passwordConfirmation)
     {
         return passwordString == passwordConfirmation;
     }
 
+    /// <summary>
+    /// Checks to see if the provided country code is valid or not
+    /// </summary>
+    /// <param name="country">string representation of a 2-letter country code</param>
+    /// <returns>
+    /// True: country is in the country code constants list
+    /// False: country is not in the country code constants list
+    /// </returns>
     private bool ValidCountry(string country)
     {
         return CountryCodes.All.Contains(country);
     }
     
+    /// <summary>
+    /// Checks to see if the provided e-mail is already in the database
+    /// </summary>
+    /// <param name="context">The Database</param>
+    /// <param name="email">String representation of the e-mail</param>
+    /// <returns>
+    /// True: e-mail is already stored and associated with an account in the db
+    /// False: e-mail is not stored and associated with an account in the db
+    /// </returns>
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
         return context.Users.Where((t) => t.Email == email).Count() > 0;

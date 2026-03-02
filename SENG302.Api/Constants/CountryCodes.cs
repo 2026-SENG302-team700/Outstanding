@@ -4,6 +4,9 @@ namespace SENG302.Api.Constants;
 
 public static class CountryCodes
 {
+    /// <summary>
+    /// A list containing all the 2-letter ISO-3166 country codes.
+    /// </summary>
     public static readonly IReadOnlyList<string> All = new List<string>
     {
             "AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG",
