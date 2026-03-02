@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Authentication;
 
 namespace SENG302.Api;
 
@@ -137,6 +138,7 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped)
