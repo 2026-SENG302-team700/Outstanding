@@ -3,6 +3,8 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 
 namespace SENG302.Api;
 
@@ -27,15 +29,8 @@ public class Program
         // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
-        // Add authentication service and configure it to use cookies
-        builder.Services.AddAuthentication("cookie").AddCookie("cookie", options =>
-        {
-            options.Cookie.Name = "SENG302_AUTH_COOKIE";
-            options.Cookie.HttpOnly = true;
-            options.LoginPath = "/login";
-            options.LogoutPath = "/logout";
-            options.AccessDeniedPath = "/api/auth/access-denied";
-        });
+        // Add authorization service
+        builder.Services.AddAuthorization();
 
         // Configure database context with factory pattern
         builder.Services.AddDbContextFactory<DatabaseContext>(options =>
@@ -60,6 +55,20 @@ public class Program
 
             options.Cookie.SecurePolicy = cookiePolicy;
         });
+
+        builder.Services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.Cookie.Name = "OUTSTANDING_AUTH_COOKIE";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = cookiePolicy;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+
+                options.LoginPath = "/login";
+                options.LogoutPath = "/logout";
+                options.AccessDeniedPath = "/api/auth/access-denied";
+            });
 
         // Add CORS for development only
         if (builder.Environment.IsDevelopment())
@@ -109,12 +118,11 @@ public class Program
             app.UseCors("AllowFrontend");
         }
 
-
-        app.UseAntiforgery();
-
         // Tell app to use authentication and authorization middleware
         app.UseAuthentication();
         app.UseAuthorization();
+        
+        app.UseAntiforgery();
 
         // CSRF token endpoint
         app.MapGet("/api/csrf-token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext context) =>
@@ -152,7 +160,6 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITaskService, TaskService>();
-        services.AddScoped<IAuthenticationService, AuthenticationService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped)

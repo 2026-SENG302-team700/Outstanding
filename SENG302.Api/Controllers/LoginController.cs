@@ -1,8 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using SENG302.Api.Filters;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
+
 namespace SENG302.Api.Controllers;
 
 [ApiController]
@@ -11,7 +16,7 @@ public class LoginController: ControllerBase
 {
     private readonly IUserService _userService;
 
-    public LoginController(IUserService userService) 
+    public LoginController(IUserService userService)
     {
         _userService = userService;
     }
@@ -26,22 +31,44 @@ public class LoginController: ControllerBase
     [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials) 
     {
-        var verification = await _userService.CheckUserCredentialsAsync(userCredentials.Email, userCredentials.PasswordKey);
-        if (verification == UserVerificationResult.DoesNotExist) 
+        var user = await _userService.ValidateCredentialsAsync(
+            userCredentials.Email,
+            userCredentials.PasswordKey
+        );
+
+        if (user == null)
         {
-            return NotFound("User does not exist");
-        } 
-        else if (verification == UserVerificationResult.Success) 
-        {
-            return Ok("Login success"); //needs replacing later on
-        } 
-        else if (verification == UserVerificationResult.SuccessRehashNeeded)
-        {
-            return Ok(); //will need somthing else here
+            return Unauthorized("Invalid credentials");
         }
-        else 
+
+        var claims = new List<Claim>
         {
-            return Unauthorized("Unauthorized or otherwise failed"); 
-        }
+            new Claim(ClaimTypes.NameIdentifier, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName),
+            new Claim(ClaimTypes.Email, user.Email)
+        };
+
+        var principle = new ClaimsPrincipal(
+            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+        );
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principle,
+            new AuthenticationProperties{
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+            });
+        
+        return Ok(new LoginResponse{
+            Email = user.Email,
+            DisplayName = user.DisplayName
+        });
+    }
+
+    public class LoginResponse
+    {
+        public string Email { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
     }
 }

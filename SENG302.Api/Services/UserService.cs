@@ -14,7 +14,7 @@ public interface IUserService
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(string email);
-    Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password);
+    Task<User?> ValidateCredentialsAsync(string email, string password);
 }
 
 public enum UserVerificationResult 
@@ -365,32 +365,32 @@ public class UserService : IUserService
     /// <param name="email">a string of the provided email</param>
     /// <param name="password">an un-hashed string of the provided password</param>
     /// <returns>a UserVerificationResult enum determining whether the user exists, failed, succeeded or succeeded with rehash needed verification.</returns>
-    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password) 
+    public async Task<User?> ValidateCredentialsAsync(string email, string password) 
     {
         PasswordHasher<User> passwordHasher = new();
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) 
         {
-            return UserVerificationResult.DoesNotExist;
+            return null;
         }
         
-        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password); 
+        var verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password); 
         switch (verificationResult) 
         {
             case PasswordVerificationResult.Success:
-                return UserVerificationResult.Success;
+                return user;
             
             case PasswordVerificationResult.SuccessRehashNeeded:
-                return UserVerificationResult.SuccessRehashNeeded;
+                user.PasswordKey = passwordHasher.HashPassword(user, password);
+                await context.SaveChangesAsync();
+                return user;
             
             default:
-                return UserVerificationResult.Failed;
+                return null;
         }
-    
-        
-        
     }
 }
 
