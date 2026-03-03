@@ -10,6 +10,5 @@ public class NewTaskListRequest
 {
 
     public string Name { get; set; } = string.Empty;
-    public string UserEmail { get; set; } = string.Empty;
 
 }

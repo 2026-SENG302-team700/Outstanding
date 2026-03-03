@@ -37,6 +37,7 @@
                     Name: name,
                     userEmail: userEmail,
                 }),
+                credentials: "include",
             });
 
             const data = await response.text();

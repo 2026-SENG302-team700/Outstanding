@@ -34,7 +34,6 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         var data = new NewTaskListRequest
         {
             Name = "Test Task List",
-            UserEmail = "test@example.com"
         };
         var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -56,7 +55,6 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         var data = new NewTaskListRequest
         {
             Name = "ab", // Short name that is less than 3 characters
-            UserEmail = "test@example.com"
         };
         var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -68,10 +66,11 @@ public class TaskControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateTaskList_NonExistentUser_ReturnBadRequest()
     {
+        // Test automatically gets userEamil as test@example.com so we dont add this
+        // to the db for this test
         var data = new NewTaskListRequest
         {
             Name = "Valid Task List Name",
-            UserEmail = "nonexistent@example.com"
         };
         var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -96,7 +95,6 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         var data = new NewTaskListRequest
         {
             Name = "test!", // Invalid character in name
-            UserEmail = "test@example.com"
         };
         var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
         var message = await response.Content.ReadAsStringAsync();
@@ -125,7 +123,6 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         var data = new NewTaskListRequest
         {
             Name = "Test Task List",
-            UserEmail = "test@example.com"
         };
         var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
         //message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure task list creation was successful
