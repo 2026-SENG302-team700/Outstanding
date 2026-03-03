@@ -139,7 +139,7 @@ public class Program
         services.AddScoped<ITaskService, TaskService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
-        // (If in doubt, you probably just want AddScoped)
+        // (If in doubt, you probably just want AddScoped
     }
 
 }

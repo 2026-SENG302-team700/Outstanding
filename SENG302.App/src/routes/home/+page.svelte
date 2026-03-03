@@ -7,16 +7,31 @@
     let loading = $state(false);
     let error = $state("");
     let taskLists = $state([]);
-
+    let username = $state("")
+    
     onMount(() => {
         fetchLists();
+        retrieveUsername()
     });
+
+    /// <summary>
+    /// Retrieves the User username from storage & checks they are non null before assigning them to reactive variables
+    /// </summary>
+    function retrieveUsername() {
+        const userData = localStorage.getItem("username");
+        if (userData !== null) {
+            username = userData;
+        } else {
+            username = "Profile";
+        }
+    }
 
     /// <summary>
     /// Fetches the task lists associated with the current user's email from the backend.
     /// If the request is successful, updates the taskLists state with the retrieved data.
     /// If there is an error, updates the error state with the error message.
     /// </summary>
+    
     async function fetchLists() {
         try {
             var userEmail = localStorage.getItem("userEmail");
@@ -40,7 +55,25 @@
 </script>
 
 <div class="container">
-    <h1 class="text-center mb-4">Home</h1>
+    <div style="display: flex; flex-direction: row; ">
+        <h1
+                class="text-center mb-4"
+                style="flex: 1; justify-content: center"
+        >
+            Home
+        </h1>
+        <div style="display: flex; flex-direction: column; align-items: center">
+            <button
+                    class="profile-button"
+                    on:click={() => goto(resolve("/profile"))}
+            >
+                <img class="profile-image" src="/defaultProfile.png" alt="Profile">
+
+            </button>
+            <p style="font-size: 14px; vertical-align: center; font-weight: 500;">{username}</p>
+        </div>
+    </div>
+    
     <div class="card-body d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Your Task Lists</h5>
         <button
@@ -83,5 +116,22 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
+    }
+
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: inline-block;
+        border-radius: 50%;
+    }
+    
+    .profile-button {
+        width:40px; 
+        height:40px; 
+        justfiy-content: flex-end; 
+        border: None; 
+        background-color: white; 
+        border-radius: 50%
     }
 </style>

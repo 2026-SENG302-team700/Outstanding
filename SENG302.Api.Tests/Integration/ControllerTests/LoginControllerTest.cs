@@ -98,10 +98,14 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             PasswordKey = "c00lPasSw0rdont@ME",
         };
+        
+        
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
 
         message2.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await message2.Content.ReadAsStringAsync()).ShouldBe("Login success");
+        var messageJson = await message2.Content.ReadFromJsonAsync<JsonElement>();
+        string? username = messageJson.GetProperty("username").GetString();
+        username.ShouldBe(register.DisplayName);
     }
 }
