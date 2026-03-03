@@ -25,22 +25,25 @@ public class LoginController: ControllerBase
     /// <summary>
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
-    /// <param name="userCredentials">a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
+    /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
     /// <returns>a Task<ActionResult<User>></returns>
     [HttpPost]
     [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials) 
     {
+        // Ensure the credentials are correct
         var user = await _userService.ValidateCredentialsAsync(
             userCredentials.Email,
             userCredentials.PasswordKey
         );
 
+        // Check if the credentials are incorrect
         if (user == null)
         {
             return Unauthorized("Invalid credentials");
         }
 
+        // Create the user claims
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Email),
@@ -48,10 +51,12 @@ public class LoginController: ControllerBase
             new Claim(ClaimTypes.Email, user.Email)
         };
 
+        
         var principle = new ClaimsPrincipal(
             new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
         );
-
+        
+        // Sign them in with the auth cookie
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principle,
@@ -60,12 +65,16 @@ public class LoginController: ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
             });
         
+        // Return the basic login information
         return Ok(new LoginResponse{
             Email = user.Email,
             DisplayName = user.DisplayName
         });
     }
 
+    /// <summary>
+    /// Return basic user information as a login reponse
+    /// </summary>
     public class LoginResponse
     {
         public string Email { get; set; } = string.Empty;

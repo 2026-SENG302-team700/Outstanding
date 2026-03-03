@@ -364,7 +364,7 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="email">a string of the provided email</param>
     /// <param name="password">an un-hashed string of the provided password</param>
-    /// <returns>a UserVerificationResult enum determining whether the user exists, failed, succeeded or succeeded with rehash needed verification.</returns>
+    /// <returns>The user that matches the email and password provided or null if they do not match</returns>
     public async Task<User?> ValidateCredentialsAsync(string email, string password) 
     {
         PasswordHasher<User> passwordHasher = new();

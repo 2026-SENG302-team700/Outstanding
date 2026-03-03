@@ -56,11 +56,12 @@ public class Program
             options.Cookie.SecurePolicy = cookiePolicy;
         });
 
+        // Configure the cookie-based authentication and set security options
         builder.Services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
-                options.Cookie.Name = "OUTSTANDING_AUTH_COOKIE";
+                options.Cookie.Name = "OUTSTANDING-AUTH-COOKIE";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = cookiePolicy;
                 options.Cookie.SameSite = SameSiteMode.Lax;
