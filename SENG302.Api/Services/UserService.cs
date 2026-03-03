@@ -28,7 +28,6 @@ public enum UserVerificationResult
 /// <summary>
 /// Exception to throw when e-mail already exists in the db.
 /// </summary>
->>>>>>> SENG302.Api/Services/UserService.cs
 public class DuplicateEmailException : Exception
 {
     public DuplicateEmailException() {}
