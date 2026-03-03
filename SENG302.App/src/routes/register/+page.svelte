@@ -25,43 +25,53 @@
             !password ||
             !passwordConfirm
         ) {
-            addToast("Please fill in all fields.", "error")
+            addToast("Please fill in all fields.", "error");
             return false;
         }
 
         // Check for malformed emails
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            addToast("Invalid email address. Email must be in the format ‘jane@doe.nz’", "error");
+            addToast(
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’",
+                "error",
+            );
             return false;
         }
 
         // Check for mismatching passwords
         if (password != passwordConfirm) {
-            addToast("Passwords do not match", "error")
+            addToast("Passwords do not match", "error");
             return false;
         }
 
         // Check password validity
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
         if (!passwordRegex.test(password)) {
             addToast(
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters",
-                "error"
+                "error",
             );
             return false;
         }
 
         // Check display name length
         if (displayName.length < 3 || displayName.length > 64) {
-            addToast("Display name must be between 3 and 64 characters", "error");
+            addToast(
+                "Display name must be between 3 and 64 characters",
+                "error",
+            );
             return false;
         }
 
         // Check display name validity
         const displayNameRegex = /^[A-Za-z\s'-]+$/;
         if (!displayNameRegex.test(displayName)) {
-            addToast("Display name must only include letters, spaces, hyphens or apostrophes", "error");
+            addToast(
+                "Display name must only include letters, spaces, hyphens or apostrophes",
+                "error",
+            );
             return false;
         }
         return true;
@@ -89,16 +99,36 @@
                     country: selectedCountryCode,
                     password,
                     passwordConfirm,
-                    }),
+                }),
             });
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                addToast(data?.message || "Registration failed.", "error");
+                // in case front end form checks were tampered with,
+                // we display a toast with the badrequest response
+                // from the back end.
+                if (response.status == 400)
+                    addToast(
+                        data?.message ||
+                            "User registration is missing information.",
+                        "error",
+                    );
+                else if (response.status == 401) {
+                    addToast(
+                        data?.message || "This email is already in use.",
+                        "error",
+                    );
+                }
+
+                // if registration fails for some other reason, display
+                // a generic error message.
+                else {
+                    addToast(data?.message || "Registration Failed.", "error");
+                }
                 return;
             }
-            
+
             localStorage.setItem("username", displayName);
             localStorage.setItem("userEmail", email);
 
@@ -111,7 +141,7 @@
         } catch (err) {
             addToast(
                 "Failed to register user: " + (err as Error).message,
-                "error"
+                "error",
             );
         } finally {
             loading = false;
@@ -132,7 +162,6 @@
     {#if error}
         <div class="alert alert-danger" role="alert">{error}</div>
     {/if}
-
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
