@@ -6,6 +6,6 @@ namespace SENG302.Api.Models.Entities;
 /// Object used to store the email and the password entered in the frontend to be processed for login verification
 /// </summary>
 public class UserCredentials {
-    public string Email { get; set; }
-    public string PasswordKey {get; set;}
+    public required string Email { get; set; }
+    public required string PasswordKey {get; set;}
 }

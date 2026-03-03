@@ -40,8 +40,8 @@
                 error = data?.message || "Email or Password is incorrect";
                 return;
             }
-
             localStorage.setItem("userEmail", email);
+            localStorage.setItem("username", data.username)
             goto(resolve(`/home`));
         } catch (err) {
             error = "Failed to login user: " + (err as Error).message;

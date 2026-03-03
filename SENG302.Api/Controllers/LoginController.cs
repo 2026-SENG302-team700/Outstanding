@@ -12,7 +12,7 @@ namespace SENG302.Api.Controllers;
 
 [ApiController]
 [Route("api/login")]
-public class LoginController: ControllerBase 
+public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
 
@@ -29,7 +29,7 @@ public class LoginController: ControllerBase
     /// <returns>a Task<ActionResult<User>></returns>
     [HttpPost]
     [ConditionalValidateAntiForgeryToken]
-    public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials) 
+    public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
         // Ensure the credentials are correct
         var user = await _userService.ValidateCredentialsAsync(
@@ -51,22 +51,24 @@ public class LoginController: ControllerBase
             new Claim(ClaimTypes.Email, user.Email)
         };
 
-        
+
         var principle = new ClaimsPrincipal(
             new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
         );
-        
+
         // Sign them in with the auth cookie
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principle,
-            new AuthenticationProperties{
+            new AuthenticationProperties
+            {
                 IsPersistent = true,
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
             });
-        
+
         // Return the basic login information
-        return Ok(new LoginResponse{
+        return Ok(new LoginResponse
+        {
             Email = user.Email,
             DisplayName = user.DisplayName
         });
