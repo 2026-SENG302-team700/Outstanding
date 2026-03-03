@@ -17,10 +17,10 @@ public class LoginControllerTest : BaseIntegrationTestFixture
 
 
     [Theory]
-    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella", "" ,"ES")]
-    [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "Sheep", "NZ")]
-    [InlineData("trad.horse@gmail.com", "bob", "TradTrad", "TradTrad1", "US")]
-    [InlineData("steven@wilson.uk", "Porcupine", "Tree", "tree", "Uk")]
+    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "" ,"ES")]
+    [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sheep", "NZ")]
+    [InlineData("trad.horse@gmail.com", "bob", "TradTrad$4a", "TradTrad1", "US")]
+    [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "tree", "NZ")]
     public async Task LoginUser_IncorrectPasswords_ReturnUnauthorised(string userEmail, string userDisplayName, string passwordKey, string otherPasswordKey, string userCountry)
     {
         var registerData = new
@@ -28,6 +28,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Email = userEmail,
             DisplayName = userDisplayName,
             PasswordKey = passwordKey,
+            PasswordConfirm = passwordKey,
             Country = userCountry
         };
         
@@ -45,10 +46,10 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     }
 
     [Theory]
-    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella", "shivsheep@gmail.com" ,"ES")]
-    [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "Sswag.mint@gmail.com", "NZ")]
-    [InlineData("trad.horse@gmail.com", "bob", "TradTrad", "bob!", "US")]
-    [InlineData("steven@wilson.uk", "Porcupine", "Tree", "", "Uk")]
+    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep@gmail.com" ,"ES")]
+    [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sswag.mint@gmail.com", "NZ")]
+    [InlineData("trad.horse@gmail.com", "bob", "TradTrad$4a", "bob!", "US")]
+    [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "", "NZ")]
     public async Task LoginUser_NonValidEmail_ReturnBadRequest(string userEmail, string userDisplayName, string passwordKey, string fakeEmail, string userCountry)
     {
         var registerData = new
@@ -56,6 +57,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Email = userEmail,
             DisplayName = userDisplayName,
             PasswordKey = passwordKey,
+            PasswordConfirm = passwordKey,
             Country = userCountry
         };
         
@@ -82,8 +84,9 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         {
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
-            PasswordKey = "c00lPasSw0rdon't@ME",
-            Country = "AUS"
+            PasswordKey = "c00lPasSw0rdont@ME",
+            PasswordConfirm = "c00lPasSw0rdont@ME",
+            Country = "AU"
         };
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", register);
@@ -93,7 +96,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var login = new
         {
             Email = "jdev@dev.com",
-            PasswordKey = "c00lPasSw0rdon't@ME",
+            PasswordKey = "c00lPasSw0rdont@ME",
         };
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
