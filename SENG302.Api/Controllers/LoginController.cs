@@ -37,11 +37,11 @@ public class LoginController: ControllerBase
         } 
         else if (verification == UserVerificationResult.SuccessRehashNeeded)
         {
-            return Ok(); //will need somthing else here
+            return Ok("Login success, rehash needed"); //will need somthing else here
         }
         else 
         {
-            return Unauthorized("Unauthorized or otherwise failed"); 
+            return Unauthorized("Unauthorised or otherwise failed"); 
         }
     }
 }
