@@ -2,6 +2,8 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { addToast } from "$lib/toast/toast";
+
 
     let email = $state("");
     let password = $state("");
@@ -54,9 +56,9 @@
 <div class="container">
     <div class="mb-3">
         <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}>Cancel</button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto(resolve("/"))}>Cancel</button
         >
     </div>
     <h1 class="text-center mb-4">Login</h1>
@@ -68,27 +70,27 @@
     <form on:submit|preventDefault={loginUser}>
         <div class="mb-3">
             <input
-                type="email"
-                class="form-control"
-                placeholder="Email"
-                bind:value={email}
-                disabled={loading}
+                    type="type"
+                    class="form-control"
+                    placeholder="Email"
+                    bind:value={email}
+                    disabled={loading}
             />
         </div>
         <div class="mb-3">
             <input
-                type="password"
-                class="form-control"
-                placeholder="Confirm Password"
-                bind:value={password}
-                disabled={loading}
+                    type="password"
+                    class="form-control"
+                    placeholder="Confirm Password"
+                    bind:value={password}
+                    disabled={loading}
             />
         </div>
         <div>
             <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
+                    type="submit"
+                    class="btn btn-primary w-100"
+                    disabled={loading}
             >
                 {loading ? "Loading..." : "Login"}
             </button>

@@ -29,19 +29,48 @@ public class LoginController: ControllerBase
         var verification = await _userService.CheckUserCredentialsAsync(userCredentials.Email, userCredentials.PasswordKey);
         if (verification == UserVerificationResult.DoesNotExist) 
         {
-            return NotFound("User does not exist");
+            return NotFound(new
+            {
+                login = false,
+                message = "Invalid email or password",
+                hashStatus = false
+            });
         } 
+        else if (verification == UserVerificationResult.MalformedEmail)
+        {
+            return BadRequest(new
+            {
+                login = false,
+                message = "Invalid email address. Email must be in the format 'jane@doe.nz'",
+                hashStatus = false
+            });
+        }
         else if (verification == UserVerificationResult.Success) 
         {
-            return Ok("Login success"); //needs replacing later on
+            return Ok(new
+            {
+                login = true,
+                message = "login success",
+                hashStatus = false
+            });
         } 
         else if (verification == UserVerificationResult.SuccessRehashNeeded)
         {
-            return Ok("Login success, rehash needed"); //will need somthing else here
+            return Ok(new
+            {
+                login = true,
+                message = "login success",
+                hashStatus = true
+            });
         }
         else 
         {
-            return Unauthorized("Unauthorised or otherwise failed"); 
+            return Unauthorized(new
+            {
+                login = false,
+                message = "Invalid email or password",
+                hashStatus = false
+            }); 
         }
     }
 }

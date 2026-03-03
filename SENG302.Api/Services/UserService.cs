@@ -21,6 +21,7 @@ public enum UserVerificationResult
     {
         DoesNotExist,
         Failed,
+        MalformedEmail,
         Success,
         SuccessRehashNeeded
     }
@@ -370,6 +371,12 @@ public class UserService : IUserService
         PasswordHasher<User> passwordHasher = new();
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        if (!CheckEmailFormat(email))
+        {
+            return UserVerificationResult.MalformedEmail;
+        }
+        
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) 
         {
@@ -393,4 +400,3 @@ public class UserService : IUserService
         
     }
 }
-
