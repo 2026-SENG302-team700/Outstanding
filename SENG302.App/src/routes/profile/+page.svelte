@@ -7,8 +7,23 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
     
-    let email = localStorage.getItem("userEmail");
-    let username = localStorage.getItem("username");
+    let email = $state("")
+    let username = $state("")
+    
+    onMount(() => {
+        retrieveUserData()
+    })
+    
+    function retrieveUserData()
+    {
+        const userEmail = localStorage.getItem("userEmail");
+        const userUsername = localStorage.getItem("username");
+        if (userEmail !== null && userUsername !== null) {
+            email = userEmail;
+            username = userUsername;
+        }
+    }
+    
     
 </script>
 

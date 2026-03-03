@@ -98,9 +98,8 @@
                 addToast(data?.message || "Registration failed.", "error");
                 return;
             }
-            localStorage.setItem("userEmail", email);
+            
             localStorage.setItem("username", displayName);
-
             localStorage.setItem("userEmail", email);
 
             addToast("Registration successful. Please log in.", "success");

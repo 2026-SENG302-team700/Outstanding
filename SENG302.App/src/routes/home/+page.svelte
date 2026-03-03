@@ -7,16 +7,28 @@
     let loading = $state(false);
     let error = $state("");
     let taskLists = $state([]);
-
+    let username = $state("")
+    
     onMount(() => {
         fetchLists();
+        retrieveUsername()
     });
+    
+    function retrieveUsername() {
+        const userData = localStorage.getItem("username");
+        if (userData !== null) {
+            username = userData;
+        } else {
+            username = "Profile";
+        }
+    }
 
     /// <summary>
     /// Fetches the task lists associated with the current user's email from the backend.
     /// If the request is successful, updates the taskLists state with the retrieved data.
     /// If there is an error, updates the error state with the error message.
     /// </summary>
+    
     async function fetchLists() {
         try {
             var userEmail = localStorage.getItem("userEmail");
@@ -55,7 +67,7 @@
                 <img class="profile-image" src="/defaultProfile.png" alt="Profile">
 
             </button>
-            <p style="font-size: 14px; vertical-align: center; font-weight: 500;">{localStorage.getItem("username")}</p>
+            <p style="font-size: 14px; vertical-align: center; font-weight: 500;">{username}</p>
         </div>
     </div>
     
