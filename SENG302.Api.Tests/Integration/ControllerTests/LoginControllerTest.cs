@@ -105,6 +105,8 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             PasswordKey = "c00lPasSw0rdont@ME",
         };
+        
+        
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
 
