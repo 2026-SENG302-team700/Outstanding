@@ -9,9 +9,9 @@
     let error = $state("");
 
     /**
-     * Handles user registration by sending a POST request to the server with the user's details.
-     * Validates that all fields are filled in before making the request. If registration is successful,
-     * redirects the user to the home page. If there is an error, displays an appropriate message.
+     * Handles user login by sending a POST request to the server with the user's email and password.
+     * Validates that all fields are filled in before making the request. If login is successful,
+     * redirects the user to the profile page. If there is an error, displays an appropriate message.
      */
     async function loginUser() {
         if (!email || !password) {

@@ -16,6 +16,12 @@ public class LoginController: ControllerBase
         _userService = userService;
     }
 
+
+    /// <summary>
+    /// Check to ensure the provided email and password match a registered user
+    /// </summary>
+    /// <param name="userCredentials">a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
+    /// <returns>a Task<ActionResult<User>></returns>
     [HttpPost]
     [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials) 
@@ -32,11 +38,11 @@ public class LoginController: ControllerBase
         } 
         else if (verification == UserVerificationResult.SuccessRehashNeeded)
         {
-            return Ok(); //will need somthing else here
+            return Ok("Login success, rehash needed"); //will need somthing else here
         }
         else 
         {
-            return Unauthorized("Unauthorized or otherwise failed"); 
+            return Unauthorized("Unauthorised or otherwise failed"); 
         }
     }
 }
