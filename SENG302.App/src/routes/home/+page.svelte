@@ -13,7 +13,10 @@
         fetchLists();
         retrieveUsername()
     });
-    
+
+    /// <summary>
+    /// Retrieves the User username from storage & checks they are non null before assigning them to reactive variables
+    /// </summary>
     function retrieveUsername() {
         const userData = localStorage.getItem("username");
         if (userData !== null) {

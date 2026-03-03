@@ -14,6 +14,10 @@
         retrieveUserData()
     })
     
+    /// <summary>
+    /// Gets User email and Username from local storage
+    /// Checks if they non null before assigning them to the reactive variables
+    /// </>summary>
     function retrieveUserData()
     {
         const userEmail = localStorage.getItem("userEmail");

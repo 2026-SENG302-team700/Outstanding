@@ -359,6 +359,12 @@ public class UserService : IUserService
         return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    /// <summary>
+    /// Check to ensure the provided email and password match a registered user
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    /// <param name="password">an un-hashed string of the provided password</param>
+    /// <returns>a UserVerificationResult enum determining whether the user exists, failed, succeeded or succeeded with rehash needed verification.</returns>
     public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password) 
     {
         PasswordHasher<User> passwordHasher = new();
