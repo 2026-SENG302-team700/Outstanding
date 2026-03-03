@@ -13,18 +13,15 @@
     });
 
     /// <summary>
-    /// Fetches the task lists associated with the current user's email from the backend.
-    /// If the request is successful, updates the taskLists state with the retrieved data.
-    /// If there is an error, updates the error state with the error message.
-    /// </summary>
+    /// Fetches the logged-in user's task lists from the server
+    // using there authorization token and updates the component state.
     async function fetchLists() {
         try {
-            var userEmail = localStorage.getItem("userEmail");
-            console.log("Fetching task lists for user:", userEmail);
             loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/tasks/user/${encodeURIComponent(userEmail!)}`),
-            );
+            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+                method: "GET",
+                credentials: "include",
+            });
             const data = await response.json();
             if (!response.ok) {
                 error = data.message || "Failed to fetch task lists.";
@@ -66,11 +63,7 @@
                 </thead>
                 <tbody>
                     {#each taskLists as list}
-                        <tr
-                            class="cursor-pointer"
-                            on:click={() =>
-                                goto(resolve(`/home/list/${list.id}`))}
-                        >
+                        <tr>
                             <td>{list.name}</td>
                         </tr>
                     {/each}
