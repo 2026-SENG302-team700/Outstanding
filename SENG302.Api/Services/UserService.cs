@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using System;
 using System.Text.RegularExpressions;
 using System.Net.Mail;
+using System.Globalization;
 
 namespace SENG302.Api.Services;
 
@@ -21,6 +22,7 @@ public enum UserVerificationResult
     {
         DoesNotExist,
         Failed,
+        MalformedEmail,
         Success,
         SuccessRehashNeeded
     }
@@ -253,12 +255,41 @@ public class UserService : IUserService
     /// </returns>
     private bool CheckEmailFormat(string email)
     {
+        // Gotten from C# docs
         try
         {
-            MailAddress m = new MailAddress(email); // throws exception if not in form of e-mail
-            return true;
+            email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
+                                      RegexOptions.None, TimeSpan.FromMilliseconds(200));
+
+            // Examines the domain part of the email and normalizes it.
+            
+            string DomainMapper(Match match)
+            {
+                // Use IdnMapping class to convert Unicode domain names.
+                var idn = new IdnMapping();
+
+                // Pull out and process domain name (throws ArgumentException on invalid)
+                string domainName = idn.GetAscii(match.Groups[2].Value);
+
+                return match.Groups[1].Value + domainName;
+            }
+            
         }
-        catch (FormatException)
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+        try
+        {
+            return Regex.IsMatch(email,
+                @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+        }
+        catch (RegexMatchTimeoutException)
         {
             return false;
         }
@@ -370,6 +401,12 @@ public class UserService : IUserService
         PasswordHasher<User> passwordHasher = new();
         
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        if (!CheckEmailFormat(email))
+        {
+            return UserVerificationResult.MalformedEmail;
+        }
+        
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null) 
         {
