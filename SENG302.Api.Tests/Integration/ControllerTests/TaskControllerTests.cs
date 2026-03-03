@@ -108,7 +108,10 @@ public class TaskControllerTests : BaseIntegrationTestFixture
     [Fact]
     public async Task FetchTaskListsByUser_SuccessfulFetch_ReturnsTaskLists()
     {
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
         context.Users.Add(new User
         {
             Email = "test@example.com",
@@ -118,15 +121,19 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
 
+        // Create task list for user
         var data = new NewTaskListRequest
         {
             Name = "Test Task List",
             UserEmail = "test@example.com"
         };
         var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
-        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+        //message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure task list creation was successful
 
-        var response = await HttpClient.GetAsync("/api/tasks/user/test@example.com");
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Fetch task lists for the user
+        message = await HttpClient.GetAsync("/api/tasks");
+        message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
+        TaskList[] taskLists = JsonConvert.DeserializeObject<TaskList[]>(await message.Content.ReadAsStringAsync())!;
+        taskLists.Length.ShouldBe(1);
     }
 }

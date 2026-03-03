@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
 using SENG302.Api.DataAccess;
-using SENG302.Api.Services;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -28,6 +28,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     protected readonly FakeTimeProvider FakeTimeProvider;
 
     protected HttpClient HttpClient { get; private init; }
+
 
     protected BaseIntegrationTestFixture(WebApplicationFactory<Program> webAppFactory)
     {
@@ -53,6 +54,9 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.RemoveAll<TimeProvider>();
                 // Replace it with our fake time provider, which keeps a consistent time throughout
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
+
+                // Replace authentication with test auth
+                services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
             });
         });
 
