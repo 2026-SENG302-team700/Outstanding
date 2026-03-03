@@ -17,7 +17,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
 
 
     [Theory]
-    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "" ,"ES")]
+    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sheep", "NZ")]
     [InlineData("trad.horse@gmail.com", "bob", "TradTrad$4a", "TradTrad1", "US")]
     [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "tree", "NZ")]
@@ -31,22 +31,22 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             PasswordConfirm = passwordKey,
             Country = userCountry
         };
-        
-        var loginData = new 
+
+        var loginData = new
         {
             Email = userEmail,
             PasswordKey = otherPasswordKey
         };
         var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
         register.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var message = await HttpClient.PostAsJsonAsync("/api/login", loginData);
         message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await message.Content.ReadAsStringAsync()).ShouldBe("Unauthorised or otherwise failed");
+        (await message.Content.ReadAsStringAsync()).ShouldBe("Invalid credentials");
     }
 
     [Theory]
-    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep@gmail.com" ,"ES")]
+    [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep@gmail.com", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sswag.mint@gmail.com", "NZ")]
     [InlineData("trad.horse@gmail.com", "bob", "TradTrad$4a", "bob!", "US")]
     [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "", "NZ")]
@@ -60,8 +60,8 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             PasswordConfirm = passwordKey,
             Country = userCountry
         };
-        
-        var loginData = new 
+
+        var loginData = new
         {
             Email = fakeEmail,
             // we use the same password here because these tests 
@@ -71,9 +71,9 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         };
         var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
         register.StatusCode.ShouldBe(HttpStatusCode.OK);
-        
+
         var message = await HttpClient.PostAsJsonAsync("/api/login", loginData);
-        message.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
 
@@ -98,14 +98,14 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             Email = "jdev@dev.com",
             PasswordKey = "c00lPasSw0rdont@ME",
         };
-        
-        
+
+
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
 
         message2.StatusCode.ShouldBe(HttpStatusCode.OK);
         var messageJson = await message2.Content.ReadFromJsonAsync<JsonElement>();
-        string? username = messageJson.GetProperty("username").GetString();
-        username.ShouldBe(register.DisplayName);
+        string? displayName = messageJson.GetProperty("displayName").GetString();
+        displayName.ShouldBe(register.DisplayName);
     }
 }
