@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
@@ -50,9 +49,11 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         };
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
+        var content = await message.Content.ReadAsStringAsync();
 
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        (await message.Content.ReadAsStringAsync()).ShouldBe("User registration is missing information");
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("message").GetString().ShouldBe("User registration is missing information");
     }
 
 
@@ -82,8 +83,10 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         };
 
         var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
-
-        message2.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await message2.Content.ReadAsStringAsync()).ShouldBe("This email address is already in use by another account");
+        message2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        
+        var content = await message2.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("message").GetString().ShouldBe("This email address is already in use by another account");        
     }
 }

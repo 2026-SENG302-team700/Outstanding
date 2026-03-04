@@ -165,7 +165,7 @@ public class UserService : IUserService
 
         if (EmailAlreadyExists(context, email))
         {
-            throw new DuplicateEmailException("This email already exists!");
+            throw new DuplicateEmailException("This email address is already in use by another account");
         }
 
         if (DisplayNameLength(displayName))
