@@ -5,13 +5,11 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 
 
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
-[Authorize]
 [ApiController]
 [Route("api/login")]
 public class LoginController : ControllerBase

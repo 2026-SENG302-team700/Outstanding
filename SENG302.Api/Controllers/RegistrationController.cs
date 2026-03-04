@@ -1,7 +1,4 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SENG302.Api;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
@@ -11,7 +8,6 @@ using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
-[Authorize]
 [ApiController]
 [Route("api/register")]
 public class RegistrationController : ControllerBase
