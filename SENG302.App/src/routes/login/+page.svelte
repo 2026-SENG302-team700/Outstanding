@@ -72,7 +72,7 @@
             <input
                     type="type"
                     class="form-control"
-                    placeholder="Email"
+                    placeholder="Email *"
                     bind:value={email}
                     disabled={loading}
             />
@@ -81,7 +81,7 @@
             <input
                     type="password"
                     class="form-control"
-                    placeholder="Confirm Password"
+                    placeholder="Password *"
                     bind:value={password}
                     disabled={loading}
             />

@@ -2,9 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Filters;
 using System.Security.Claims;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
+[ConditionalValidateAntiForgeryToken]
+[Authorize]
 [ApiController]
 [Route("api/tasks")]
 public class TaskController : ControllerBase

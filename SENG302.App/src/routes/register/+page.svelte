@@ -104,28 +104,16 @@
 
             const data = await response.json().catch(() => null);
 
+            console.log(data)
+            
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                if (response.status == 400)
-                    addToast(
-                        data?.message ||
-                            "User registration is missing information.",
-                        "error",
-                    );
-                else if (response.status == 401) {
-                    addToast(
-                        data?.message || "This email is already in use.",
-                        "error",
-                    );
-                }
-
-                // if registration fails for some other reason, display
-                // a generic error message.
-                else {
-                    addToast(data?.message || "Registration Failed.", "error");
-                }
+                addToast(
+                    data?.message || "An error occured.",
+                    "error",
+                )
                 return;
             }
 
@@ -168,7 +156,7 @@
             <input
                 type="text"
                 class="form-control"
-                placeholder="Email"
+                placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
             />
@@ -177,7 +165,7 @@
             <input
                 type="text"
                 class="form-control"
-                placeholder="Display Name"
+                placeholder="Display Name *"
                 bind:value={displayName}
                 disabled={loading}
             />
@@ -185,10 +173,11 @@
         <div class="mb-3">
             <select
                 class="form-control"
+                class:country-select={!selectedCountryCode}
                 bind:value={selectedCountryCode}
                 disabled={loading}
             >
-                <option value="">Select Country</option>
+                <option value="">Select Country *</option>
                 {#each countries as country}
                     <option value={country.code}>
                         {country.name}
@@ -200,7 +189,7 @@
             <input
                 type="password"
                 class="form-control"
-                placeholder="Password"
+                placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
             />
@@ -209,7 +198,7 @@
             <input
                 type="password"
                 class="form-control"
-                placeholder="Confirm Password"
+                placeholder="Confirm Password *"
                 bind:value={passwordConfirm}
                 disabled={loading}
             />
@@ -229,5 +218,9 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
+    }
+
+    .country-select {
+        color: #666666; /* Bootstrap's placeholder color */
     }
 </style>
