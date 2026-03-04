@@ -15,21 +15,21 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sheep", "NZ")]
     [InlineData("trad.horse@gmail.com", "bob", "TradTrad$4a", "TradTrad1", "US")]
     [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "tree", "NZ")]
-    public async Task LoginUser_IncorrectPasswords_ReturnUnauthorised(string userEmail, string userDisplayName, string passwordKey, string otherPasswordKey, string userCountry)
+    public async Task LoginUser_IncorrectPasswords_ReturnUnauthorised(string userEmail, string userDisplayName, string passwordString, string otherPasswordString, string userCountry)
     {
         var registerData = new
         {
             Email = userEmail,
             DisplayName = userDisplayName,
-            PasswordKey = passwordKey,
-            PasswordConfirm = passwordKey,
+            PasswordString = passwordString,
+            PasswordConfirm = passwordString,
             Country = userCountry
         };
 
         var loginData = new
         {
             Email = userEmail,
-            PasswordKey = otherPasswordKey
+            PasswordString = otherPasswordString
         };
         var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
         register.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -47,14 +47,14 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep@gmail.com", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "Sswag.mint@gmail.com", "NZ")]
-    public async Task LoginUser_NonValidEmail_ReturnBadRequest(string userEmail, string userDisplayName, string passwordKey, string fakeEmail, string userCountry)
+    public async Task LoginUser_NonValidEmail_ReturnBadRequest(string userEmail, string userDisplayName, string passwordString, string fakeEmail, string userCountry)
     {
         var registerData = new
         {
             Email = userEmail,
             DisplayName = userDisplayName,
-            PasswordKey = passwordKey,
-            PasswordConfirm = passwordKey,
+            PasswordString = passwordString,
+            PasswordConfirm = passwordString,
             Country = userCountry
         };
 
@@ -64,7 +64,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             // we use the same password here because these tests 
             // should fail based on an incorrect email, not password, 
             // it does not matter what password is used.
-            PasswordKey = passwordKey
+            PasswordString = passwordString
         };
         var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
         register.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -87,7 +87,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         {
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
-            PasswordKey = "c00lPasSw0rdont@ME",
+            PasswordString = "c00lPasSw0rdont@ME",
             PasswordConfirm = "c00lPasSw0rdont@ME",
             Country = "AU"
         };
@@ -99,7 +99,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var login = new
         {
             Email = "jdev@dev.com",
-            PasswordKey = "c00lPasSw0rdont@ME",
+            PasswordString = "c00lPasSw0rdont@ME",
         };
 
 
@@ -120,7 +120,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     public async Task LoginUser_MalformedEmail_ReturnBadRequest(
         string userEmail,
         string userDisplayName,
-        string passwordKey,
+        string passwordString,
         string fakeEmail,
         string userCountry
         )
@@ -129,8 +129,8 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         {
             Email = userEmail,
             DisplayName = userDisplayName,
-            PasswordKey = passwordKey,
-            PasswordConfirm = passwordKey,
+            PasswordString = passwordString,
+            PasswordConfirm = passwordString,
             Country = userCountry
         };
 
@@ -140,7 +140,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             // we use the same password here because these tests 
             // should fail based on an incorrect email, not password, 
             // it does not matter what password is used.
-            PasswordKey = passwordKey
+            PasswordString = passwordString
         };
         var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
         register.StatusCode.ShouldBe(HttpStatusCode.OK);

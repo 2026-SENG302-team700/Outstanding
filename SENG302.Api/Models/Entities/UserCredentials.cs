@@ -7,5 +7,5 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class UserCredentials {
     public required string Email { get; set; }
-    public required string PasswordKey {get; set;}
+    public required string PasswordString {get; set;}
 }
