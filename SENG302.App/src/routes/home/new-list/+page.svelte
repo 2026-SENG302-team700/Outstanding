@@ -2,10 +2,36 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import {onMount} from "svelte";
 
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
+    let username = $state("");
+
+    onMount(() => {
+        retrieveUsername();
+    });
+
+    async function retrieveUsername() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
+                method: "GET",
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                username = data.message || "Failed to fetch username.";
+                goto(resolve("/"));
+                return;
+            }
+            username = data.displayName;
+        } catch (err) {
+            error = "Failed to fetch username: " + (err as Error).message;
+            goto(resolve("/"));
+        }
+    }
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Validates the name
@@ -56,7 +82,26 @@
 </script>
 
 <div class="container">
-    <h1 class="text-center mb-4">Name your new task list</h1>
+    <div style="display: flex; flex-direction: row; ">
+        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">Name your new task list</h1>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
+            <button
+                    class="profile-button"
+                    on:click={() => goto(resolve("/profile"))}
+            >
+                <img
+                        class="profile-image"
+                        src="/defaultProfile.png"
+                        alt="Profile"
+                />
+            </button>
+            <p
+                    style="font-size: 14px; vertical-align: center; font-weight: 500;"
+            >
+                {username}
+            </p>
+        </div>
+    </div>
     <div class="mb-3">
         <button
             type="button"
@@ -93,5 +138,22 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
+    }
+
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: inline-block;
+        border-radius: 50%;
+    }
+
+    .profile-button {
+        width: 40px;
+        height: 40px;
+        justfiy-content: flex-end;
+        border: None;
+        background-color: white;
+        border-radius: 50%;
     }
 </style>
