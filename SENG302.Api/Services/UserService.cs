@@ -236,7 +236,7 @@ public class UserService : IUserService
     {
         // regex below allow a-z, A-Z, - and ' -- 
         var validCharsRegex = new Regex(
-            @"^[a-zA-Z\-'\s]+$",
+            @"^[\p{L}0-9\s'-]+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
             );

@@ -8,7 +8,7 @@
 export type CountryCode = 
 | "NZ" | "AU" | "US" | "GB" | "CA" | "JP" | "DE" | "FR"
 | "CN" | "IN" | "BR" | "ZA" | "SG" | "KR" | "MX" | "IT"
-| "ES" | "NL" | "SE" | "CH";
+| "ES" | "NL" | "SE" | "CH" | "RO";
 
 export interface Country {
     code: CountryCode;
@@ -35,5 +35,6 @@ export const countries: Country[] = [
     { code: "ES", name: "Spain" },
     { code: "NL", name: "Netherlands" },
     { code: "SE", name: "Sweden" },
-    { code: "CH", name: "Switzerland" }
+    { code: "CH", name: "Switzerland" },
+    { code: "RO", name: "Romania" },
 ];

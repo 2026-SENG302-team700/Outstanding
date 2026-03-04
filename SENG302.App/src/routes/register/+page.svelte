@@ -66,7 +66,7 @@
         }
 
         // Check display name validity
-        const displayNameRegex = /^[A-Za-z\s'-]+$/;
+        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
         if (!displayNameRegex.test(displayName)) {
             addToast(
                 "Display name must only include letters, spaces, hyphens or apostrophes",
