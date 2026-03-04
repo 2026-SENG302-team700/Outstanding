@@ -35,7 +35,7 @@ public class LoginController : ControllerBase
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
             userCredentials.Email,
-            userCredentials.PasswordKey
+            userCredentials.PasswordString
         );
 
         // Check if the credentials are incorrect

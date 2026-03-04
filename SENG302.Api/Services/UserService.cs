@@ -392,9 +392,9 @@ public class UserService : IUserService
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="email">a string of the provided email</param>
-    /// <param name="password">an un-hashed string of the provided password</param>
+    /// <param name="passwordString">an un-hashed string of the provided password</param>
     /// <returns>The user that matches the email and password provided or null if they do not match</returns>
-    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password)
+    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string passwordString)
     {
         PasswordHasher<User> passwordHasher = new();
 
@@ -411,7 +411,7 @@ public class UserService : IUserService
             return UserVerificationResult.DoesNotExist;
         }
 
-        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
+        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
         switch (verificationResult)
         {
             case PasswordVerificationResult.Success:
