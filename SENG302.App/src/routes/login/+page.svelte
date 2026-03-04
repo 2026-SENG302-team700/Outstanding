@@ -18,6 +18,7 @@
     async function loginUser() {
         if (!email || !password) {
             error = "Please fill in all fields.";
+            addToast(error, "error");
             return;
         }
 
@@ -40,6 +41,7 @@
 
             if (!response.ok) {
                 error = data?.message || "Email or Password is incorrect";
+                addToast(error, "error");
                 return;
             }
             localStorage.setItem("userEmail", email);
@@ -47,6 +49,7 @@
             goto(resolve(`/home`));
         } catch (err) {
             error = "Failed to login user: " + (err as Error).message;
+            addToast(error, "error");
             console.error(err);
         } finally {
             loading = false;
@@ -63,10 +66,6 @@
         >
     </div>
     <h1 class="text-center mb-4">Login</h1>
-
-    {#if error}
-        <div class="alert alert-danger" role="alert">{error}</div>
-    {/if}
 
     <form on:submit|preventDefault={loginUser}>
         <div class="mb-3">
