@@ -1,0 +1,19 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace SENG302.Api.Models.Entities;
+
+public class User
+{
+    [Key]
+    public required string Email { get; set; }
+
+    [MinLength(3)]
+    [MaxLength(64)]
+    public required string DisplayName { get; set; }
+
+    public string PasswordKey { get; set; } = String.Empty;
+
+    public required string Country { get; set; }
+
+    public DateTimeOffset TimeCreated { get; set; }
+}

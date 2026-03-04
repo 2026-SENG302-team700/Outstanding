@@ -1,4 +1,0 @@
-<Solution>
-    <Project Path="SENG302Template.Api.Tests/SENG302Template.Api.Tests.csproj" />
-    <Project Path="SENG302Template.Api/SENG302Template.Api.csproj" />
-</Solution>

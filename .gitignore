@@ -2,6 +2,7 @@
 .idea/
 .vscode/
 .DS_Store
+.editorconfig
 
 ## C# build
 **/bin/
@@ -11,9 +12,9 @@
 *.DotSettings.user
 
 # Sveltekit
-SENG302Template.App/.svelte-kit
+SENG302.App/.svelte-kit
 node_modules/
-SENG302Template.App/build
+SENG302.App/build
 
 # Databases
 *.db
@@ -24,4 +25,4 @@ SENG302Template.App/build
 **/package-lock.json
 
 # Allow the specific one in the template directory
-!/SENG302Template.App/package-lock.json
+!/SENG302.App/package-lock.json

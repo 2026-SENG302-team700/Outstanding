@@ -1,6 +1,6 @@
-# SENG302 Template Project Overview
+# SENG302  Project Overview
 
-Welcome to the template project for SENG302 2026. In this README we have included some useful information to help you get started. We advise you take some time reading through this entire document, as doing so may save you many headaches down the line!
+Welcome to the  project for SENG302 2026. In this README we have included some useful information to help you get started. We advise you take some time reading through this entire document, as doing so may save you many headaches down the line!
 
 ## Dependencies
 
@@ -44,13 +44,13 @@ For those of you who have experience with IntelliJ IDEA, [Rider](https://www.jet
 
 #### 1 - Installing the dependencies
 
-To install the C# dependencies, run the following command from the `SENG302Template.Api` project directory
+To install the C# dependencies, run the following command from the `SENG302.Api` project directory
 
 ```bash
 dotnet restore
 ```
 
-To install the Svelte dependencies, run the following command from the `SENG302Template.App` project directory
+To install the Svelte dependencies, run the following command from the `SENG302.App` project directory
 
 ```bash
 npm install
@@ -58,7 +58,7 @@ npm install
 
 #### 2 - Running the project
 
-To run the API, run the following command from the `SENG302Template.Api` project directory
+To run the API, run the following command from the `SENG302.Api` project directory
 
 ```bash
 dotnet run
@@ -66,7 +66,7 @@ dotnet run
 
 The REST API should now be available on port 5000.
 
-To run the app (UI), run the following commands from the `SENG302Template.App` project directory
+To run the app (UI), run the following commands from the `SENG302.App` project directory
 
 ```bash
 npm run dev
@@ -76,7 +76,7 @@ The app should now be available on port 5173 and visible in your browser at <htt
 
 #### 3 - What's included to play with
 
-The template project comes with a small example book management system where the user can:
+The  project comes with a small example book management system where the user can:
 
 - view a list of books
 - add new books
@@ -89,9 +89,9 @@ We have provided Bootstrap 5 for styling the front-end. You can see this styling
 
 ### Running and implementing tests
 
-By convention, C# applications place their tests in a separate project, in this case `SENG302Template.Api.Tests`. This is similar to how Java separates between `main` and `test` packages.
+By convention, C# applications place their tests in a separate project, in this case `SENG302.Api.Tests`. This is similar to how Java separates between `main` and `test` packages.
 
-From the `SENG302Template.Api.Tests` project, run the command
+From the `SENG302.Api.Tests` project, run the command
 
 ```bash
 dotnet test
