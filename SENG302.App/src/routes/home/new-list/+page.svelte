@@ -21,13 +21,6 @@
         try {
             loading = true;
             error = "";
-            let userEmail = localStorage.getItem("userEmail");
-            console.log(
-                "Creating list with name:",
-                name,
-                "for user:",
-                userEmail,
-            );
             const response = await fetchWithCsrf(resolve(`/api/tasks`), {
                 method: "POST",
                 headers: {
@@ -35,7 +28,6 @@
                 },
                 body: JSON.stringify({
                     Name: name,
-                    userEmail: userEmail,
                 }),
                 credentials: "include",
             });
@@ -70,10 +62,14 @@
             <input
                 type="text"
                 class="form-control"
-                placeholder="Name"
+                class:error
+                placeholder="Name *"
                 bind:value={name}
                 disabled={loading}
             />
+            {#if error}
+                <div class="text-danger mt-1">{error}</div>
+            {/if}
         </div>
         <div>
             <button
@@ -83,9 +79,6 @@
             >
                 {loading ? "Creating..." : "Create List"}
             </button>
-            {#if error}
-                <div class="alert alert-danger" role="alert">{error}</div>
-            {/if}
         </div>
     </form>
 </div>
