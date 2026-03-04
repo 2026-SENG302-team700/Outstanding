@@ -15,66 +15,91 @@
     let passwordConfirm = $state("");
     let loading = $state(false);
     let error = $state("");
+    let errors = $state({
+        email: "",
+        displayName: "",
+        country: "",
+        password: "",
+        passwordConfirm: "",
+    });
 
     function validateInputs(): boolean {
-        // Check all fields are filled
-        if (
-            !email ||
-            !displayName ||
-            !selectedCountryCode ||
-            !password ||
-            !passwordConfirm
-        ) {
-            addToast("Please fill in all fields.", "error");
-            return false;
-        }
+        let valid = true;
+        // Reset errors
+        errors = {
+            email: "",
+            displayName: "",
+            country: "",
+            password: "",
+            passwordConfirm: "",
+        };
 
-        // Check for malformed emails
+        // Check email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            addToast(
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’",
-                "error",
-            );
-            return false;
+            (errors.email =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
+                "error";
+            valid = false;
         }
 
-        // Check for mismatching passwords
-        if (password != passwordConfirm) {
-            addToast("Passwords do not match", "error");
-            return false;
+        // Check if passwords match
+        if (password !== passwordConfirm) {
+            errors.passwordConfirm = "Passwords do not match.";
+            valid = false;
         }
 
         // Check password validity
         const passwordRegex =
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
         if (!passwordRegex.test(password)) {
-            addToast(
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters",
-                "error",
-            );
-            return false;
+            errors.password =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+            valid = false;
         }
 
         // Check display name length
         if (displayName.length < 3 || displayName.length > 64) {
-            addToast(
-                "Display name must be between 3 and 64 characters",
-                "error",
-            );
-            return false;
+            errors.displayName =
+                "Display name must be between 3 and 64 characters.";
+            valid = false;
         }
 
         // Check display name validity
         const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
         if (!displayNameRegex.test(displayName)) {
-            addToast(
-                "Display name must only include letters, spaces, hyphens or apostrophes",
-                "error",
-            );
-            return false;
+            errors.displayName =
+                "Display name must only include letters, spaces, hyphens or apostrophes.";
+            valid = false;
         }
-        return true;
+
+        // Check for empty fields
+        if (!email) {
+            errors.email = "Email is required.";
+            valid = false;
+        }
+
+        if (!displayName) {
+            errors.displayName = "Display name is required.";
+            valid = false;
+        }
+
+        if (!selectedCountryCode) {
+            errors.country = "Please select a country.";
+            valid = false;
+        }
+
+        if (!password) {
+            errors.password = "Password is required.";
+            valid = false;
+        }
+
+        if (!passwordConfirm) {
+            errors.passwordConfirm = "Please confirm your password.";
+            valid = false;
+        }
+
+        return valid;
     }
     /**
      * Handles user registration by sending a POST request to the server with the user's details.
@@ -104,16 +129,13 @@
 
             const data = await response.json().catch(() => null);
 
-            console.log(data)
-            
+            console.log(data);
+
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                addToast(
-                    data?.message || "An error occured.",
-                    "error",
-                )
+                addToast(data?.message || "An error occured.", "error");
                 return;
             }
 
@@ -156,24 +178,37 @@
             <input
                 type="text"
                 class="form-control"
+                class:is-invalid={errors.email}
                 placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
             />
+            {#if errors.email}
+                <div class="invalid-feedback">
+                    {errors.email}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <input
                 type="text"
                 class="form-control"
+                class:is-invalid={errors.displayName}
                 placeholder="Display Name *"
                 bind:value={displayName}
                 disabled={loading}
             />
+            {#if errors.displayName}
+                <div class="invalid-feedback">
+                    {errors.displayName}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <select
                 class="form-control"
                 class:country-select={!selectedCountryCode}
+                class:is-invalid={errors.country}
                 bind:value={selectedCountryCode}
                 disabled={loading}
             >
@@ -184,24 +219,41 @@
                     </option>
                 {/each}
             </select>
+            {#if errors.country}
+                <div class="invalid-feedback">
+                    {errors.country}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <input
                 type="password"
                 class="form-control"
+                class:is-invalid={errors.password}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
             />
+            {#if errors.password}
+                <div class="invalid-feedback">
+                    {errors.password}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <input
                 type="password"
                 class="form-control"
+                class:is-invalid={errors.passwordConfirm}
                 placeholder="Confirm Password *"
                 bind:value={passwordConfirm}
                 disabled={loading}
             />
+            {#if errors.passwordConfirm}
+                <div class="invalid-feedback">
+                    {errors.passwordConfirm}
+                </div>
+            {/if}
         </div>
         <div>
             <button
