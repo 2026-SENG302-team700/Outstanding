@@ -104,28 +104,16 @@
 
             const data = await response.json().catch(() => null);
 
+            console.log(data)
+            
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                if (response.status == 400)
-                    addToast(
-                        data?.message ||
-                            "User registration is missing information.",
-                        "error",
-                    );
-                else if (response.status == 401) {
-                    addToast(
-                        data?.message || "This email is already in use.",
-                        "error",
-                    );
-                }
-
-                // if registration fails for some other reason, display
-                // a generic error message.
-                else {
-                    addToast(data?.message || "Registration Failed.", "error");
-                }
+                addToast(
+                    data?.message || "An error occured.",
+                    "error",
+                )
                 return;
             }
 
