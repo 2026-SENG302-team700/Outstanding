@@ -62,7 +62,7 @@ public class RegistrationController : ControllerBase
         }
         catch (DuplicateEmailException)
         {
-            return Unauthorized("This email is already in use");
+            return Unauthorized("This email address is already in use by another account");
         }
 
         return Ok("User created successfully");

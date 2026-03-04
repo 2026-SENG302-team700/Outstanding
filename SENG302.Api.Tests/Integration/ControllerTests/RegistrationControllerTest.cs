@@ -84,6 +84,6 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
 
         message2.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await message2.Content.ReadAsStringAsync()).ShouldBe("This email is already in use");
+        (await message2.Content.ReadAsStringAsync()).ShouldBe("This email address is already in use by another account");
     }
 }
