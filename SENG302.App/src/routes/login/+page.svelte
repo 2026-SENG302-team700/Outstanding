@@ -64,8 +64,19 @@
                 }),
             });
 
-            const data = await response.json().catch(() => null);
+            if (response.status === 404) {
+                error = "Invalid email or password.";
+                addToast(error, "error");
+                return;
+            }
 
+            if (response.status === 400) {
+                errors.email =
+                    "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+                return;
+            }
+
+            const data = await response.json().catch(() => null);
             if (!response.ok) {
                 error = data?.message || "Invalid email or password.";
                 addToast(error, "error");
