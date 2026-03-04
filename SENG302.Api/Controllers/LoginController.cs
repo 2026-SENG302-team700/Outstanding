@@ -5,10 +5,13 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace SENG302.Api.Controllers;
 
+[ConditionalValidateAntiForgeryToken]
+[Authorize]
 [ApiController]
 [Route("api/login")]
 public class LoginController : ControllerBase
@@ -27,7 +30,6 @@ public class LoginController : ControllerBase
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
     /// <returns>a Task<ActionResult<User>></returns>
     [HttpPost]
-    [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
         // Ensure the credentials are correct
