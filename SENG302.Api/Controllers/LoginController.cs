@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
-[Authorize]
 [ApiController]
 [Route("api/login")]
 public class LoginController : ControllerBase

@@ -40,6 +40,9 @@ public class UserController : ControllerBase
         {
             return NotFound();
         }
+
+        // Remove hashed password from user
+        user.PasswordKey = "---";
         return Ok(user);
     }
 }

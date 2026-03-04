@@ -11,7 +11,6 @@ using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
-[Authorize]
 [ApiController]
 [Route("api/register")]
 public class RegistrationController : ControllerBase
