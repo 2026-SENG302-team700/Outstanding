@@ -43,12 +43,6 @@
 </script>
 
 <div class="display: flex; flex-direction: row;">
-    <button
-        class="btn btn-primary w-15"
-        on:click={() => goto(resolve("/home"))}
-    >
-        Home
-    </button>
     <div class="profile-box">
         <img
             class="profile-image"
