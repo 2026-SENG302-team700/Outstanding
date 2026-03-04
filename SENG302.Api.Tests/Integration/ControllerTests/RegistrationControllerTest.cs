@@ -22,7 +22,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         {
             Email = "great.person@gmail.com",
             DisplayName = "Great Person",
-            PasswordKey = "Gre@tPerson69",
+            PasswordString = "Gre@tPerson69",
             PasswordConfirm = "Gre@tPerson69",
             Country = "NZ",
         };
@@ -37,14 +37,14 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "")]
     [InlineData("trad.horse@gmail.com", "", "TradTrad", "US")]
     [InlineData("", "Porcupine", "JohnPork", "US")]
-    public async Task RegisterUser_MissingFields_ReturnMissingInfo(string userEmail, string userDisplayName, string passwordKey, string userCountry)
+    public async Task RegisterUser_MissingFields_ReturnMissingInfo(string userEmail, string userDisplayName, string passwordString, string userCountry)
     {
         var data = new
         {
             Email = userEmail,
             DisplayName = userDisplayName,
-            PasswordKey = passwordKey,
-            PasswordConfirm = passwordKey,
+            PasswordString = passwordString,
+            PasswordConfirm = passwordString,
             Country = userCountry
         };
 
@@ -64,7 +64,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         {
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
-            PasswordKey = "c00lPasSw0rdon't@ME",
+            PasswordString = "c00lPasSw0rdon't@ME",
             PasswordConfirm = "c00lPasSw0rdon't@ME",
             Country = "US"
         };
@@ -77,7 +77,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         {
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy second account",
-            PasswordKey = "c00lPasSw0rdon't@ME2",
+            PasswordString = "c00lPasSw0rdon't@ME2",
             PasswordConfirm = "c00lPasSw0rdon't@ME2",
             Country = "US"
         };

@@ -9,7 +9,7 @@ public class PostUserRequest
 
     public string DisplayName { get; set; } = string.Empty;
     
-    public string PasswordKey { get; set; } = string.Empty;
+    public string PasswordString { get; set; } = string.Empty;
 
     public string PasswordConfirm { get; set; } = string.Empty;
 

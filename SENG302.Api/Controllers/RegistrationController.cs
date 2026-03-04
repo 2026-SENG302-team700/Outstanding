@@ -46,7 +46,7 @@ public class RegistrationController : ControllerBase
         if (string.IsNullOrWhiteSpace(user.Email) ||
         string.IsNullOrWhiteSpace(user.DisplayName) ||
         string.IsNullOrWhiteSpace(user.Country) ||
-        string.IsNullOrWhiteSpace(user.PasswordKey) ||
+        string.IsNullOrWhiteSpace(user.PasswordString) ||
         string.IsNullOrWhiteSpace(user.PasswordConfirm)
         )
         {
@@ -58,7 +58,7 @@ public class RegistrationController : ControllerBase
 
         try
         {
-            await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.PasswordConfirm, user.Country);
+            await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordString, user.PasswordConfirm, user.Country);
         }
         catch (Exception e)
         {

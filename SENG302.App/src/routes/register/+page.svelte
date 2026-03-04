@@ -95,10 +95,9 @@
                 body: JSON.stringify({
                     email,
                     displayName,
-                    passwordKey: password,
-                    country: selectedCountryCode,
-                    password,
-                    passwordConfirm,
+                    passwordString: password,
+                    passwordConfirm: password,
+                    country: selectedCountryCode
                 }),
             });
 
