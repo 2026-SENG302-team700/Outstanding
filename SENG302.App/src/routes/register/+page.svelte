@@ -156,7 +156,7 @@
             <input
                 type="text"
                 class="form-control"
-                placeholder="Email"
+                placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
             />
@@ -165,7 +165,7 @@
             <input
                 type="text"
                 class="form-control"
-                placeholder="Display Name"
+                placeholder="Display Name *"
                 bind:value={displayName}
                 disabled={loading}
             />
@@ -173,10 +173,11 @@
         <div class="mb-3">
             <select
                 class="form-control"
+                class:country-select={!selectedCountryCode}
                 bind:value={selectedCountryCode}
                 disabled={loading}
             >
-                <option value="">Select Country</option>
+                <option value="">Select Country *</option>
                 {#each countries as country}
                     <option value={country.code}>
                         {country.name}
@@ -188,7 +189,7 @@
             <input
                 type="password"
                 class="form-control"
-                placeholder="Password"
+                placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
             />
@@ -197,7 +198,7 @@
             <input
                 type="password"
                 class="form-control"
-                placeholder="Confirm Password"
+                placeholder="Confirm Password *"
                 bind:value={passwordConfirm}
                 disabled={loading}
             />
@@ -217,5 +218,9 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
+    }
+
+    .country-select {
+        color: #666666; /* Bootstrap's placeholder color */
     }
 </style>
