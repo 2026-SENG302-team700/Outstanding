@@ -15,14 +15,25 @@
     });
 
     /// <summary>
-    /// Retrieves the User username from storage & checks they are non null before assigning them to reactive variables
+    /// Retrieves the users Display name from the backend
     /// </summary>
-    function retrieveUsername() {
-        const userData = localStorage.getItem("username");
-        if (userData !== null) {
-            username = userData;
-        } else {
-            username = "Profile";
+    async function retrieveUsername() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
+                method: "GET",
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                username = data.message || "Failed to fetch username.";
+                goto(resolve("/"));
+                return;
+            }
+            username = data.displayName;
+        } catch (err) {
+            error = "Failed to fetch username: " + (err as Error).message;
+            goto(resolve("/"));
         }
     }
 
