@@ -7,36 +7,11 @@
     let loading = $state(false);
     let error = $state("");
     let taskLists = $state([]);
-    let username = $state("");
 
     onMount(() => {
         fetchLists();
-        retrieveUsername();
     });
-
-    /// <summary>
-    /// Retrieves the users Display name from the backend
-    /// </summary>
-    async function retrieveUsername() {
-        try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
-                method: "GET",
-                credentials: "include",
-            });
-
-            const data = await response.json();
-            if (!response.ok) {
-                username = data.message || "Failed to fetch username.";
-                goto(resolve("/"));
-                return;
-            }
-            username = data.displayName;
-        } catch (err) {
-            error = "Failed to fetch username: " + (err as Error).message;
-            goto(resolve("/"));
-        }
-    }
-
+    
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
@@ -66,23 +41,6 @@
         <h1 class="text-center mb-4" style="flex: 1; justify-content: center">
             Home
         </h1>
-        <div style="display: flex; flex-direction: column; align-items: center">
-            <button
-                class="profile-button"
-                on:click={() => goto(resolve("/profile"))}
-            >
-                <img
-                    class="profile-image"
-                    src="/defaultProfile.png"
-                    alt="Profile"
-                />
-            </button>
-            <p
-                style="font-size: 14px; vertical-align: center; font-weight: 500;"
-            >
-                {username}
-            </p>
-        </div>
     </div>
 
     <div class="card-body d-flex justify-content-between align-items-center">
@@ -123,22 +81,5 @@
 <style>
     .cursor-pointer {
         cursor: pointer;
-    }
-
-    .profile-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: inline-block;
-        border-radius: 50%;
-    }
-
-    .profile-button {
-        width: 40px;
-        height: 40px;
-        justfiy-content: flex-end;
-        border: None;
-        background-color: white;
-        border-radius: 50%;
     }
 </style>

@@ -2,11 +2,13 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import {onMount} from "svelte";
 
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
-
+    
+    
     /// <summary>
     /// Creates a new task list for the user with the given name. Validates the name
     /// before sending the request to the backend. If creation is successful, navigates
@@ -56,7 +58,9 @@
 </script>
 
 <div class="container">
-    <h1 class="text-center mb-4">Name your new task list</h1>
+    <div style="display: flex; flex-direction: row; ">
+        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">Name your new task list</h1>
+    </div>
     <div class="mb-3">
         <button
             type="button"
