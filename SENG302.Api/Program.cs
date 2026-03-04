@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 
 namespace SENG302.Api;
 
@@ -26,6 +29,9 @@ public class Program
         // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
+        // Add authorization service
+        builder.Services.AddAuthorization();
+
         // Configure database context with factory pattern
         builder.Services.AddDbContextFactory<DatabaseContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
@@ -49,6 +55,21 @@ public class Program
 
             options.Cookie.SecurePolicy = cookiePolicy;
         });
+
+        // Configure the cookie-based authentication and set security options
+        builder.Services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.Cookie.Name = "OUTSTANDING-AUTH-COOKIE";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = cookiePolicy;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+
+                options.LoginPath = "/login";
+                options.LogoutPath = "/logout";
+                options.AccessDeniedPath = "/api/auth/access-denied";
+            });
 
         // Add CORS for development only
         if (builder.Environment.IsDevelopment())
@@ -98,7 +119,10 @@ public class Program
             app.UseCors("AllowFrontend");
         }
 
-
+        // Tell app to use authentication and authorization middleware
+        app.UseAuthentication();
+        app.UseAuthorization();
+        
         app.UseAntiforgery();
 
         // CSRF token endpoint

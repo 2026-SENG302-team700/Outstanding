@@ -7,11 +7,11 @@
     let loading = $state(false);
     let error = $state("");
     let taskLists = $state([]);
-    let username = $state("")
-    
+    let username = $state("");
+
     onMount(() => {
         fetchLists();
-        retrieveUsername()
+        retrieveUsername();
     });
 
     /// <summary>
@@ -27,19 +27,15 @@
     }
 
     /// <summary>
-    /// Fetches the task lists associated with the current user's email from the backend.
-    /// If the request is successful, updates the taskLists state with the retrieved data.
-    /// If there is an error, updates the error state with the error message.
-    /// </summary>
-    
+    /// Fetches the logged-in user's task lists from the server
+    // using there authorization token and updates the component state.
     async function fetchLists() {
         try {
-            var userEmail = localStorage.getItem("userEmail");
-            console.log("Fetching task lists for user:", userEmail);
             loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/tasks/user/${encodeURIComponent(userEmail!)}`),
-            );
+            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+                method: "GET",
+                credentials: "include",
+            });
             const data = await response.json();
             if (!response.ok) {
                 error = data.message || "Failed to fetch task lists.";
@@ -56,24 +52,28 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1
-                class="text-center mb-4"
-                style="flex: 1; justify-content: center"
-        >
+        <h1 class="text-center mb-4" style="flex: 1; justify-content: center">
             Home
         </h1>
         <div style="display: flex; flex-direction: column; align-items: center">
             <button
-                    class="profile-button"
-                    on:click={() => goto(resolve("/profile"))}
+                class="profile-button"
+                on:click={() => goto(resolve("/profile"))}
             >
-                <img class="profile-image" src="/defaultProfile.png" alt="Profile">
-
+                <img
+                    class="profile-image"
+                    src="/defaultProfile.png"
+                    alt="Profile"
+                />
             </button>
-            <p style="font-size: 14px; vertical-align: center; font-weight: 500;">{username}</p>
+            <p
+                style="font-size: 14px; vertical-align: center; font-weight: 500;"
+            >
+                {username}
+            </p>
         </div>
     </div>
-    
+
     <div class="card-body d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Your Task Lists</h5>
         <button
@@ -99,11 +99,7 @@
                 </thead>
                 <tbody>
                     {#each taskLists as list}
-                        <tr
-                            class="cursor-pointer"
-                            on:click={() =>
-                                goto(resolve(`/home/list/${list.id}`))}
-                        >
+                        <tr>
                             <td>{list.name}</td>
                         </tr>
                     {/each}
@@ -125,13 +121,13 @@
         display: inline-block;
         border-radius: 50%;
     }
-    
+
     .profile-button {
-        width:40px; 
-        height:40px; 
-        justfiy-content: flex-end; 
-        border: None; 
-        background-color: white; 
-        border-radius: 50%
+        width: 40px;
+        height: 40px;
+        justfiy-content: flex-end;
+        border: None;
+        background-color: white;
+        border-radius: 50%;
     }
 </style>

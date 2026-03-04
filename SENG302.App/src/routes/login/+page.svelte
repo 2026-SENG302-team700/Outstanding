@@ -26,6 +26,7 @@
             error = "";
             const response = await fetchWithCsrf(resolve(`/api/login`), {
                 method: "POST",
+                credentials: "include",
                 headers: {
                     "Content-Type": "application/json",
                 },

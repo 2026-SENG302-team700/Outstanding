@@ -3,9 +3,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using System;
 using System.Text.RegularExpressions;
-using System.Net.Mail;
 using System.Globalization;
 
 namespace SENG302.Api.Services;
@@ -18,25 +16,25 @@ public interface IUserService
     Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password);
 }
 
-public enum UserVerificationResult 
-    {
-        DoesNotExist,
-        Failed,
-        MalformedEmail,
-        Success,
-        SuccessRehashNeeded
-    }
+public enum UserVerificationResult
+{
+    DoesNotExist,
+    Failed,
+    MalformedEmail,
+    Success,
+    SuccessRehashNeeded
+}
 
 /// <summary>
 /// Exception to throw when e-mail already exists in the db.
 /// </summary>
 public class DuplicateEmailException : Exception
 {
-    public DuplicateEmailException() {}
+    public DuplicateEmailException() { }
 
-    public DuplicateEmailException(string message) : base(message) {}
+    public DuplicateEmailException(string message) : base(message) { }
 
-    public DuplicateEmailException(string message, Exception inner) : base(message, inner) {}
+    public DuplicateEmailException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -44,11 +42,11 @@ public class DuplicateEmailException : Exception
 /// </summary>
 public class InvalidDisplayNameLengthException : Exception
 {
-    public InvalidDisplayNameLengthException() {}
-    
-    public InvalidDisplayNameLengthException(string message) : base(message) {}
-    
-    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) {}
+    public InvalidDisplayNameLengthException() { }
+
+    public InvalidDisplayNameLengthException(string message) : base(message) { }
+
+    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -56,11 +54,11 @@ public class InvalidDisplayNameLengthException : Exception
 /// </summary>
 public class InvalidDisplayNameCharsException : Exception
 {
-    public InvalidDisplayNameCharsException() {}
-    
-    public InvalidDisplayNameCharsException(string message) : base(message) {} 
-    
-    public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) {}
+    public InvalidDisplayNameCharsException() { }
+
+    public InvalidDisplayNameCharsException(string message) : base(message) { }
+
+    public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -68,11 +66,11 @@ public class InvalidDisplayNameCharsException : Exception
 /// </summary>
 public class InvalidEmailFormatException : Exception
 {
-    public InvalidEmailFormatException() {}
-    
-    public InvalidEmailFormatException(string message) : base(message) {}
-    
-    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) {}
+    public InvalidEmailFormatException() { }
+
+    public InvalidEmailFormatException(string message) : base(message) { }
+
+    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -80,11 +78,11 @@ public class InvalidEmailFormatException : Exception
 /// </summary>
 public class InvalidPasswordException : Exception
 {
-    public InvalidPasswordException() {}
-    
-    public InvalidPasswordException(string message) : base(message) {}
-    
-    public InvalidPasswordException(string message, Exception inner) : base(message, inner) {}
+    public InvalidPasswordException() { }
+
+    public InvalidPasswordException(string message) : base(message) { }
+
+    public InvalidPasswordException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -92,11 +90,11 @@ public class InvalidPasswordException : Exception
 /// </summary>
 public class MismatchedPasswordException : Exception
 {
-    public MismatchedPasswordException() {}
+    public MismatchedPasswordException() { }
 
-    public MismatchedPasswordException(string message) : base(message) {}
-    
-    public MismatchedPasswordException(string message, Exception inner) : base(message, inner) {}
+    public MismatchedPasswordException(string message) : base(message) { }
+
+    public MismatchedPasswordException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
@@ -104,11 +102,11 @@ public class MismatchedPasswordException : Exception
 /// </summary>
 public class InvalidCountryException : Exception
 {
-    public InvalidCountryException() {}
-    
-    public InvalidCountryException(string message) : base(message) {}
-    
-    public InvalidCountryException(string message, Exception inner) : base(message, inner) {}
+    public InvalidCountryException() { }
+
+    public InvalidCountryException(string message) : base(message) { }
+
+    public InvalidCountryException(string message, Exception inner) : base(message, inner) { }
 }
 
 public class UserService : IUserService
@@ -157,14 +155,14 @@ public class UserService : IUserService
     /// <param name="passwordConfirm">Password Confirm String - Plaintext confirmation of the password, should match passwordString</param>
     /// <param name="country">Country - 2 Letter Country Code of user to be generated</param>
     public async Task CreateNewUserAsync(
-        string email, 
-        string displayName, 
-        string passwordString, 
+        string email,
+        string displayName,
+        string passwordString,
         string passwordConfirm,
         string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         if (EmailAlreadyExists(context, email))
         {
             throw new DuplicateEmailException("This email already exists!");
@@ -241,7 +239,7 @@ public class UserService : IUserService
             @"^[a-zA-Z\-'\s]+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
-            ); 
+            );
         return (validCharsRegex.IsMatch(displayName));
     }
 
@@ -262,7 +260,7 @@ public class UserService : IUserService
                                       RegexOptions.None, TimeSpan.FromMilliseconds(200));
 
             // Examines the domain part of the email and normalizes it.
-            
+
             string DomainMapper(Match match)
             {
                 // Use IdnMapping class to convert Unicode domain names.
@@ -273,7 +271,7 @@ public class UserService : IUserService
 
                 return match.Groups[1].Value + domainName;
             }
-            
+
         }
         catch (RegexMatchTimeoutException)
         {
@@ -310,7 +308,7 @@ public class UserService : IUserService
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
-        
+
         var upperCharRegex = new Regex(
             @"[A-Z]+",
             RegexOptions.None,
@@ -328,10 +326,10 @@ public class UserService : IUserService
             RegexOptions.None,
             TimeSpan.FromSeconds(2)
         );
-        
+
         if (
-            (password.Length < 8) || 
-            (!lowerCharRegex.IsMatch(password)) || 
+            (password.Length < 8) ||
+            (!lowerCharRegex.IsMatch(password)) ||
             (!upperCharRegex.IsMatch(password)) ||
             (!numCharRegex.IsMatch(password)) ||
             (!specialCharRegex.IsMatch(password))
@@ -368,7 +366,7 @@ public class UserService : IUserService
     {
         return CountryCodes.All.Contains(country);
     }
-    
+
     /// <summary>
     /// Checks to see if the provided e-mail is already in the database
     /// </summary>
@@ -395,38 +393,35 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="email">a string of the provided email</param>
     /// <param name="password">an un-hashed string of the provided password</param>
-    /// <returns>a UserVerificationResult enum determining whether the user exists, failed, succeeded or succeeded with rehash needed verification.</returns>
-    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password) 
+    /// <returns>The user that matches the email and password provided or null if they do not match</returns>
+    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password)
     {
         PasswordHasher<User> passwordHasher = new();
-        
+
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         if (!CheckEmailFormat(email))
         {
             return UserVerificationResult.MalformedEmail;
         }
-        
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user == null) 
+        if (user == null)
         {
             return UserVerificationResult.DoesNotExist;
         }
-        
-        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password); 
-        switch (verificationResult) 
+
+        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
+        switch (verificationResult)
         {
             case PasswordVerificationResult.Success:
                 return UserVerificationResult.Success;
-            
+
             case PasswordVerificationResult.SuccessRehashNeeded:
                 return UserVerificationResult.SuccessRehashNeeded;
-            
+
             default:
                 return UserVerificationResult.Failed;
         }
-    
-        
-        
     }
 }

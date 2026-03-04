@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
-
+using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ApiController]
@@ -37,9 +37,14 @@ public class TaskController : ControllerBase
     /// </summary>
     /// <param name="userEmail"></param>
     /// <returns></returns>
-    [HttpGet("user/{userEmail}")]
-    public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsByUser(string userEmail)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsForUser()
     {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrEmpty(userEmail))
+            return Unauthorized();
+
+
         var taskLists = await _taskService.GetTaskListsByUserEmailAsync(userEmail);
         return Ok(taskLists);
     }
@@ -56,7 +61,10 @@ public class TaskController : ControllerBase
     {
         try
         {
-            await _taskService.CreateNewTaskListAsync(taskListRequest.Name, taskListRequest.UserEmail);
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(userEmail))
+                return Unauthorized();
+            await _taskService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
             return Ok("Task list created successfully");
         }
         catch (ArgumentException e)
