@@ -7,6 +7,8 @@ public class User
     [Key]
     public required string Email { get; set; }
 
+    [MinLength(3)]
+    [MaxLength(64)]
     public required string DisplayName { get; set; }
 
     public string PasswordKey { get; set; } = String.Empty;
