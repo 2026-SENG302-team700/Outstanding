@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api;
 using SENG302.Api.Filters;
@@ -9,7 +10,8 @@ using SENG302.Api.Services;
 
 namespace SENG302.Api.Controllers;
 
-
+[ConditionalValidateAntiForgeryToken]
+[Authorize]
 [ApiController]
 [Route("api/register")]
 public class RegistrationController : ControllerBase
@@ -43,7 +45,6 @@ public class RegistrationController : ControllerBase
     /// bad request if any fields are empty
     /// </returns>
     [HttpPost]
-    [ConditionalValidateAntiForgeryToken]
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
         if (string.IsNullOrWhiteSpace(user.Email) ||
@@ -58,7 +59,7 @@ public class RegistrationController : ControllerBase
                 message = "User registration is missing information"
             });
         }
-        
+
         try
         {
             await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordKey, user.PasswordConfirm, user.Country);
