@@ -1,8 +1,9 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+
 using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace SENG302.Api.Services;
 
@@ -97,5 +98,17 @@ public class TaskService : ITaskService
         }
 
         return taskList;
+    }
+
+    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string taskListId, string name, DateTime dueDate, CurrentTaskStatus currentStatus, string description = "") {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
+        {
+            throw new ArgumentException("Task name is required and must be between 3 and 128 characters long");
+        }      
+        if (description.Length > 2048) {
+            throw new ArgumentException("Description name cannot be more than 2048 characters long.");
+        }
     }
 }
