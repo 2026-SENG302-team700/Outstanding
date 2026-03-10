@@ -100,6 +100,18 @@ public class TaskService : ITaskService
         return taskList;
     }
 
+
+    /// <summary>
+    /// ** NOT DONE**
+    /// </summary>
+    /// <param name="user"></param>
+    /// <param name="taskListId"></param>
+    /// <param name="name"></param>
+    /// <param name="dueDate"></param>
+    /// <param name="currentStatus"></param>
+    /// <param name="descriptions"></param>
+    /// <returns></returns>
+
     public async Task<TaskItem> CreateNewTaskItemAsync(User user, string taskListId, string name, DateTime dueDate, CurrentTaskStatus currentStatus, string description = "") {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -109,6 +121,12 @@ public class TaskService : ITaskService
         }      
         if (description.Length > 2048) {
             throw new ArgumentException("Description name cannot be more than 2048 characters long.");
+        }
+        if (user == null) {
+            throw new ArgumentException("You cannot make a task without logging in!");
+        }
+        if (string.IsNullOrEmpty(taskListId)) {
+            throw new ArgumentException("Every task needs a list!");
         }
     }
 }
