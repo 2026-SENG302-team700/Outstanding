@@ -15,9 +15,6 @@ public class TaskControllerTests : BaseIntegrationTestFixture
 {
     public TaskControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
-    private ITaskService ServiceUnderTest => ServiceProvider.GetRequiredService<ITaskService>();
-
-
     [Fact]
     public async Task CreateTaskList_SuccessfulCreation_ReturnOk()
     {

@@ -119,7 +119,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "vlad@nistor.me",
                 "Vlad Ni$tor",
                 "12345678Ab$",
-                "12345678Ab$", 
+                "12345678Ab$",
                 "RO"
             );
         });
