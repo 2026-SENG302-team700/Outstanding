@@ -65,9 +65,7 @@ public class TaskService : ITaskService
         }
 
         // Validate user email exists in db
-        var user = await context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync();
-        if (user == null)
-        {
+        if (VerifyUserExists(context, userEmail)) {
             throw new ArgumentException("User with the provided email does not exist.");
         }
 
@@ -102,19 +100,25 @@ public class TaskService : ITaskService
 
 
     /// <summary>
-    /// ** NOT DONE**
+    /// Adds a new task to the task list given owned by the given user. All parameters
+    /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
+    /// The name of the task must be between 3 and 128 characters, and the description
+    /// can be up to 2048 characters.
+    /// dueDate must be in the future, and currentStatus will be automatically set to
+    /// ToDo if not present.
     /// </summary>
     /// <param name="user"></param>
     /// <param name="taskListId"></param>
     /// <param name="name"></param>
     /// <param name="dueDate"></param>
     /// <param name="currentStatus"></param>
-    /// <param name="descriptions"></param>
+    /// <param name="description"></param>
     /// <returns></returns>
 
-    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string taskListId, string name, DateTime dueDate, CurrentTaskStatus currentStatus, string description = "") {
+    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string taskListId, string name, DateTime dueDate, CurrentTaskStatus currentStatus = CurrentTaskStatus.Todo, string description = "") {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
+        //enforces information formatting requirements
         if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
         {
             throw new ArgumentException("Task name is required and must be between 3 and 128 characters long");
@@ -126,7 +130,30 @@ public class TaskService : ITaskService
             throw new ArgumentException("You cannot make a task without logging in!");
         }
         if (string.IsNullOrEmpty(taskListId)) {
-            throw new ArgumentException("Every task needs a list!");
+            throw new ArgumentException("Every task needs a list! Create one first.");
         }
+        if (VerifyUserExists(context, user.Email)) {
+            throw new ArgumentException("Invalid user credentials.");
+        }
+
+        var newTask = new TaskItem()
+        {
+            
+        }
+
+    }
+
+    /// <summary>
+    /// Given this method is given a valid database context, query the context
+    /// to verify if the given email is registered to a user in the db.
+    /// The email is used as the user's primary key, and is therefore, unique.
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="userEmail"></param>
+    /// <returns></returns>
+    public bool VerifyUserExists(DatabaseContext context, string userEmail) {
+        return context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync() !=null;
+        
     }
 }
+
