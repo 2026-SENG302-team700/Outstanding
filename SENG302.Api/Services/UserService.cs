@@ -12,8 +12,10 @@ public interface IUserService
 {
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
-    Task<User?> GetUserByIdAsync(string email);
-    Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password);
+    Task<User?> GetUserByIdAsync(int id);
+    Task<int?> GetUserIdFromEmailAsync(string email);
+    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<User> UpdateUser(int userId, string newEmail, string displayName, string country);
 }
 
 public enum UserVerificationResult
@@ -23,6 +25,12 @@ public enum UserVerificationResult
     MalformedEmail,
     Success,
     SuccessRehashNeeded
+}
+
+public class UserVerificationResponse
+{
+    public UserVerificationResult userVerificationResult;
+    public User? user;
 }
 
 /// <summary>
@@ -381,11 +389,29 @@ public class UserService : IUserService
         return context.Users.Where((t) => t.Email == email).Count() > 0;
     }
 
-    public async Task<User?> GetUserByIdAsync(string email)
+    /// <summary>
+    /// Fetch a user from the database that matches the passed in id
+    /// </summary>
+    /// <param name="id">a int of the provided id</param>
+    /// <returns>The user that has the id that was passed in</returns>
+    public async Task<User?> GetUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    /// <summary>
+    /// Fetch a users id from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    /// <returns>The user id of the user that has the email that was passed in</returns>
+    public async Task<int?> GetUserIdFromEmailAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return user?.Id;
     }
 
     /// <summary>
@@ -394,7 +420,7 @@ public class UserService : IUserService
     /// <param name="email">a string of the provided email</param>
     /// <param name="passwordString">an un-hashed string of the provided password</param>
     /// <returns>The user that matches the email and password provided or null if they do not match</returns>
-    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string passwordString)
+    public async Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString)
     {
         PasswordHasher<User> passwordHasher = new();
 
@@ -402,26 +428,72 @@ public class UserService : IUserService
 
         if (!CheckEmailFormat(email))
         {
-            return UserVerificationResult.MalformedEmail;
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.MalformedEmail,
+                user = null
+            };
         }
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
         if (user == null)
         {
-            return UserVerificationResult.DoesNotExist;
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.DoesNotExist,
+                user = null
+            };
+
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
         switch (verificationResult)
         {
             case PasswordVerificationResult.Success:
-                return UserVerificationResult.Success;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.Success,
+                    user = user
+                };
 
             case PasswordVerificationResult.SuccessRehashNeeded:
-                return UserVerificationResult.SuccessRehashNeeded;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.SuccessRehashNeeded,
+                    user = user
+                };
 
             default:
-                return UserVerificationResult.Failed;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.Failed,
+                    user = null
+                };
         }
+    }
+
+    /// <summary>
+    /// Update the users details with the passed in values
+    /// </summary>
+    /// <param name="userId">a string of the provided email</param>
+    /// <param name="newEmail">a string of the provided email</param>
+    /// <param name="newDisplayName">a string of the users new display name</param>
+    /// <param name="newCountry">a string of the users new country</param>
+    /// <returns>The new user that has been saved in the database</returns>
+    public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null) return null;
+
+        user.Email = newEmail;
+        user.DisplayName = newDisplayName;
+        user.Country = newCountry;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
     }
 }

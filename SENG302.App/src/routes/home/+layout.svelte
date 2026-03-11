@@ -1,11 +1,10 @@
 ﻿<script lang="ts">
-    import {onMount} from "svelte";
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { user } from "$lib/stores/user";
 
-    let username = $state("");
-    
     onMount(() => {
         retrieveUsername();
     });
@@ -22,39 +21,43 @@
 
             const data = await response.json();
             if (!response.ok) {
-                username = data.message || "Failed to fetch username.";
                 goto(resolve("/"));
                 return;
             }
-            username = data.displayName;
+            user.set(data);
         } catch (err) {
-            error = "Failed to fetch username: " + (err as Error).message;
             goto(resolve("/"));
         }
     }
 </script>
 
 <nav class="navBar">
-    <div style="display: flex; flex-direction: row; align-items: center; padding-top: 5px; ">
+    <div
+        style="display: flex; flex-direction: row; align-items: center; padding-top: 5px; "
+    >
         <button
-                class="btn btn-primary w-15"
-                on:click={() => goto(resolve("/home"))}
-                style="margin-left: 7px;"
+            class="btn btn-primary w-15"
+            on:click={() => goto(resolve("/home"))}
+            style="margin-left: 7px;"
         >
             Home
         </button>
-        <div style="display: flex; flex-direction: row; align-items: center; flex: 1; justify-content: flex-end; margin-right: 5px;" >
+        <div
+            style="display: flex; flex-direction: row; align-items: center; flex: 1; justify-content: flex-end; margin-right: 5px;"
+        >
             <p
-                    style="font-size: 18px; vertical-align: bottom; margin-bottom: 0px; padding-bottom: 0px; font-weight: 500;"
+                style="font-size: 18px; vertical-align: bottom; margin-bottom: 0px; padding-bottom: 0px; font-weight: 500;"
             >
-                {username}
+                {$user.displayName}
             </p>
-            <i class="bi bi-person-circle fs-2" on:click={() => goto(resolve("/home/profile"))}></i>
+            <i
+                class="bi bi-person-circle fs-2"
+                on:click={() => goto(resolve("/home/profile"))}
+            ></i>
         </div>
-        
     </div>
 </nav>
-<slot/>
+<slot />
 
 <style>
     .profile-image {
@@ -75,7 +78,7 @@
         border-radius: 50%;
         margin-left: 5px;
     }
-    
+
     .navBar {
         top: 0;
         z-index: 1000;
@@ -84,7 +87,9 @@
         height: 50px;
         margin-top: 0px;
         padding-top: 0px;
-        box-shadow: 1px 5px 4px rgba(214, 213, 210, 0.75), -1px -5px 4px rgba(214, 213, 210, 0.75);
+        box-shadow:
+            1px 5px 4px rgba(214, 213, 210, 0.75),
+            -1px -5px 4px rgba(214, 213, 210, 0.75);
         border-radius: 10px;
         margin-bottom: 20px;
     }

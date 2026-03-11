@@ -44,6 +44,11 @@
 
 <div class="display: flex; flex-direction: row;">
     <div class="profile-box">
+        <button
+            class="btn btn-primary ms-auto"
+            onclick={() => goto(resolve("/home/profile/edit-profile"))}
+            >Edit Profile</button
+        >
         <img
             class="profile-image"
             ,
