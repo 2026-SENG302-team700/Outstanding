@@ -389,6 +389,11 @@ public class UserService : IUserService
         return context.Users.Where((t) => t.Email == email).Count() > 0;
     }
 
+    /// <summary>
+    /// Fetch a user from the database that matches the passed in id
+    /// </summary>
+    /// <param name="id">a int of the provided id</param>
+    /// <returns>The user that has the id that was passed in</returns>
     public async Task<User?> GetUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -396,6 +401,11 @@ public class UserService : IUserService
         return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
     }
 
+    /// <summary>
+    /// Fetch a users id from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    /// <returns>The user id of the user that has the email that was passed in</returns>
     public async Task<int?> GetUserIdFromEmailAsync(string email)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -462,6 +472,14 @@ public class UserService : IUserService
         }
     }
 
+    /// <summary>
+    /// Update the users details with the passed in values
+    /// </summary>
+    /// <param name="userId">a string of the provided email</param>
+    /// <param name="newEmail">a string of the provided email</param>
+    /// <param name="newDisplayName">a string of the users new display name</param>
+    /// <param name="newCountry">a string of the users new country</param>
+    /// <returns>The new user that has been saved in the database</returns>
     public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
