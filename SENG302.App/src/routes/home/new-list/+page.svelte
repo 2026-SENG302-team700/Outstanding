@@ -19,6 +19,11 @@
         const trimmedName = name.trim();
 
         const errors = [];
+        
+        if (trimmedName == "") {
+            error = "Task list name cannot be empty";
+            return;
+        }
 
         if (trimmedName.length < 3 || trimmedName.length > 128) {
             errors.push("List name is required and must be between 3 and 128 characters long");
