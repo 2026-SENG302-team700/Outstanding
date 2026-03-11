@@ -284,7 +284,7 @@ public class UserService : IUserService
         try
         {
             return Regex.IsMatch(email,
-                @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                @"^[A-Za-z0-9+_%-]+[A-Za-z0-9+_%.-]*@[A-Za-z0-9-.]+\.[A-Za-z0-9-.]+$",
                 RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
         }
         catch (RegexMatchTimeoutException)

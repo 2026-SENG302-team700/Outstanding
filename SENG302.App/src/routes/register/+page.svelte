@@ -35,10 +35,10 @@
         };
 
         // Check email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9_%+-]+[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+$/;
         if (!emailRegex.test(email)) {
             (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’ with no special characters."),
                 "error";
             valid = false;
         }

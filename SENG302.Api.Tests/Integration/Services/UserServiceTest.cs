@@ -125,13 +125,18 @@ public class UserServiceTest : BaseIntegrationTestFixture
         });
     }
 
-    [Fact]
-    public async Task CreateNewUser_NoEmail_InvalidEmailFormatException()
+    [Theory]
+    [InlineData("vlad.nistor.email")]
+    [InlineData("!!!@nistor.email")]
+    [InlineData("pandya@gmail!.com")]
+    [InlineData(".@gmail.com")]
+    [InlineData("coolman@gmail+.com")]
+    public async Task CreateNewUser_NoEmail_InvalidEmailFormatException(string userEmail)
     {
         await Should.ThrowAsync<InvalidEmailFormatException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
-                "vlad.nistor.email",
+                userEmail,
                 "Vlad Nistor",
                 "12345678Ab$",
                 "12345678Ab$", 
