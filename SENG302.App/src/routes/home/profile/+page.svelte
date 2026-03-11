@@ -51,7 +51,8 @@
         >
         <img
             class="profile-image"
-            src="/defaultProfile.png"
+            ,
+            src="/defaultProfile.svg"
             alt="No Profile Picture"
         />
         <p class="username">{username}</p>
