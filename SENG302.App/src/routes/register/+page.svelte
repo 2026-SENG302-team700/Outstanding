@@ -32,60 +32,6 @@
             password: "",
             passwordConfirm: "",
         };
-        
-        // Check email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            email = "";
-            
-            (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
-                "error";
-            valid = false;
-        }
-
-        // Check if passwords match
-        if (password !== passwordConfirm) {
-            // clear password confirm field
-            passwordConfirm = "";
-            
-            // actual error stuff
-            errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            // clear password and password confirm fields
-            password = "";
-            passwordConfirm = "";
-            
-            // actual error stuff
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-            valid = false;
-        }
-
-        // Check display name length
-        if (displayName.length < 3 || displayName.length > 64) {
-            displayName = "";
-            
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        // Check display name validity
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
-        if (!displayNameRegex.test(displayName)) {
-            displayName = "";
-            
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
-            valid = false;
-        }
 
         // Check for empty fields
         if (!email) {
@@ -112,7 +58,50 @@
             errors.passwordConfirm = "Please confirm your password.";
             valid = false;
         }
+        
+        // Check email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email) && email) {
+            (errors.email =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
+                "error";
+            valid = false;
+        }
 
+        // Check if passwords match
+        if (password !== passwordConfirm && password && passwordConfirm) {
+            // actual error stuff
+            errors.passwordConfirm = "Passwords do not match.";
+            valid = false;
+        }
+
+        // Check password validity
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+        if (!passwordRegex.test(password) && password) {
+            // actual error stuff
+            errors.password =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+            password = "";
+            passwordConfirm = "";
+            valid = false;
+        }
+
+        // Check display name length
+        if ((displayName.length < 3 || displayName.length > 64) && displayName) {
+            errors.displayName =
+                "Display name must be between 3 and 64 characters.";
+            valid = false;
+        }
+
+        // Check display name validity
+        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
+        if (!displayNameRegex.test(displayName) && displayName) {
+            errors.displayName =
+                "Display name must only include letters, spaces, hyphens or apostrophes.";
+            valid = false;
+        }
+        
         return valid;
     }
     /**
@@ -150,6 +139,7 @@
                 // from the back end.
                 
                 switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
                     case "DuplicateEmailException":
                         email = "";
                         errors.email = data?.message || "This email address is already in use by another account.";

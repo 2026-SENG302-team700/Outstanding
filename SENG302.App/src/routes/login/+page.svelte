@@ -12,6 +12,7 @@
     let errors = $state({
         email: "",
         password: "",
+        passwordErrorIndicator: false,
     });
 
     /**
@@ -19,18 +20,13 @@
      * Validates that all fields are filled in before making the request. If login is successful,
      * redirects the user to the profile page. If there is an error, displays an appropriate message.
      */
-    
-    function clearFields() {
-        email = "";
-        password = "";
-    }
-    
     async function loginUser() {
         let valid = true;
         // Reset errors
         errors = {
             email: "",
             password: "",
+            passwordErrorIndicator: false,
         };
 
         // Check email format
@@ -42,13 +38,11 @@
 
         // Validate inputs
         if (!email) {
-            email = "";
             errors.email = "Email is required.";
             valid = false;
         }
 
         if (!password) {
-            password = "";
             errors.password = "Password is required.";
             valid = false;
         }
@@ -72,30 +66,31 @@
                 }),
             });
 
+            const data = await response.json().catch(() => null);
+            
             if (response.status === 404 || response.status === 401) {
-                clearFields();
-                error = "Invalid email or password.";
-                addToast(error, "error");
+                password = "";
+                errors.email = data?.message || "Invalid email or password.";
+                errors.passwordErrorIndicator = true;
                 return;
             }
 
             if (response.status === 400) {
-                email = "";
                 errors.email =
                     "Invalid email address. Email must be in the format ‘jane@doe.nz’";
                 return;
             }
 
-            const data = await response.json().catch(() => null);
             if (!response.ok) {
-                clearFields();
-                error = data?.message || "Invalid email or password.";
+                password = "";
+                error = data?.message || "Failed to login user: !response.ok";
                 addToast(error, "error");
+                console.error("!response.ok outside of 400, 401 and 404.")
                 return;
             }
             goto(resolve(`/home`));
         } catch (err) {
-            clearFields();
+            password = "";
             error = "Failed to login user: " + (err as Error).message;
             addToast(error, "error");
             console.error(err);
@@ -121,7 +116,7 @@
                 type="type"
                 class="form-control"
                 class:error={errors.email}
-                class:is-invalid={errors.email}
+                class:is-invalid={errors.email || error}
                 placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
@@ -135,7 +130,7 @@
                 type="password"
                 class="form-control"
                 class:error={errors.password}
-                class:is-invalid={errors.password}
+                class:is-invalid={errors.password || errors.passwordErrorIndicator}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
