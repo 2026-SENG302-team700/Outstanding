@@ -2,18 +2,20 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { onMount } from "svelte";
+    import type { PageProps } from "./$types";
+    import { itemsStore } from "$lib/stores";
 
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
+    let { data }: PageProps = $props();
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Validates the name
     /// before sending the request to the backend. If creation is successful, navigates
     /// back to the home screen. If there is an error, displays the error message.
     /// </summary>
-    async function createList() {
+    async function GetList() {
         if (!name) {
             error = "Please enter a name for the list.";
             return;
@@ -51,7 +53,7 @@
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
         <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
-            **WIP!!!**
+            {data.post.content}
         </h1>
     </div>
     <div class="mb-3">
