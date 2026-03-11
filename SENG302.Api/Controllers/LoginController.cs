@@ -78,19 +78,21 @@ public class LoginController : ControllerBase
                     IsPersistent = true,
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
+            User? user = await _userService.GetUserByIdAsync(userCredentials.Email);
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = false
             });
         }
         else if (verification == UserVerificationResult.SuccessRehashNeeded)
         {
+            User? user = await _userService.GetUserByIdAsync(userCredentials.Email);
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = true
             });
         }
