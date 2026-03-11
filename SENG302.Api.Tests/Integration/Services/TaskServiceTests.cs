@@ -22,7 +22,7 @@ public class TaskServiceTests : BaseIntegrationTestFixture
     [InlineData("  xyz  ", "test3@example.com")] // Name with 3 characters but whitespace that will be trimmed
     [InlineData("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh", "test4@example.com")] // Name with 128 characters
     [InlineData(" 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", "test5@example.com")] // Name with 128 characters but whitespace that should be trimmed
-    [InlineData("f                  f", "test6@example.com")] // What will this do huh?
+    [InlineData("f                  f", "test6@example.com")] // Lots of spaces but only a few characters at either side
     public async Task CreateNewTaskList_Success_ReturnList(string name, string userEmail)
     {
         // Add a user to the database with the email that we are testing with
@@ -48,6 +48,7 @@ public class TaskServiceTests : BaseIntegrationTestFixture
     [InlineData("Hi!", "test5@example.com")] // Name with special character
     [InlineData("                    Hi  ", "test6@example.com")] // long enough but whitespace should be trimmed, meaning not long enough
     [InlineData("          ", "test7@example.com")] // long enough but only whitespace
+    [InlineData("x123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890abcdefgh ", "test5@example.com")] // Name with 129 characters so invalid
     public async Task CreateNewTaskList_InvalidName_ThrowArgumentException(string name, string userEmail)
     {
         // Add a user to the database with the email that we are testing with
