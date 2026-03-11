@@ -17,9 +17,9 @@
     });
 
     /// <summary>
-    /// Gets User email and Username from local storage
-    /// Checks if they non null before assigning them to the reactive variables
-    /// </>summary>
+    /// Sends GET request for the users data and
+    /// sets the feilds the the retrieved data
+    /// </summary>
     async function retrieveUserData() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {
@@ -44,6 +44,9 @@
         }
     }
 
+    /// <summary>
+    /// Updates the users information with the provided information
+    /// </summary>
     async function updateUser() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {

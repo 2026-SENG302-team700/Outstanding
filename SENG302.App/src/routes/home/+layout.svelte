@@ -21,7 +21,6 @@
 
             const data = await response.json();
             if (!response.ok) {
-                username = data.message || "Failed to fetch username.";
                 goto(resolve("/"));
                 return;
             }
