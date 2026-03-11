@@ -63,7 +63,7 @@
             });
 
             if (response.ok) {
-                addToast("Update Successful");
+                addToast("Profile edited successful");
                 const updatedUser = await response.json();
                 user.set(updatedUser);
                 goto(resolve("/home"));
