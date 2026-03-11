@@ -5,6 +5,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
 
     let displayName = $state("");
     let email = $state("");
@@ -41,16 +42,40 @@
             goto(resolve("/"));
         }
     }
+
+    async function updateUser() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
+                method: "PUT",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    displayName,
+                    country,
+                }),
+            });
+
+            if (response.ok) {
+                addToast("Update Successful");
+                goto(resolve("/home"));
+            }
+        } catch (err) {
+            addToast((err as Error).message);
+        }
+    }
 </script>
 
 <div class="container">
-    <form>
+    <form on:submit|preventDefault={updateUser}>
         <div class="mb-3">
             <label for="displayName" class="form-label">Display Name</label>
             <input
                 type="text"
                 class="form-control"
-                value={displayName}
+                bind:value={displayName}
                 id="displayName"
             />
         </div>
@@ -60,7 +85,7 @@
                 type="email"
                 class="form-control"
                 id="userEmail"
-                value={email}
+                bind:value={email}
             />
         </div>
         <div class="mb-3">

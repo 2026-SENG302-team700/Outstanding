@@ -31,11 +31,12 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<User>> GetUser()
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrEmpty(userEmail))
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
-        var user = await _userService.GetUserByIdAsync(userEmail);
+        var userId = int.Parse(userIdString);
+        var user = await _userService.GetUserByIdAsync(userId);
         if (user == null)
         {
             return NotFound();
@@ -43,6 +44,17 @@ public class UserController : ControllerBase
 
         // Remove hashed password from user
         user.PasswordKey = "---";
+        return Ok(user);
+    }
+
+    [HttpPut]
+    public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
         return Ok(user);
     }
 }
