@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import ImageEditor from "$lib/image-editor/image-editor.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -35,6 +36,8 @@
         }
     }
 </script>
+
+<ImageEditor />
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
