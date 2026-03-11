@@ -21,12 +21,12 @@
         const errors = [];
 
         if (trimmedName.length < 3 || trimmedName.length > 128) {
-            errors.push("CS List name is required and must be between 3 and 128 characters long");
+            errors.push("List name is required and must be between 3 and 128 characters long");
         }
 
         const nameRegex = /^[\p{L}0-9\s'-]+$/u;
         if (!nameRegex.test(trimmedName)) {
-            errors.push("CS List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+            errors.push("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
         }
 
         if (errors.length > 0) {
