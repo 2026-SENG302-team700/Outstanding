@@ -110,5 +110,12 @@
             </select>
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            on:click={() => {
+                goto(resolve("/home/profile"));
+            }}>Cancel</button
+        >
     </form>
 </div>
