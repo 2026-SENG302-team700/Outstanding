@@ -4,6 +4,8 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers;
 
@@ -55,6 +57,27 @@ public class UserController : ControllerBase
             return Unauthorized();
 
         var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
+        // Re login user to update claims
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName)
+        };
+
+        var principle = new ClaimsPrincipal(
+            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+        );
+
+        // Sign them in with the auth cookie
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principle,
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+            });
         return Ok(user);
     }
 }

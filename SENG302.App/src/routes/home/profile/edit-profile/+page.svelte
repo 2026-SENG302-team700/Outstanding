@@ -6,6 +6,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
+    import { user } from "$lib/stores/user";
 
     let displayName = $state("");
     let email = $state("");
@@ -60,6 +61,8 @@
 
             if (response.ok) {
                 addToast("Update Successful");
+                const updatedUser = await response.json();
+                user.set(updatedUser);
                 goto(resolve("/home"));
             }
         } catch (err) {
