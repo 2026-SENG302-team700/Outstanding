@@ -68,7 +68,7 @@
                 </thead>
                 <tbody>
                     {#each taskLists as list}
-                        <tr>
+                        <tr on:click={() => goto(resolve("/home/task-list"))}>
                             <td>{list.name}</td>
                         </tr>
                     {/each}
