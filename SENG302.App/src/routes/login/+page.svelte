@@ -130,7 +130,7 @@
                 type="password"
                 class="form-control"
                 class:error={errors.password}
-                class:is-invalid={errors.password || errors.passwordErrorIndicator}
+                class:is-invalid={errors.password || errors.passwordErrorIndicator || error}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
