@@ -14,7 +14,6 @@
     let password = $state("");
     let passwordConfirm = $state("");
     let loading = $state(false);
-    let error = $state("");
     let errors = $state({
         email: "",
         displayName: "",
@@ -23,6 +22,11 @@
         passwordConfirm: "",
     });
 
+    function clearPasswordFields(): void {
+        password = "";
+        passwordConfirm = "";
+    }
+    
     function validateInputs(): boolean {
         let valid = true;
         // Reset errors
@@ -45,6 +49,10 @@
 
         // Check if passwords match
         if (password !== passwordConfirm) {
+            // clear password confirm field
+            passwordConfirm = "";
+            
+            // actual error stuff
             errors.passwordConfirm = "Passwords do not match.";
             valid = false;
         }
@@ -53,6 +61,11 @@
         const passwordRegex =
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
         if (!passwordRegex.test(password)) {
+            // clear password and password confirm fields
+            password = "";
+            passwordConfirm = "";
+            
+            // actual error stuff
             errors.password =
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
             valid = false;
@@ -167,10 +180,6 @@
         >
     </div>
     <h1 class="text-center mb-4">Register</h1>
-
-    {#if error}
-        <div class="alert alert-danger" role="alert">{error}</div>
-    {/if}
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">

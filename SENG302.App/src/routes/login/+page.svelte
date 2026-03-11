@@ -41,6 +41,7 @@
         }
 
         if (!password) {
+            passowrd = "";
             errors.password = "Password is required.";
             valid = false;
         }
@@ -64,7 +65,8 @@
                 }),
             });
 
-            if (response.status === 404) {
+            if (response.status === 404 || response.status === 401) {
+                password = "";
                 error = "Invalid email or password.";
                 addToast(error, "error");
                 return;
@@ -78,6 +80,7 @@
 
             const data = await response.json().catch(() => null);
             if (!response.ok) {
+                password = "";
                 error = data?.message || "Invalid email or password.";
                 addToast(error, "error");
                 return;
@@ -85,6 +88,7 @@
             goto(resolve(`/home`));
         } catch (err) {
             error = "Failed to login user: " + (err as Error).message;
+            password = "";
             addToast(error, "error");
             console.error(err);
         } finally {
