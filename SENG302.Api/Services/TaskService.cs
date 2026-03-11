@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.VisualBasic;
 
 namespace SENG302.Api.Services;
 
@@ -12,7 +13,8 @@ public interface ITaskService
     Task<TaskList> CreateNewTaskListAsync(string name, string userEmail);
     Task<TaskList> GetTaskListByIdAsync(int id);
     Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
-
+    Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
+    bool VerifyUserExists(DatabaseContext context, string userEmail);
 }
 
 public class TaskService : ITaskService
@@ -65,7 +67,8 @@ public class TaskService : ITaskService
         }
 
         // Validate user email exists in db
-        if (VerifyUserExists(context, userEmail)) {
+        if (!VerifyUserExists(context, userEmail))
+        {
             throw new ArgumentException("User with the provided email does not exist.");
         }
 
@@ -113,34 +116,61 @@ public class TaskService : ITaskService
     /// <param name="dueDate"></param>
     /// <param name="currentStatus"></param>
     /// <param name="description"></param>
-    /// <returns></returns>
+    /// <returns>the newly created TaskItem</returns>
 
-    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string taskListId, string name, DateTime dueDate, CurrentTaskStatus currentStatus = CurrentTaskStatus.Todo, string description = "") {
+    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string name, DateTime dueDate, int taskListId = -1, CurrentTaskStatus currentStatus = CurrentTaskStatus.Todo, string description = "No Description.")
+    {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         //enforces information formatting requirements
         if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
         {
             throw new ArgumentException("Task name is required and must be between 3 and 128 characters long");
-        }      
-        if (description.Length > 2048) {
+        }
+        if (description.Length > 2048)
+        {
             throw new ArgumentException("Description name cannot be more than 2048 characters long.");
         }
-        if (user == null) {
+        if (user == null)
+        {
             throw new ArgumentException("You cannot make a task without logging in!");
         }
-        if (string.IsNullOrEmpty(taskListId)) {
+        if (taskListId == -1) // -1 is assigned to taskListId if nothing was provided
+        {
             throw new ArgumentException("Every task needs a list! Create one first.");
         }
-        if (VerifyUserExists(context, user.Email)) {
+        if (VerifyUserExists(context, user.Email))
+        {
             throw new ArgumentException("Invalid user credentials.");
         }
+        var list = await GetTaskListByIdAsync(taskListId);
 
         var newTask = new TaskItem()
         {
-            
-        }
+            TaskListId = taskListId,
+            TaskId = list.NextId,
+            Name = name,
+            Description = description,
+            CurrentStatus = currentStatus,
+            DueDate = dueDate
+        };
+        context.Set<TaskItem>().Add(newTask);
+        await context.SaveChangesAsync();
+        return newTask;
 
+    }
+
+    /// <summary>
+    /// Gets all task items from the given list.
+    /// </summary>
+    /// <param name="taskListId"></param>
+    /// <returns>a list of all tasks found. Empty if no tasks exist.</returns>
+    public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
+
+        return taskItems;
     }
 
     /// <summary>
@@ -150,10 +180,11 @@ public class TaskService : ITaskService
     /// </summary>
     /// <param name="context"></param>
     /// <param name="userEmail"></param>
-    /// <returns></returns>
-    public bool VerifyUserExists(DatabaseContext context, string userEmail) {
-        return context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync() !=null;
-        
+    /// <returns>true if email exists, false otherwise</returns>
+    public bool VerifyUserExists(DatabaseContext context, string userEmail)
+    {
+        return context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync() != null;
+
     }
 }
 

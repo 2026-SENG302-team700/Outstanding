@@ -11,12 +11,12 @@ namespace SENG302.Api.Controllers;
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/tasks")]
-public class TaskController : ControllerBase
+[Route("api/taskList")]
+public class TaskListController : ControllerBase
 {
     private readonly ITaskService _taskService;
 
-    public TaskController(ITaskService taskService)
+    public TaskListController(ITaskService taskService)
     {
         _taskService = taskService;
     }

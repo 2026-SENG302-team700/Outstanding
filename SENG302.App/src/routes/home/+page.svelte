@@ -11,14 +11,14 @@
     onMount(() => {
         fetchLists();
     });
-    
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
     async function fetchLists() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
                 method: "GET",
                 credentials: "include",
             });
