@@ -19,6 +19,12 @@
      * Validates that all fields are filled in before making the request. If login is successful,
      * redirects the user to the profile page. If there is an error, displays an appropriate message.
      */
+    
+    function clearFields() {
+        email = "";
+        password = "";
+    }
+    
     async function loginUser() {
         let valid = true;
         // Reset errors
@@ -36,12 +42,13 @@
 
         // Validate inputs
         if (!email) {
+            email = "";
             errors.email = "Email is required.";
             valid = false;
         }
 
         if (!password) {
-            passowrd = "";
+            password = "";
             errors.password = "Password is required.";
             valid = false;
         }
@@ -66,13 +73,14 @@
             });
 
             if (response.status === 404 || response.status === 401) {
-                password = "";
+                clearFields();
                 error = "Invalid email or password.";
                 addToast(error, "error");
                 return;
             }
 
             if (response.status === 400) {
+                email = "";
                 errors.email =
                     "Invalid email address. Email must be in the format ‘jane@doe.nz’";
                 return;
@@ -80,15 +88,15 @@
 
             const data = await response.json().catch(() => null);
             if (!response.ok) {
-                password = "";
+                clearFields();
                 error = data?.message || "Invalid email or password.";
                 addToast(error, "error");
                 return;
             }
             goto(resolve(`/home`));
         } catch (err) {
+            clearFields();
             error = "Failed to login user: " + (err as Error).message;
-            password = "";
             addToast(error, "error");
             console.error(err);
         } finally {
@@ -113,6 +121,7 @@
                 type="type"
                 class="form-control"
                 class:error={errors.email}
+                class:is-invalid={errors.email}
                 placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
@@ -126,6 +135,7 @@
                 type="password"
                 class="form-control"
                 class:error={errors.password}
+                class:is-invalid={errors.password}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}
