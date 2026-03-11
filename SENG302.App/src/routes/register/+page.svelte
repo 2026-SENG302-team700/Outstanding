@@ -21,11 +21,6 @@
         password: "",
         passwordConfirm: "",
     });
-
-    function clearPasswordFields(): void {
-        password = "";
-        passwordConfirm = "";
-    }
     
     function validateInputs(): boolean {
         let valid = true;
@@ -37,10 +32,12 @@
             password: "",
             passwordConfirm: "",
         };
-
+        
         // Check email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
+            email = "";
+            
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
@@ -73,6 +70,8 @@
 
         // Check display name length
         if (displayName.length < 3 || displayName.length > 64) {
+            displayName = "";
+            
             errors.displayName =
                 "Display name must be between 3 and 64 characters.";
             valid = false;
@@ -81,6 +80,8 @@
         // Check display name validity
         const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
         if (!displayNameRegex.test(displayName)) {
+            displayName = "";
+            
             errors.displayName =
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
@@ -121,7 +122,7 @@
      */
     async function registerUser() {
         if (!validateInputs()) return;
-
+        
         try {
             loading = true;
 
@@ -147,7 +148,16 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                addToast(data?.message || "An error occured.", "error");
+                
+                switch (data.errorType) {
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email = data?.message || "This email address is already in use by another account.";
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
                 return;
             }
 
@@ -161,6 +171,7 @@
             localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
+            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
