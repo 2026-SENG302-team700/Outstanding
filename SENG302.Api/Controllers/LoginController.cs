@@ -35,9 +35,11 @@ public class LoginController : ControllerBase
             userCredentials.Email,
             userCredentials.PasswordString
         );
+        var user = verification.user;
+        var status = verification.userVerificationResult;
 
         // Check if the credentials are incorrect
-        if (verification == UserVerificationResult.DoesNotExist)
+        if (status == UserVerificationResult.DoesNotExist)
         {
             return NotFound(new
             {
@@ -46,7 +48,7 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.MalformedEmail)
+        else if (status == UserVerificationResult.MalformedEmail)
         {
             return BadRequest(new
             {
@@ -55,13 +57,14 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.Success)
+        else if (status == UserVerificationResult.Success && user != null)
         {
             // Create the user claims
             var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userCredentials.Email),
-            new Claim(ClaimTypes.Email, userCredentials.Email)
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName)
         };
 
 
@@ -85,7 +88,7 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.SuccessRehashNeeded)
+        else if (status == UserVerificationResult.SuccessRehashNeeded)
         {
             return Ok(new
             {
