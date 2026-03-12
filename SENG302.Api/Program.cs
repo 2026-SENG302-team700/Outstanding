@@ -161,6 +161,7 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IFileService, FileService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped

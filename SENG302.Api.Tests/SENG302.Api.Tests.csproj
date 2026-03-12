@@ -34,4 +34,15 @@
       <ProjectReference Include="..\SENG302.Api\SENG302.Api.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="resources\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="resources\panda.webp" />
+      <Content Include="resources\panda.webp">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>
