@@ -289,11 +289,15 @@ public class UserService : IUserService
         {
             return false;
         }
+        
         try
         {
             return Regex.IsMatch(email,
-                @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-                RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+                @"^(?=.{5,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+ 
+                          (\.[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+)*
+                           @(?=.{3,255}$)([A-Za-z0-9]+[-]*)+
+                           (\.([-]*[A-Za-z0-9]+)+)+$",
+                RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace, TimeSpan.FromMilliseconds(250));
         }
         catch (RegexMatchTimeoutException)
         {
