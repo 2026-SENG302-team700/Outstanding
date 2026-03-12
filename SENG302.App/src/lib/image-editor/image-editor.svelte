@@ -98,6 +98,19 @@
         movingOffset.y = event.y;
     }
 
+    function updateZoom(event : Event | undefined) {
+        if (event === undefined) return;
+        const newZoom = event.target.value;
+
+        const zoomDiff = newZoom - zoom;
+
+        xOffset += (zoomDiff);
+        
+        zoom = newZoom;
+
+        clampOffset();
+    }
+
     onMount(() => {
         setImg(testImage);
     });
@@ -127,8 +140,9 @@
         max={profileSize * 10}
         min={profileSize}
         id="zoom-range"
-        oninput={() => clampOffset()}
-        bind:value={zoom}
+        oninput={() => updateZoom(event)}
+        value={zoom}
+
     />
 </div>
 
