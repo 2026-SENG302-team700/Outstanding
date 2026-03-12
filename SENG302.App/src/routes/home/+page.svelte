@@ -3,7 +3,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { itemsStore } from "$lib/stores";
 
     let loading = $state(false);
     let error = $state("");
@@ -12,11 +11,6 @@
     onMount(() => {
         fetchLists();
     });
-
-    function sendListData(data: any) {
-        itemsStore.set(data);
-        goto("/home/task-list/${list}");
-    }
 
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
@@ -34,6 +28,7 @@
                 return;
             }
             taskLists = data;
+            console.log(taskLists);
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -75,7 +70,8 @@
                 <tbody>
                     {#each taskLists as taskList}
                         <tr
-                            on:click={() => sendListData(taskList)}
+                            on:click={() =>
+                                goto(`/home/task-list/${taskList.id}`)}
                             style="cursor: pointer;"
                         >
                             <td>{taskList.name}</td>
