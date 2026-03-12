@@ -2,9 +2,11 @@
     import testImage from "$lib/assets/images/target.jpg";
     import { onMount } from "svelte";
 
+    const profileSize = $state(300.0);
+
     let imageSrc = $state("");
 
-    let zoom = $state(300.0);
+    let zoom = $state(profileSize);
     let shortDim = $state("width");
 
     let width = 0;
@@ -17,10 +19,17 @@
     let yOffset = $state(0);
 
     let isMoving = false;
+    let movingOffset = {x : 0, y : 0};
 
     let imageStyle = $derived(
-        `${shortDim}: ${zoom}px; translate: ${xOffset + 149 - (newWidth * (zoom / 300)) / 2}px ${yOffset + 149 - (newHeight * (zoom / 300)) / 2}px;`,
+        `${shortDim}: ${zoom}px;
+        translate: 
+            ${xOffset + ((profileSize / 2) - 1) - (newWidth  * (zoom / profileSize)) / 2}px 
+            ${yOffset + ((profileSize / 2) - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
     );
+
+    document.body.addEventListener("mouseup", () => {isMoving = false});
+    document.body.addEventListener("mousemove", () => {imageMoveEvent(event)});
 
     async function setImg(url: string) {
         try {
@@ -31,11 +40,11 @@
 
             if (width < height) {
                 shortDim = "width";
-                newWidth = 300;
+                newWidth = profileSize;
                 newHeight = (newWidth / width) * height;
             } else {
                 shortDim = "height";
-                newHeight = 300;
+                newHeight = profileSize;
                 newWidth = (newHeight / height) * width;
             }
         } catch (error) {
@@ -59,6 +68,36 @@
         }
     }
 
+    function imageMoveEvent(event : Event | undefined) {
+        if (event !== undefined && isMoving) {
+            xOffset += event.x - movingOffset.x;
+            yOffset += event.y - movingOffset.y;
+
+            movingOffset.x = event.x;
+            movingOffset.y = event.y;
+
+            clampOffset();
+        }
+    }
+
+    function clampOffset() {
+        const xLeeway = (profileSize - (newWidth * (zoom / profileSize)));
+        const yLeeway = (profileSize - (newHeight * (zoom / profileSize)));
+
+        xOffset = Math.max(xOffset, xLeeway / 2);
+        xOffset = Math.min(xOffset, -xLeeway / 2);
+
+        yOffset = Math.max(yOffset, yLeeway / 2);
+        yOffset = Math.min(yOffset, -yLeeway / 2);
+    }
+
+    function startMove(event : Event | undefined) {
+        if (event === undefined) return;
+        isMoving = true;
+        movingOffset.x = event.x;
+        movingOffset.y = event.y;
+    }
+
     onMount(() => {
         setImg(testImage);
     });
@@ -69,14 +108,8 @@
         class="image-editor-image-parent"
         role="button"
         tabindex="-1"
-        onmousedown={() => (isMoving = true)}
-        onmouseup={() => (isMoving = false)}
-        onmouseleave={() => (isMoving = false)}
-        onmousemove={() => {
-            if (isMoving) {
-                console.log(event);
-            }
-        }}
+        style="width: {profileSize}px; height: {profileSize}px;"
+        onmousedown={() => startMove(event)}
     >
         <img
             draggable="false"
@@ -91,9 +124,10 @@
     <input
         type="range"
         class="form-range"
-        max="2000.0"
-        min="300.0"
+        max={profileSize * 10}
+        min={profileSize}
         id="zoom-range"
+        oninput={() => clampOffset()}
         bind:value={zoom}
     />
 </div>
@@ -106,11 +140,10 @@
 
     .image-editor-image-editing {
         position: relative;
+        user-select: none;
     }
 
     .image-editor-image-parent {
-        width: 300px;
-        height: 300px;
         border: 1px solid black;
         border-radius: 50%;
         overflow: hidden;
