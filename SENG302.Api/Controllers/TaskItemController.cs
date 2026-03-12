@@ -20,6 +20,12 @@ public class TaskItemController : ControllerBase
     }
 
 
+    /// <summary>
+    /// Fetches all task items associated to the id of the given list. If
+    /// no list is provided, then throw a BadRequest Error.
+    /// </summary>
+    /// <param name="listId = -1"></param>
+    /// <returns>The list of tasks</returns>
     [HttpGet("{listId:int}")]
     public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasksFromList(int listId = -1)
     {
@@ -29,5 +35,11 @@ public class TaskItemController : ControllerBase
         }
         var taskList = await _taskService.GetTaskItemsByListAsync(listId);
         return Ok(taskList);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TaskItem>> CreateTaskItem(TaskItem taskItem)
+    {
+
     }
 }
