@@ -17,6 +17,7 @@ For many of you, this will be the first time using C# and or Sveltekit, so we ha
 - [Sveltekit](https://kit.svelte.dev/docs) - Used for the front-end framework
 - [Using Sveltekit as an SPA](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/) - An interesting article about using Sveltekit as a single page application
 - [Bootstrap 5.3](https://getbootstrap.com/docs/5.3/getting-started/introduction) - Used within the Sveltekit front-end for styling
+- [Bootstrap Icons 1.13.1](https://getbootstrap.com/docs/5.3/getting-started/introduction/) - Used within the Sveltekit front-end for icons
 
 ### Back-end
 

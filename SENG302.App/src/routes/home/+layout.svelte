@@ -49,16 +49,7 @@
             >
                 {username}
             </p>
-            <button
-                    class="profile-button"
-                    on:click={() => goto(resolve("/home/profile"))}
-            >
-                <img
-                        class="profile-image"
-                        src="/defaultProfile.png"
-                        alt="Profile"
-                />
-            </button>
+            <i class="bi bi-person-circle fs-2" on:click={() => goto(resolve("/home/profile"))}></i>
         </div>
         
     </div>
@@ -72,6 +63,7 @@
         object-fit: cover;
         display: inline-block;
         border-radius: 50%;
+        border-color: black;
     }
 
     .profile-button {

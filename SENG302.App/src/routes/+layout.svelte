@@ -1,5 +1,6 @@
 <script lang="ts">
 	import 'bootstrap/dist/css/bootstrap.min.css';
+	import 'bootstrap-icons/font/bootstrap-icons.css'
 	import '../app.css';
 	import Toast from '$lib/toast/toast.svelte';
 	
