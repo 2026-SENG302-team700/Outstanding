@@ -40,6 +40,14 @@ public class TaskItemController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TaskItem>> CreateTaskItem(TaskItem taskItem)
     {
+        if (taskItem == null)
+        {
+            return BadRequest("One or more fields are missing!");
+        }
+
+        var newTask = await _taskService.CreateNewTaskListAsync(taskItem.Name,
+        taskItem.DueDate,
+        taskItem.TaskListId, taskItem.CurrentStatus, taskItem.Description);
 
     }
 }

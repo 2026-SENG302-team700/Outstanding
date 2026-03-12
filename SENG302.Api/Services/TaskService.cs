@@ -118,32 +118,24 @@ public class TaskService : ITaskService
     /// <param name="description"></param>
     /// <returns>the newly created TaskItem</returns>
 
-    public async Task<TaskItem> CreateNewTaskItemAsync(User user, string name, DateTime dueDate, int taskListId = -1, CurrentTaskStatus currentStatus = CurrentTaskStatus.Todo, string description = "No Description.")
+    public async Task<TaskItem> CreateNewTaskItemAsync(TaskItem taskItem)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         //enforces information formatting requirements
-        if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
+        if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
         {
             throw new ArgumentException("Task name is required and must be between 3 and 128 characters long");
         }
-        if (description.Length > 2048)
+        if (taskItem.Description.Length > 2048)
         {
             throw new ArgumentException("Description name cannot be more than 2048 characters long.");
         }
-        if (user == null)
-        {
-            throw new ArgumentException("You cannot make a task without logging in!");
-        }
-        if (taskListId == -1) // -1 is assigned to taskListId if nothing was provided
+        if (taskItem.TaskListId == -1) // -1 is assigned to taskListId if nothing was provided
         {
             throw new ArgumentException("Every task needs a list! Create one first.");
         }
-        if (VerifyUserExists(context, user.Email))
-        {
-            throw new ArgumentException("Invalid user credentials.");
-        }
-        var list = await GetTaskListByIdAsync(taskListId);
+        var list = await GetTaskListByIdAsync(taskItem.TaskListId);
 
         var newTask = new TaskItem()
         {
@@ -154,6 +146,7 @@ public class TaskService : ITaskService
             CurrentStatus = currentStatus,
             DueDate = dueDate
         };
+        list.NextId++; //probably doesn't work
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
         return newTask;
