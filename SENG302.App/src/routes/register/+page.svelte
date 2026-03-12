@@ -35,10 +35,15 @@
         };
 
         // Check email format
-        const emailRegex = /^[a-zA-Z0-9_%+-]+[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+$/;
+        const emailRegex = new RegExp(
+            '^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+' +
+            '(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*' +
+            '@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+' +
+            '(\\.([-]*[A-Za-z0-9]+)+)+$'
+            );
         if (!emailRegex.test(email)) {
             (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’ with no special characters."),
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
             valid = false;
         }
