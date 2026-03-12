@@ -40,7 +40,7 @@
             '@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+' +
             '(\\.([-]*[A-Za-z0-9]+)+)+$'
             );
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(email) && email) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
@@ -48,17 +48,8 @@
         }
 
         // Check if passwords match
-        if (password !== passwordConfirm) {
+        if (password !== passwordConfirm && password && passwordConfirm) {
             errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
             valid = false;
         }
 
@@ -102,15 +93,6 @@
             errors.passwordConfirm = "Please confirm your password.";
             valid = false;
         }
-        
-        // Check email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email) && email) {
-            (errors.email =
-                "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
-                "error";
-            valid = false;
-        }
 
         // Check if passwords match
         if (password !== passwordConfirm && password && passwordConfirm) {
@@ -135,14 +117,6 @@
         if ((displayName.length < 3 || displayName.length > 64) && displayName) {
             errors.displayName =
                 "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        // Check display name validity
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
-        if (!displayNameRegex.test(displayName) && displayName) {
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
         
