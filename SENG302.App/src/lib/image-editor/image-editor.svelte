@@ -1,54 +1,68 @@
 <script lang="ts">
-    let zoom = $state(1.0);
-    let maxImageStyle = $state("width: 300px");
+    import profileImg from "$lib/assets/images/defaultProfile.png";
 
-    let imageUrl = $state('/tallProfile.png');
+    let zoom = $state(300.0);
+    let longDim = "width";
 
-    async function setImg(url : string) {
-        imageUrl = url;
-        const dimensions = await getImgDimensions(url);
-        
-        if (dimensions.width < dimensions.height) {
-            maxImageStyle = "width: 300px";
-        } else {
-            maxImageStyle = "height: 300px";
+    let imageStyle = $derived(`${longDim}: ${zoom}px;`);
+
+    const image = encodeURI(profileImg);
+
+    async function updateDimensions() {
+        try {
+            const dimensions = await getImgDimensions(image);
+
+            if (dimensions.width < dimensions.height) {
+                longDim = "width";
+            } else {
+                longDim = "height";
+            }
+            console.log(longDim);
+        } catch (error) {
+            console.error("image not found");
         }
     }
 
-    async function getImgDimensions(url : string) {
-        const img = new Image();
-        img.src = url;
-
-        await img.decode();
+    async function getImgDimensions(url: string) {
         try {
+            const img = new Image();
+            img.src = url;
+
+            await img.decode();
+
             return {
                 width: img.naturalWidth,
-                height: img.naturalHeight
+                height: img.naturalHeight,
             };
         } catch (error) {
             throw new Error(`Could not load image at ${url}, ${error}`);
         }
     }
 
-    setImg(imageUrl);
+    updateDimensions();
 </script>
 
 <div class="image-editor-content">
     <div class="image-editor-image-parent">
         <img
-            draggable=true
-            src={imageUrl}
+            draggable="true"
+            src={image}
             alt="New profile"
             class="image-editor-image-editing"
-            style={maxImageStyle}
-        >
+            style={imageStyle}
+        />
     </div>
 
     <label for="zoom-range" class="form-label">Zoom</label>
-    <input type="range" class="form-range" max=600.0 min=300.0 id="zoom-range" bind:value={zoom}>
-
+    <input
+        type="range"
+        class="form-range"
+        max="600.0"
+        min="300.0"
+        id="zoom-range"
+        bind:value={zoom}
+    />
 </div>
-
 
 <style>
     .image-editor-content {
