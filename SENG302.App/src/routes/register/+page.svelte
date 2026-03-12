@@ -14,7 +14,6 @@
     let password = $state("");
     let passwordConfirm = $state("");
     let loading = $state(false);
-    let error = $state("");
     let errors = $state({
         email: "",
         displayName: "",
@@ -22,7 +21,7 @@
         password: "",
         passwordConfirm: "",
     });
-
+    
     function validateInputs(): boolean {
         let valid = true;
         // Reset errors
@@ -41,7 +40,7 @@
             '@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+' +
             '(\\.([-]*[A-Za-z0-9]+)+)+$'
             );
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(email) && email) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
@@ -49,17 +48,8 @@
         }
 
         // Check if passwords match
-        if (password !== passwordConfirm) {
+        if (password !== passwordConfirm && password && passwordConfirm) {
             errors.passwordConfirm = "Passwords do not match.";
-            valid = false;
-        }
-
-        // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
             valid = false;
         }
 
@@ -104,6 +94,32 @@
             valid = false;
         }
 
+        // Check if passwords match
+        if (password !== passwordConfirm && password && passwordConfirm) {
+            // actual error stuff
+            errors.passwordConfirm = "Passwords do not match.";
+            valid = false;
+        }
+
+        // Check password validity
+        const passwordRegex =
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+        if (!passwordRegex.test(password) && password) {
+            // actual error stuff
+            errors.password =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+            password = "";
+            passwordConfirm = "";
+            valid = false;
+        }
+
+        // Check display name length
+        if ((displayName.length < 3 || displayName.length > 64) && displayName) {
+            errors.displayName =
+                "Display name must be between 3 and 64 characters.";
+            valid = false;
+        }
+        
         return valid;
     }
     /**
@@ -113,7 +129,7 @@
      */
     async function registerUser() {
         if (!validateInputs()) return;
-
+        
         try {
             loading = true;
 
@@ -139,7 +155,17 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                addToast(data?.message || "An error occured.", "error");
+                
+                switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email = data?.message || "This email address is already in use by another account.";
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
                 return;
             }
 
@@ -153,6 +179,7 @@
             localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
+            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
@@ -172,10 +199,6 @@
         >
     </div>
     <h1 class="text-center mb-4">Register</h1>
-
-    {#if error}
-        <div class="alert alert-danger" role="alert">{error}</div>
-    {/if}
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">

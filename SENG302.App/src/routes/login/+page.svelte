@@ -12,6 +12,7 @@
     let errors = $state({
         email: "",
         password: "",
+        passwordErrorIndicator: false,
     });
 
     /**
@@ -25,6 +26,7 @@
         errors = {
             email: "",
             password: "",
+            passwordErrorIndicator: false,
         };
 
         // Check email format
@@ -64,9 +66,12 @@
                 }),
             });
 
-            if (response.status === 404) {
-                error = "Invalid email or password.";
-                addToast(error, "error");
+            const data = await response.json().catch(() => null);
+            
+            if (response.status === 404 || response.status === 401) {
+                password = "";
+                errors.email = data?.message || "Invalid email or password.";
+                errors.passwordErrorIndicator = true;
                 return;
             }
 
@@ -76,14 +81,16 @@
                 return;
             }
 
-            const data = await response.json().catch(() => null);
             if (!response.ok) {
-                error = data?.message || "Invalid email or password.";
+                password = "";
+                error = data?.message || "Failed to login user: !response.ok";
                 addToast(error, "error");
+                console.error("!response.ok outside of 400, 401 and 404.")
                 return;
             }
             goto(resolve(`/home`));
         } catch (err) {
+            password = "";
             error = "Failed to login user: " + (err as Error).message;
             addToast(error, "error");
             console.error(err);
@@ -109,6 +116,7 @@
                 type="type"
                 class="form-control"
                 class:error={errors.email}
+                class:is-invalid={errors.email || error}
                 placeholder="Email *"
                 bind:value={email}
                 disabled={loading}
@@ -122,6 +130,7 @@
                 type="password"
                 class="form-control"
                 class:error={errors.password}
+                class:is-invalid={errors.password || errors.passwordErrorIndicator || error}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}

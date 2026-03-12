@@ -64,7 +64,8 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest(new
             {
-                message = e.Message
+                message = e.Message,
+                errorType = e.GetType().Name
             });
         }
 
