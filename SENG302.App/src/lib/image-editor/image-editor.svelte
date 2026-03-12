@@ -1,25 +1,45 @@
 <script lang="ts">
-    import profileImg from "$lib/assets/images/defaultProfile.png";
+    import testImage from "$lib/assets/images/target.jpg";
+    import { onMount } from "svelte";
+
+    let imageSrc = $state("");
 
     let zoom = $state(300.0);
-    let longDim = "width";
+    let shortDim = $state("width");
 
-    let imageStyle = $derived(`${longDim}: ${zoom}px;`);
+    let width = 0;
+    let height = 0;
 
-    const image = encodeURI(profileImg);
+    let newWidth = 0;
+    let newHeight = 0;
 
-    async function updateDimensions() {
+    let xOffset = $state(0);
+    let yOffset = $state(0);
+
+    let isMoving = false;
+
+    let imageStyle = $derived(
+        `${shortDim}: ${zoom}px; translate: ${xOffset + 149 - (newWidth * (zoom / 300)) / 2}px ${yOffset + 149 - (newHeight * (zoom / 300)) / 2}px;`,
+    );
+
+    async function setImg(url: string) {
         try {
-            const dimensions = await getImgDimensions(image);
+            imageSrc = url;
+            const dimensions = await getImgDimensions(imageSrc);
+            width = dimensions.width;
+            height = dimensions.height;
 
-            if (dimensions.width < dimensions.height) {
-                longDim = "width";
+            if (width < height) {
+                shortDim = "width";
+                newWidth = 300;
+                newHeight = (newWidth / width) * height;
             } else {
-                longDim = "height";
+                shortDim = "height";
+                newHeight = 300;
+                newWidth = (newHeight / height) * width;
             }
-            console.log(longDim);
         } catch (error) {
-            console.error("image not found");
+            console.log("image not found");
         }
     }
 
@@ -39,14 +59,28 @@
         }
     }
 
-    updateDimensions();
+    onMount(() => {
+        setImg(testImage);
+    });
 </script>
 
 <div class="image-editor-content">
-    <div class="image-editor-image-parent">
+    <div
+        class="image-editor-image-parent"
+        role="button"
+        tabindex="-1"
+        onmousedown={() => (isMoving = true)}
+        onmouseup={() => (isMoving = false)}
+        onmouseleave={() => (isMoving = false)}
+        onmousemove={() => {
+            if (isMoving) {
+                console.log(event);
+            }
+        }}
+    >
         <img
-            draggable="true"
-            src={image}
+            draggable="false"
+            src={imageSrc}
             alt="New profile"
             class="image-editor-image-editing"
             style={imageStyle}
@@ -57,7 +91,7 @@
     <input
         type="range"
         class="form-range"
-        max="600.0"
+        max="2000.0"
         min="300.0"
         id="zoom-range"
         bind:value={zoom}
