@@ -30,7 +30,12 @@
         };
 
         // Check email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = new RegExp(
+            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
+                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
+                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
+                "(\\.([-]*[A-Za-z0-9]+)+)+$",
+        );
         if (email && !emailRegex.test(email)) {
             errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’";
@@ -88,6 +93,8 @@
                 console.error("!response.ok outside of 400, 401 and 404.")
                 return;
             }
+            // If login is succesful then redirect the user to the home page and show a toast notification for NFR
+            addToast(`Welcome to Outstanding ${data?.message}!`);
             goto(resolve(`/home`));
         } catch (err) {
             password = "";

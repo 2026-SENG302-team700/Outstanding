@@ -111,7 +111,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var content = await message2.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(true);
-        json.GetProperty("message").GetString().ShouldBe("login success");
+        json.GetProperty("message").GetString().ShouldBe("JJ Devy");
     }
 
     [Theory]
