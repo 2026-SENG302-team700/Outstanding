@@ -13,7 +13,7 @@
 	// added to ensure we can make use of bootstrap js for things like dropdowns
 	onMount(async () => {
 		// @ts-ignore
-		await import('bootstrap');
+		await import('bootstrap/dist/js/bootstrap.bundle.min.js');
 	});
 </script>
 
