@@ -3,11 +3,14 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
+    import { SvelteDate } from "svelte/reactivity";
 
     let loading = $state(false);
     let listName = $state("");
+    let listId = $state("");
     let error = $state("");
     let name = $state("");
+    var dateTime = new SvelteDate();
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -16,11 +19,15 @@
         dueDate: "",
         status: "",
     });
+    var currentTime = new SvelteDate();
 
     onMount(() => {
         GetList();
     });
 
+    /**
+     * enforces form formatting is correct in the front end, for speed.
+     */
     function validateInputs(): boolean {
         let valid = true;
         // Reset errors
@@ -31,63 +38,80 @@
             status: "",
         };
 
-        // Check if passwords match
-        if (password !== passwordConfirm) {
-            errors.passwordConfirm = "Passwords do not match.";
+        // Check if name and description length
+        if (name.length > 128 || name.length < 3) {
+            errors.name =
+                "Task name must be between 3 and 128 characters long! Currently its " +
+                name.length +
+                " characters long.";
+            valid = false;
+        }
+        if (description.length > 2048) {
+            errors.name =
+                "The description cannot be longer than 2048 characters long! Currently its " +
+                description.length +
+                " characters long.";
             valid = false;
         }
 
-        // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-            valid = false;
-        }
-
-        // Check display name length
-        if (displayName.length < 3 || displayName.length > 64) {
-            errors.displayName =
-                "Display name must be between 3 and 64 characters.";
-            valid = false;
-        }
-
-        // Check display name validity
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
-        if (!displayNameRegex.test(displayName)) {
-            errors.displayName =
-                "Display name must only include letters, spaces, hyphens or apostrophes.";
-            valid = false;
-        }
-
-        // Check for empty fields
-        if (!email) {
-            errors.email = "Email is required.";
-            valid = false;
-        }
-
-        if (!displayName) {
-            errors.displayName = "Display name is required.";
-            valid = false;
-        }
-
-        if (!selectedCountryCode) {
-            errors.country = "Please select a country.";
-            valid = false;
-        }
-
-        if (!password) {
-            errors.password = "Password is required.";
-            valid = false;
-        }
-
-        if (!passwordConfirm) {
-            errors.passwordConfirm = "Please confirm your password.";
+        // Check date validity
+        if (dateTime < currentTime) {
+            errors.dueDate = "Date cannot be in the past!";
             valid = false;
         }
 
         return valid;
+    }
+
+    async function createTask() {
+        if (!validateInputs()) return;
+
+        try {
+            loading = true;
+
+            const response = await fetchWithCsrf(
+                resolve(`/api/taskItem` as any),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        taskId: 0 /*0 is used as a placeholder, and will be replaced with the appropriate id in the backend */,
+                        taskListId: listId,
+                    }),
+                },
+            );
+
+            const data = await response.json().catch(() => null);
+
+            console.log(data);
+
+            if (!response.ok) {
+                // in case front end form checks were tampered with,
+                // we display a toast with the badrequest response
+                // from the back end.
+                addToast(data?.message || "An error occured.", "error");
+                return;
+            }
+
+            localStorage.setItem("username", displayName);
+            localStorage.setItem("userEmail", email);
+
+            addToast("Registration successful. Please log in.", "success");
+
+            goto(resolve(`/login`));
+
+            localStorage.setItem("justRegistered", "true");
+            goto(resolve(`/login`));
+        } catch (err) {
+            addToast(
+                "Failed to register user: " + (err as Error).message,
+                "error",
+            );
+        } finally {
+            loading = false;
+        }
     }
 
     /// <summary>
@@ -100,7 +124,7 @@
             loading = true;
             error = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/taskList/${params.slug}`),
+                resolve(`/api/taskList/${params.slug}` as any),
                 {
                     method: "GET",
                     credentials: "include",
@@ -135,31 +159,40 @@
             >Cancel
         </button>
     </div>
-    <form on:submit={createList}>
+    <form on:submit={createTask}>
         <div class="mb-3">
             <input
                 type="text"
                 class="form-control"
-                class:error
+                class:is-invalid={errors.name}
                 placeholder="Name *"
                 bind:value={name}
                 disabled={loading}
             />
-            {#if error}
-                <div class="text-danger mt-1">{error}</div>
+            {#if errors.name}
+                <div class="invalid-feedback">
+                    {errors.name}
+                </div>
             {/if}
+        </div>
+
+        <div class="mb-3">
             <input
                 type="text"
                 class="form-control"
-                class:error
+                class:is-invalid={errors.description}
                 placeholder="Description (Optional)"
-                bind:value={name}
+                bind:value={description}
                 disabled={loading}
             />
-            {#if error}
-                <div class="text-danger mt-1">{error}</div>
+            {#if errors.description}
+                <div class="invalid-feedback">
+                    {errors.description}
+                </div>
             {/if}
+        </div>
 
+        <div class="mb-3">
             <div class="dropdown">
                 <button
                     type="button"
@@ -177,10 +210,27 @@
                     </li>
                 </ul>
             </div>
-
             {#if error}
                 <div class="text-danger mt-1">{error}</div>
             {/if}
+        </div>
+
+        <div class="mb-3">
+            <div class="row">
+                <p class="due-text">Due Date</p>
+                <input
+                    type="datetime-local"
+                    class="form-control"
+                    class:is-invalid={errors.dueDate}
+                    bind:value={dateTime}
+                    disabled={loading}
+                />
+                {#if errors.dueDate}
+                    <div class="invalid-feedback">
+                        {errors.dueDate}
+                    </div>
+                {/if}
+            </div>
         </div>
         <div>
             <button
@@ -198,5 +248,16 @@
     @import url("https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css");
     .cursor-pointer {
         cursor: pointer;
+    }
+
+    .row {
+        display: grid;
+        grid-template-columns: 20% 80%;
+        width: 100%;
+    }
+
+    .due-test {
+        height: 100%;
+        text-align: center;
     }
 </style>

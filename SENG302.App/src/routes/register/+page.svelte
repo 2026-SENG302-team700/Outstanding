@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { Book } from "$lib/types";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -122,7 +120,7 @@
                     displayName,
                     passwordString: password,
                     passwordConfirm: password,
-                    country: selectedCountryCode
+                    country: selectedCountryCode,
                 }),
             });
 

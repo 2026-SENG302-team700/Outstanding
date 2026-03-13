@@ -15,6 +15,7 @@ public interface ITaskService
     Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
     Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
     bool VerifyUserExists(DatabaseContext context, string userEmail);
+    Task<TaskItem> CreateNewTaskItemAsync(TaskItem taskItem);
 }
 
 public class TaskService : ITaskService
@@ -139,12 +140,12 @@ public class TaskService : ITaskService
 
         var newTask = new TaskItem()
         {
-            TaskListId = taskListId,
+            TaskListId = taskItem.TaskListId,
             TaskId = list.NextId,
-            Name = name,
-            Description = description,
-            CurrentStatus = currentStatus,
-            DueDate = dueDate
+            Name = taskItem.Name,
+            Description = taskItem.Description,
+            CurrentStatus = taskItem.CurrentStatus,
+            DueDate = taskItem.DueDate
         };
         list.NextId++; //probably doesn't work
         context.Set<TaskItem>().Add(newTask);

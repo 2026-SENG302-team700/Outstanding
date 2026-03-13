@@ -38,16 +38,23 @@ public class TaskItemController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTaskItem(TaskItem taskItem)
+    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] TaskItem taskItem)
     {
-        if (taskItem == null)
+        try
         {
-            return BadRequest("One or more fields are missing!");
+            if (taskItem == null)
+            {
+                return BadRequest("One or more fields are missing!");
+            }
+
+            await _taskService.CreateNewTaskItemAsync(taskItem);
+            return Ok("Task created successfully");
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(e);
         }
 
-        var newTask = await _taskService.CreateNewTaskListAsync(taskItem.Name,
-        taskItem.DueDate,
-        taskItem.TaskListId, taskItem.CurrentStatus, taskItem.Description);
 
     }
 }

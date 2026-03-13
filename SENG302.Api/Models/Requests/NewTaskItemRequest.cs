@@ -4,27 +4,14 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace SENG302.Api.Models.Entities;
 
-public enum CurrentTaskStatus
-{
-    Todo,
-    InProgress,
-    Done
-}
-
 /// <summary>
 /// Represents a task that a user can create.
 /// TaskId is a variable set by the constructor when it's created, 
 /// and should not be set after the case, so therefore it does not 
 /// have a setter (and therefore, it cannot be set as required).
 /// </summary>
-public class TaskItem
+public class NewTaskItemRequest
 {
-    [Key]
-    [Column(Order = 1)]// used for defining superkeys
-    public int TaskId { get; init; }
-
-    [Key]
-    [Column(Order = 2)]
     public required int TaskListId { get; set; }
 
     [MaxLength(128)]
