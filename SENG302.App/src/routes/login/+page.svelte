@@ -29,15 +29,14 @@
 
         // Check email format
         const emailRegex = new RegExp(
-            '^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+' +
-            '(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*' +
-            '@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+' +
-            '(\\.([-]*[A-Za-z0-9]+)+)+$'
-            );
+            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
+                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
+                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
+                "(\\.([-]*[A-Za-z0-9]+)+)+$",
+        );
         if (email && !emailRegex.test(email)) {
             errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’";
-            return;
         }
 
         // Validate inputs
@@ -89,7 +88,7 @@
                 return;
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
-            addToast(`Welcome to Outstanding ${data?.message}!`)
+            addToast(`Welcome to Outstanding ${data?.message}!`);
             goto(resolve(`/home`));
         } catch (err) {
             error = "Failed to login user: " + (err as Error).message;
