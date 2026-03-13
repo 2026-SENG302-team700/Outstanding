@@ -1,11 +1,11 @@
 <script lang="ts">
-	import 'bootstrap/dist/css/bootstrap.min.css';
-	import '../app.css';
-	import Toast from '$lib/toast/toast.svelte';
-	import { onMount } from 'svelte';
-	
+	import "bootstrap/dist/css/bootstrap.min.css";
+	import "../app.css";
+	import Toast from "$lib/toast/toast.svelte";
+	import { onMount } from "svelte";
+
 	interface Props {
-		children?: import('svelte').Snippet;
+		children?: import("svelte").Snippet;
 	}
 
 	let { children }: Props = $props();
@@ -13,7 +13,7 @@
 	// added to ensure we can make use of bootstrap js for things like dropdowns
 	onMount(async () => {
 		// @ts-ignore
-		await import('bootstrap/dist/js/bootstrap.bundle.min.js');
+		await import("bootstrap");
 	});
 </script>
 

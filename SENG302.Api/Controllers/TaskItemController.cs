@@ -44,6 +44,7 @@ public class TaskItemController : ControllerBase
         {
             if (taskItem == null)
             {
+                Console.WriteLine("Is bad request being called?");
                 return BadRequest("One or more fields are missing!");
             }
 
@@ -52,6 +53,7 @@ public class TaskItemController : ControllerBase
         }
         catch (ArgumentException e)
         {
+            Console.WriteLine("Is argument being called");
             return BadRequest(e);
         }
 

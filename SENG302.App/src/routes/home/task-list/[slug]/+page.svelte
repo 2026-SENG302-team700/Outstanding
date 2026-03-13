@@ -70,6 +70,23 @@
         try {
             loading = true;
 
+            //const year = dateTime.getFullYear();
+            //const month = String(dateTime.getMonth() + 1).padStart(2, "0");
+            //const day = String(dateTime.getDay()).padStart(2, "0");
+            //const hours = String(dateTime.getHours()).padStart(2, "0");
+            //const mins = String(dateTime.getDay()).padStart(2, "0");
+            //const secs = String(dateTime.getDay()).padStart(2, "0");
+            //
+            //const newDate = `${year}-${month}-${day}T${hours}:${mins}:${secs}`;
+
+            var bod = JSON.stringify({
+                taskListId: params.slug,
+                name,
+                description,
+                DueDate: dateTime,
+                currentStatus: taskStatus,
+            });
+
             const response = await fetchWithCsrf(resolve(`/api/taskItem`), {
                 method: "POST",
                 headers: {
@@ -79,14 +96,14 @@
                     taskListId: params.slug,
                     name,
                     description,
-                    dateTime,
+                    DueDate: dateTime,
                     currentStatus: taskStatus,
                 }),
                 credentials: "include",
             });
 
             const data = await response.json().catch(() => null);
-            console.log(data);
+            console.log(bod);
 
             if (!response.ok) {
                 // in case front end form checks were tampered with,
