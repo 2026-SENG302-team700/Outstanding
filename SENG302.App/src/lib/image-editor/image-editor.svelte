@@ -1,35 +1,32 @@
 <script lang="ts">
-    import testImage from "$lib/assets/images/target.jpg";
+    import testImage from "$lib/assets/images/tallProfile.png";
     import { onMount } from "svelte";
 
     const profileSize = $state(300.0);
 
     let imageSrc = $state("");
 
-    let zoom = $state(profileSize);
+    let zoom = $state(300.0);
     let shortDim = $state("width");
 
     let width = 0;
     let height = 0;
 
-    let newWidth = 0;
-    let newHeight = 0;
+    let newWidth = $state(0);
+    let newHeight = $state(0);
 
     let xOffset = $state(0);
     let yOffset = $state(0);
 
     let isMoving = false;
-    let movingOffset = {x : 0, y : 0};
+    let movingOffset = { x: 0, y: 0 };
 
     let imageStyle = $derived(
         `${shortDim}: ${zoom}px;
-        translate: 
-            ${xOffset + ((profileSize / 2) - 1) - (newWidth  * (zoom / profileSize)) / 2}px 
-            ${yOffset + ((profileSize / 2) - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
+        translate:
+            ${xOffset + (profileSize / 2 - 1) - (newWidth * (zoom / profileSize)) / 2}px
+            ${yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
     );
-
-    document.body.addEventListener("mouseup", () => {isMoving = false});
-    document.body.addEventListener("mousemove", () => {imageMoveEvent(event)});
 
     async function setImg(url: string) {
         try {
@@ -68,7 +65,7 @@
         }
     }
 
-    function imageMoveEvent(event : Event | undefined) {
+    function imageMoveEvent(event: MouseEvent) {
         if (event !== undefined && isMoving) {
             xOffset += event.x - movingOffset.x;
             yOffset += event.y - movingOffset.y;
@@ -81,8 +78,8 @@
     }
 
     function clampOffset() {
-        const xLeeway = (profileSize - (newWidth * (zoom / profileSize)));
-        const yLeeway = (profileSize - (newHeight * (zoom / profileSize)));
+        const xLeeway = profileSize - newWidth * (zoom / profileSize);
+        const yLeeway = profileSize - newHeight * (zoom / profileSize);
 
         xOffset = Math.max(xOffset, xLeeway / 2);
         xOffset = Math.min(xOffset, -xLeeway / 2);
@@ -91,28 +88,33 @@
         yOffset = Math.min(yOffset, -yLeeway / 2);
     }
 
-    function startMove(event : Event | undefined) {
-        if (event === undefined) return;
+    function startMove(moveX: number, moveY: number) {
         isMoving = true;
-        movingOffset.x = event.x;
-        movingOffset.y = event.y;
+        movingOffset.x = moveX;
+        movingOffset.y = moveY;
     }
 
-    function updateZoom(event : Event | undefined) {
-        if (event === undefined) return;
-        const newZoom = event.target.value;
+    function updateZoom(zoomEvent: Event) {
+        if (zoomEvent.target === null) return;
 
-        const zoomDiff = newZoom - zoom;
+        const newZoom = zoomEvent.target.value;
+        const zoomDiff = newZoom / zoom;
 
-        xOffset += (zoomDiff);
-        
+        yOffset *= zoomDiff;
+        xOffset *= zoomDiff;
+
         zoom = newZoom;
-
         clampOffset();
     }
 
     onMount(() => {
         setImg(testImage);
+        document.body.addEventListener("mouseup", () => {
+            isMoving = false;
+        });
+        document.body.addEventListener("mousemove", (e: MouseEvent) => {
+            imageMoveEvent(e);
+        });
     });
 </script>
 
@@ -122,7 +124,7 @@
         role="button"
         tabindex="-1"
         style="width: {profileSize}px; height: {profileSize}px;"
-        onmousedown={() => startMove(event)}
+        onmousedown={(e: MouseEvent) => startMove(e.x, e.y)}
     >
         <img
             draggable="false"
@@ -140,9 +142,8 @@
         max={profileSize * 10}
         min={profileSize}
         id="zoom-range"
-        oninput={() => updateZoom(event)}
+        oninput={(e: Event) => updateZoom(e)}
         value={zoom}
-
     />
 </div>
 
