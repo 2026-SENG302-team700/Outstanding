@@ -17,7 +17,6 @@ public class User
 
     public required string Country { get; set; }
 
-    [ForeignKey("CustomFile")] 
     public string ProfilePicture { get; set; } = String.Empty;
 
     public DateTimeOffset TimeCreated { get; set; }

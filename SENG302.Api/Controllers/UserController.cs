@@ -16,10 +16,12 @@ namespace SENG302.Api.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IFileService _fileService;
 
-    public UserController(IUserService userService)
+    public UserController(IUserService userService, IFileService fileService)
     {
         _userService = userService;
+        _fileService = fileService;
     }
 
     /// <summary>
@@ -48,7 +50,7 @@ public class UserController : ControllerBase
         user.PasswordKey = "---";
         return Ok(user);
     }
-
+    
     [HttpPut]
     public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
     {
@@ -79,5 +81,19 @@ public class UserController : ControllerBase
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
             });
         return Ok(user);
+    }
+
+    [HttpPut("pfp")]
+    public async Task<ActionResult<CustomFile>> UploadProfilePicture([FromForm] IFormFile file)
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var userId = int.Parse(userIdString);
+        var customFile = await _fileService.SaveFileAsync(file, userId);
+        return Ok();
     }
 }

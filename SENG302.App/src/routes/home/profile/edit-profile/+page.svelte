@@ -11,6 +11,7 @@
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
+    let files = $state("");
 
     onMount(() => {
         retrieveUserData();
@@ -72,9 +73,41 @@
             addToast((err as Error).message);
         }
     }
+    
+    async function temporaryPutPFP() {
+        if (!files || files.length === 0) return;
+        
+        try {
+            console.log(`File Selected: ${files[0]}`);
+
+            const formData = new FormData();
+            formData.append("file", files[0]);
+            
+            const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
+                method: "PUT",
+                body: formData
+            })
+        } catch (err) {
+            addToast((err as Error).message);
+        }
+    }
 </script>
 
 <div class="container">
+    <div class="mb-3">
+        <label for="pfp" class="form-label">upload pfp test</label>
+        <input accept="image/webp" 
+               bind:files
+               id="pfp"
+               name="pfp"
+               type="file"
+        />
+    </div>
+
+    <button type="button" class="btn btn-primary" on:click={
+    temporaryPutPFP
+    }>trial pfp</button>
+
     <form on:submit|preventDefault={updateUser}>
         <div class="mb-3">
             <label for="displayName" class="form-label">Display Name</label>

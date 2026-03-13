@@ -36,7 +36,7 @@ public class FileServiceTests : BaseIntegrationTestFixture
             "image/webp");
 
         
-        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        await ServiceUnderTest.SaveFileAsync(mockFile, 0);
 
         var singleItemInDb = context.CustomFiles.ShouldHaveSingleItem();
         singleItemInDb.OwnerId.ShouldBe(0);

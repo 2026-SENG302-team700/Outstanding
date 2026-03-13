@@ -109,4 +109,15 @@ public class FileService : IFileService
             $"File {id} not found"
             );
     }
+
+    /// <summary>
+    /// Fetches the content from a file from the given file key
+    /// </summary>
+    /// <param name="fileKey">FileKey used to lookup file in bucket</param>
+    /// <returns>File content of matching file key</returns>
+    public async Task<Byte[]> GetFileContentAsync(string fileKey)
+    {
+        var path = Path.Combine(_basePath, fileKey);
+        return await File.ReadAllBytesAsync(path);
+    }
 }
