@@ -38,7 +38,7 @@ public class TaskItemController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] TaskItem taskItem)
+    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItem)
     {
         try
         {

@@ -1,11 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-
 using System.Text.RegularExpressions;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.VisualBasic;
-
 namespace SENG302.Api.Services;
 
 public interface ITaskService
@@ -15,7 +11,7 @@ public interface ITaskService
     Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
     Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
     bool VerifyUserExists(DatabaseContext context, string userEmail);
-    Task<TaskItem> CreateNewTaskItemAsync(TaskItem taskItem);
+    Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
 }
 
 public class TaskService : ITaskService
@@ -102,6 +98,25 @@ public class TaskService : ITaskService
         return taskList;
     }
 
+    /// <summary>
+    /// Gets a task list by its ID. Returns null if no task list with the given ID exists.
+    /// Also takes a DatabaseContext so the list that it returns can be modified.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public async Task<TaskList> GetTaskListByIdAsync(int id, DatabaseContext context)
+    {
+        var taskList = await context.Set<TaskList>().Where(t => t.Id == id).FirstOrDefaultAsync();
+        if (taskList == null)
+        {
+            throw new ArgumentException("Task list with the provided ID does not exist.");
+        }
+
+        return taskList;
+    }
+
+
+
 
     /// <summary>
     /// Adds a new task to the task list given owned by the given user. All parameters
@@ -118,8 +133,7 @@ public class TaskService : ITaskService
     /// <param name="currentStatus"></param>
     /// <param name="description"></param>
     /// <returns>the newly created TaskItem</returns>
-
-    public async Task<TaskItem> CreateNewTaskItemAsync(TaskItem taskItem)
+    public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -136,7 +150,10 @@ public class TaskService : ITaskService
         {
             throw new ArgumentException("Every task needs a list! Create one first.");
         }
-        var list = await GetTaskListByIdAsync(taskItem.TaskListId);
+        var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
+
+        context.TaskLists.Where(u => u.Id == list.Id).ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
+        await context.SaveChangesAsync();
 
         var newTask = new TaskItem()
         {
@@ -147,7 +164,6 @@ public class TaskService : ITaskService
             CurrentStatus = taskItem.CurrentStatus,
             DueDate = taskItem.DueDate
         };
-        list.NextId++; //probably doesn't work
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
         return newTask;

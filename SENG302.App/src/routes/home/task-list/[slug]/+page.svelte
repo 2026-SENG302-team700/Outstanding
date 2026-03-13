@@ -4,10 +4,11 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
     import { SvelteDate } from "svelte/reactivity";
+    import { addToast } from "$lib/toast/toast";
 
+    let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
     let listName = $state("");
-    let listId = $state("");
     let error = $state("");
     let name = $state("");
     var dateTime = new SvelteDate();
@@ -17,7 +18,7 @@
         name: "",
         description: "",
         dueDate: "",
-        status: "",
+        taskStatus: "",
     });
     var currentTime = new SvelteDate();
 
@@ -35,7 +36,7 @@
             name: "",
             description: "",
             dueDate: "",
-            status: "",
+            taskStatus: "",
         };
 
         // Check if name and description length
@@ -69,22 +70,22 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(
-                resolve(`/api/taskItem` as any),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        taskId: 0 /*0 is used as a placeholder, and will be replaced with the appropriate id in the backend */,
-                        taskListId: listId,
-                    }),
+            const response = await fetchWithCsrf(resolve(`/api/taskItem`), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            );
+                body: JSON.stringify({
+                    taskListId: params.slug,
+                    name,
+                    description,
+                    dateTime,
+                    currentStatus: taskStatus,
+                }),
+                credentials: "include",
+            });
 
             const data = await response.json().catch(() => null);
-
             console.log(data);
 
             if (!response.ok) {
@@ -95,18 +96,12 @@
                 return;
             }
 
-            localStorage.setItem("username", displayName);
-            localStorage.setItem("userEmail", email);
+            addToast("Task creation successful.", "success");
 
-            addToast("Registration successful. Please log in.", "success");
-
-            goto(resolve(`/login`));
-
-            localStorage.setItem("justRegistered", "true");
-            goto(resolve(`/login`));
+            goto(resolve(`/home/task-list/${params.slug}`));
         } catch (err) {
             addToast(
-                "Failed to register user: " + (err as Error).message,
+                "Failed to create task: " + (err as Error).message,
                 "error",
             );
         } finally {
@@ -133,12 +128,12 @@
 
             const data = await response.json();
             if (!response.ok) {
-                error = data || "Failed to create list.";
+                error = data || "Failed to get list.";
                 return;
             }
             listName = data.name;
         } catch (err) {
-            error = "Failed to create list: " + (err as Error).message;
+            error = "Failed to get list: " + (err as Error).message;
         } finally {
             loading = false;
         }
@@ -159,7 +154,7 @@
             >Cancel
         </button>
     </div>
-    <form on:submit={createTask}>
+    <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
             <input
                 type="text"
@@ -203,10 +198,24 @@
                     Select status
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">ToDo</a></li>
-                    <li><a class="dropdown-item" href="#">Doing</a></li>
                     <li>
-                        <a class="dropdown-item" href="#">Done</a>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 0)}>ToDo</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 1)}
+                            ref="#">Doing</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 2)}>Done</a
+                        >
                     </li>
                 </ul>
             </div>

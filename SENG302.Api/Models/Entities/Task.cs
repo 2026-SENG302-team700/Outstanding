@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -17,14 +18,10 @@ public enum CurrentTaskStatus
 /// and should not be set after the case, so therefore it does not 
 /// have a setter (and therefore, it cannot be set as required).
 /// </summary>
+[PrimaryKey(nameof(TaskId), nameof(TaskListId))]
 public class TaskItem
 {
-    [Key]
-    [Column(Order = 1)]// used for defining superkeys
     public int TaskId { get; init; }
-
-    [Key]
-    [Column(Order = 2)]
     public required int TaskListId { get; set; }
 
     [MaxLength(128)]
