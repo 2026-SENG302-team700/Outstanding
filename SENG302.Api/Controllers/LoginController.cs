@@ -26,7 +26,7 @@ public class LoginController : ControllerBase
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
-    /// <returns>a Task<ActionResult<User>></returns>
+    /// <returns>a Task<ActionResult<User></returns>
     [HttpPost]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
@@ -35,9 +35,11 @@ public class LoginController : ControllerBase
             userCredentials.Email,
             userCredentials.PasswordString
         );
+        var user = verification.user;
+        var status = verification.userVerificationResult;
 
         // Check if the credentials are incorrect
-        if (verification == UserVerificationResult.DoesNotExist)
+        if (status == UserVerificationResult.DoesNotExist)
         {
             return NotFound(new
             {
@@ -46,7 +48,7 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.MalformedEmail)
+        else if (status == UserVerificationResult.MalformedEmail)
         {
             return BadRequest(new
             {
@@ -55,13 +57,14 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.Success)
+        else if (status == UserVerificationResult.Success && user != null)
         {
             // Create the user claims
             var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userCredentials.Email),
-            new Claim(ClaimTypes.Email, userCredentials.Email)
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName)
         };
 
 
@@ -78,19 +81,21 @@ public class LoginController : ControllerBase
                     IsPersistent = true,
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
+            User? user = await _userService.GetUserByIdAsync(userCredentials.Email);
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.SuccessRehashNeeded)
+        else if (status == UserVerificationResult.SuccessRehashNeeded)
         {
+            User? user = await _userService.GetUserByIdAsync(userCredentials.Email);
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = true
             });
         }
