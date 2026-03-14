@@ -1,9 +1,5 @@
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute.ReceivedExtensions;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
@@ -86,5 +82,52 @@ public class TaskServiceTests : BaseIntegrationTestFixture
         var updatedTaskLists = await ServiceUnderTest.GetTaskListsByUserEmailAsync("test@example.com");
         updatedTaskLists.Count().ShouldBe(1);
         updatedTaskLists.First().Name.ShouldBe("Test Task List");
+    }
+
+    //generates a string 10 times the size of loop
+    private string generateString(int loops)
+    {
+        string value = "";
+        for (int i = 0; i <loops; i++)
+        {
+            value += "aaaaaaaaaa";
+        }
+        return value;
+    }
+
+    [Theory]
+    [InlineData("b", "", 6064, 04, 23, CurrentTaskStatus.Todo)]
+    [InlineData("", "", 6064, 04, 23, CurrentTaskStatus.Todo)]
+    [InlineData("bob mcnugg", "", 1900, 04, 23, CurrentTaskStatus.Todo)]
+    [InlineData("bob mcnugg", " ", 2027, 04, 23, CurrentTaskStatus.Todo)]
+    public async Task CreateNewTaskItemAsync_InvalidData_ThrowArgumentException(string name, string description, int year, int month, int day, CurrentTaskStatus currentStatus) {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        context.Users.Add(new User
+        {
+            Email = "fish@ocean.com",
+            DisplayName = "fish",
+            PasswordKey = "averysecurepassword",
+            Country = "The Atlantic",
+        });
+        context.TaskLists.Add(new TaskList 
+        {
+            Name = "Testlist",
+            UserEmail = "fish@ocean.com"
+        });
+        if (description == " ")
+        {
+            description = generateString(21);
+        }
+        NewTaskItemRequest newTask = new NewTaskItemRequest 
+        {
+            TaskListId = 0,
+            Name = name,
+            Description = description,
+            DueDate = new DateTime(year, month, day),
+            CurrentStatus = currentStatus,
+        };
+        await context.SaveChangesAsync();
+        await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTaskItemAsync(newTask));
     }
 }

@@ -2,7 +2,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
-using System.Globalization;
 namespace SENG302.Api.Services;
 
 public interface ITaskService
@@ -116,9 +115,6 @@ public class TaskService : ITaskService
         return taskList;
     }
 
-
-
-
     /// <summary>
     /// Adds a new task to the task list given owned by the given user. All parameters
     /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
@@ -151,16 +147,16 @@ public class TaskService : ITaskService
         {
             throw new ArgumentException("Every task needs a list! Create one first.");
         }
+        DateTime today = new DateTime();
+        if (taskItem.DueDate < today) 
+        {
+            throw new ArgumentException("Due Date cannot be in the past!");
+        }
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
 
         context.TaskLists.Where(u => u.Id == list.Id)
                          .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
         await context.SaveChangesAsync();
-
-        // string pattern = @"[T]";
-        // string result = Regex.Replace(taskItem.DueDate, pattern, " ");
-
-        // DateTime newDate = DateTime.ParseExact(result, "yyyy-MM-dd hh:mm", CultureInfo.InvariantCulture);
 
         var newTask = new TaskItem()
         {

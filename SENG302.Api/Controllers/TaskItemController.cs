@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
-
+using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -44,16 +44,24 @@ public class TaskItemController : ControllerBase
         {
             if (taskItem == null)
             {
-                Console.WriteLine("Is bad request being called?");
                 return BadRequest("One or more fields are missing!");
             }
 
-            await _taskService.CreateNewTaskItemAsync(taskItem);
-            return Ok("Task created successfully");
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var taskList = await _taskService.GetTaskListByIdAsync(taskItem.TaskListId);
+            if (taskList.UserEmail == userEmail) {
+                await _taskService.CreateNewTaskItemAsync(taskItem);
+                return Ok("Task created successfully");
+            }
+            else if (taskList.UserEmail != userEmail) {
+                return Unauthorized("You are not authorised to add tasks to that list!");
+            }
+            else {
+                return BadRequest("List does not exist.");
+            }
         }
         catch (ArgumentException e)
         {
-            Console.WriteLine("Is argument being called");
             return BadRequest(e);
         }
 

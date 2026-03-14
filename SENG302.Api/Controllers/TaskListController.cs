@@ -4,7 +4,6 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Filters;
 using System.Security.Claims;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
