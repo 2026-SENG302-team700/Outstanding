@@ -137,7 +137,7 @@ public class TaskService : ITaskService
         //enforces information formatting requirements
         if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
         {
-            throw new ArgumentException("Task name is required and must be between 3 and 128 characters long");
+            throw new ArgumentException("Title is required and must be between 3 and 128 characters long");
         }
         if (taskItem.Description.Length > 2048)
         {
@@ -147,31 +147,53 @@ public class TaskService : ITaskService
         {
             throw new ArgumentException("Every task needs a list! Create one first.");
         }
-        DateTime today = new DateTime();
-        if (taskItem.DueDate < today) 
-        {
-            throw new ArgumentException("Due Date cannot be in the past!");
+        if (taskItem.CurrentStatus != CurrentTaskStatus.Done && 
+            taskItem.CurrentStatus != CurrentTaskStatus.InProgress && 
+            taskItem.CurrentStatus != CurrentTaskStatus.Todo) {
+            throw new ArgumentException("Not a valid status!");
         }
+
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
-
-        context.TaskLists.Where(u => u.Id == list.Id)
+        if (taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001"){
+            DateTime today = new DateTime();
+            if (taskItem.DueDate < today) 
+            {
+                throw new ArgumentException("Due Date cannot be in the past!");
+            }
+            context.TaskLists.Where(u => u.Id == list.Id)
                          .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
-        await context.SaveChangesAsync();
+            await context.SaveChangesAsync();
+            var newTask = new TaskItem()
+            {
+                TaskListId = taskItem.TaskListId,
+                TaskId = list.NextId,
+                Name = taskItem.Name,
+                Description = taskItem.Description,
+                CurrentStatus = taskItem.CurrentStatus,
+                DueDate = taskItem.DueDate
+            };
+            context.Set<TaskItem>().Add(newTask);
+            await context.SaveChangesAsync();
+            return newTask;
+        } 
+        else {
+            context.TaskLists.Where(u => u.Id == list.Id)
+                         .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
+            await context.SaveChangesAsync();
+            var newTask = new TaskItem()
+            {
+                TaskListId = taskItem.TaskListId,
+                TaskId = list.NextId,
+                Name = taskItem.Name,
+                Description = taskItem.Description,
+                CurrentStatus = taskItem.CurrentStatus,
+                //ommits the due date
+            };
+            context.Set<TaskItem>().Add(newTask);
+            await context.SaveChangesAsync();
+            return newTask;
+        }
 
-        var newTask = new TaskItem()
-        {
-            TaskListId = taskItem.TaskListId,
-            TaskId = list.NextId,
-            Name = taskItem.Name,
-            Description = taskItem.Description,
-            CurrentStatus = taskItem.CurrentStatus,
-            DueDate = taskItem.DueDate
-        };
-        Console.WriteLine(newTask.DueDate);
-
-        context.Set<TaskItem>().Add(newTask);
-        await context.SaveChangesAsync();
-        return newTask;
 
     }
 

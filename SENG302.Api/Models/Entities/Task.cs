@@ -32,6 +32,5 @@ public class TaskItem
 
     [AllowNull]
     public DateTime DueDate { get; set; }
-
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
 }

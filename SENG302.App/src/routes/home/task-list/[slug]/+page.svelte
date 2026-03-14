@@ -11,7 +11,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    var dateTime = new SvelteDate();
+    var dateTime = $state(new SvelteDate());
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -20,7 +20,6 @@
         dueDate: "",
         taskStatus: "",
     });
-    var currentTime = new SvelteDate();
 
     onMount(() => {
         GetList();
@@ -42,22 +41,21 @@
         // Check if name and description length
         if (name.length > 128 || name.length < 3) {
             errors.name =
-                "Task name must be between 3 and 128 characters long! Currently its " +
-                name.length +
-                " characters long.";
+                "Title is required and must be between 3 and 128 characters long";
             valid = false;
         }
         if (description.length > 2048) {
-            errors.name =
-                "The description cannot be longer than 2048 characters long! Currently its " +
-                description.length +
-                " characters long.";
+            errors.name = "Description must be 2048 characters or less";
             valid = false;
         }
 
+        var date = new Date();
         // Check date validity
-        if (dateTime < currentTime) {
-            errors.dueDate = "Date cannot be in the past!";
+        if (dateTime.toDateString() < date.toDateString()) {
+            var dateReference = new Date();
+            errors.dueDate =
+                "Invalid due date, date must be formatted" +
+                dateReference.toLocaleDateString();
             valid = false;
         }
 
