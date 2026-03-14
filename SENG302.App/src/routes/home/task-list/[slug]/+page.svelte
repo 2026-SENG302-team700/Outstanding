@@ -11,7 +11,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    var dateTime = $state(new SvelteDate());
+    let taskDue = new Date();
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -48,14 +48,11 @@
             errors.name = "Description must be 2048 characters or less";
             valid = false;
         }
-
-        var date = new Date();
         // Check date validity
-        if (dateTime.toDateString() < date.toDateString()) {
-            var dateReference = new Date();
-            errors.dueDate =
-                "Invalid due date, date must be formatted" +
-                dateReference.toLocaleDateString();
+        let taskDueDate = new Date(taskDue).getTime();
+        let date = new Date().getTime();
+        if (date > taskDueDate) {
+            errors.dueDate = "Invalid due date, date must be in the future";
             valid = false;
         }
 
@@ -67,24 +64,6 @@
 
         try {
             loading = true;
-
-            //const year = dateTime.getFullYear();
-            //const month = String(dateTime.getMonth() + 1).padStart(2, "0");
-            //const day = String(dateTime.getDay()).padStart(2, "0");
-            //const hours = String(dateTime.getHours()).padStart(2, "0");
-            //const mins = String(dateTime.getDay()).padStart(2, "0");
-            //const secs = String(dateTime.getDay()).padStart(2, "0");
-            //
-            //const newDate = `${year}-${month}-${day}T${hours}:${mins}:${secs}`;
-
-            var bod = JSON.stringify({
-                taskListId: params.slug,
-                name,
-                description,
-                DueDate: dateTime,
-                currentStatus: taskStatus,
-            });
-
             const response = await fetchWithCsrf(resolve(`/api/taskItem`), {
                 method: "POST",
                 headers: {
@@ -94,14 +73,13 @@
                     taskListId: params.slug,
                     name,
                     description,
-                    DueDate: dateTime,
+                    DueDate: taskDue,
                     currentStatus: taskStatus,
                 }),
                 credentials: "include",
             });
 
             const data = await response.json().catch(() => null);
-            console.log(bod);
 
             if (!response.ok) {
                 // in case front end form checks were tampered with,
@@ -222,8 +200,7 @@
                     <li>
                         <a
                             class="dropdown-item"
-                            on:click={() => (taskStatus = 1)}
-                            ref="#">Doing</a
+                            on:click={() => (taskStatus = 1)}>Doing</a
                         >
                     </li>
                     <li>
@@ -243,10 +220,10 @@
             <div class="row">
                 <p class="due-text">Due Date</p>
                 <input
-                    type="datetime-local"
+                    type="date"
                     class="form-control"
                     class:is-invalid={errors.dueDate}
-                    bind:value={dateTime}
+                    bind:value={taskDue}
                     disabled={loading}
                 />
                 {#if errors.dueDate}
@@ -269,7 +246,6 @@
 </div>
 
 <style>
-    @import url("https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css");
     .cursor-pointer {
         cursor: pointer;
     }

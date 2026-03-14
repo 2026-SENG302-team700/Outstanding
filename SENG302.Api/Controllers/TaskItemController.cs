@@ -42,9 +42,22 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            if (taskItem == null)
+            if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
             {
-                return BadRequest("One or more fields are missing!");
+                return BadRequest("Title is required and must be between 3 and 128 characters long");
+            }
+            if (taskItem.Description.Length > 2048)
+            {
+                return BadRequest("Description name cannot be more than 2048 characters long.");
+            }
+            if (taskItem.TaskListId == -1) // -1 is assigned to taskListId if nothing was provided
+            {
+                return BadRequest("Every task needs a list! Create one first.");
+            }
+            if (taskItem.CurrentStatus != CurrentTaskStatus.Done && 
+                taskItem.CurrentStatus != CurrentTaskStatus.InProgress && 
+                taskItem.CurrentStatus != CurrentTaskStatus.Todo) {
+                return BadRequest("Not a valid status!");
             }
 
             var userEmail = User.FindFirstValue(ClaimTypes.Email);

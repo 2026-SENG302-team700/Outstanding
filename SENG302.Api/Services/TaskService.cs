@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using System.Globalization;
 namespace SENG302.Api.Services;
 
 public interface ITaskService
@@ -134,32 +135,19 @@ public class TaskService : ITaskService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        //enforces information formatting requirements
-        if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
-        {
-            throw new ArgumentException("Title is required and must be between 3 and 128 characters long");
-        }
-        if (taskItem.Description.Length > 2048)
-        {
-            throw new ArgumentException("Description name cannot be more than 2048 characters long.");
-        }
-        if (taskItem.TaskListId == -1) // -1 is assigned to taskListId if nothing was provided
-        {
-            throw new ArgumentException("Every task needs a list! Create one first.");
-        }
-        if (taskItem.CurrentStatus != CurrentTaskStatus.Done && 
-            taskItem.CurrentStatus != CurrentTaskStatus.InProgress && 
-            taskItem.CurrentStatus != CurrentTaskStatus.Todo) {
-            throw new ArgumentException("Not a valid status!");
-        }
+        //enforces date formatting requirements
+        /** 
+        * ##ENSURE LOCALE HERE##
+        */
 
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
         if (taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001"){
-            DateTime today = new DateTime();
+            DateTime today = DateTime.Now;
             if (taskItem.DueDate < today) 
             {
-                throw new ArgumentException("Due Date cannot be in the past!");
+                throw new ArgumentException("Invalid due date, date must be in the future");
             }
+
             context.TaskLists.Where(u => u.Id == list.Id)
                          .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
             await context.SaveChangesAsync();
