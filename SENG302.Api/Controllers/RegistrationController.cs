@@ -13,10 +13,12 @@ namespace SENG302.Api.Controllers;
 public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IEmailService2 _emailService2;
 
-    public RegistrationController(IUserService userService)
+    public RegistrationController(IUserService userService, IEmailService2 emailService)
     {
         _userService = userService;
+        _emailService2 = emailService;
     }
 
     [HttpGet("{id:int}")]
@@ -68,6 +70,7 @@ public class RegistrationController : ControllerBase
             });
         }
 
+        // _emailService2.SendEmailAsync(user.Email, "Email Registration", "Thankyou for registering with outstanding");
         return Ok(new
         {
             message = "Registration successful. Please log in."
