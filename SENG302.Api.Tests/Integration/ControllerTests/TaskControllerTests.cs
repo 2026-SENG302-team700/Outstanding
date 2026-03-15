@@ -35,7 +35,7 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         {
             Name = "Test Task List",
         };
-        var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -56,7 +56,7 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         {
             Name = "ab", // Short name that is less than 3 characters
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -72,7 +72,7 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         {
             Name = "Valid Task List Name",
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -96,7 +96,7 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         {
             Name = "test!", // Invalid character in name
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -124,11 +124,11 @@ public class TaskControllerTests : BaseIntegrationTestFixture
         {
             Name = "Test Task List",
         };
-        var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         //message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure task list creation was successful
 
         // Fetch task lists for the user
-        message = await HttpClient.GetAsync("/api/tasks");
+        message = await HttpClient.GetAsync("/api/taskList");
         message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
         TaskList[] taskLists = JsonConvert.DeserializeObject<TaskList[]>(await message.Content.ReadAsStringAsync())!;
         taskLists.Length.ShouldBe(1);

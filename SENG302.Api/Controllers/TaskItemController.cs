@@ -37,6 +37,15 @@ public class TaskItemController : ControllerBase
         return Ok(taskList);
     }
 
+
+    /// <summary>
+    /// Given a task item request object, create a new task item and add it to the db
+    /// Fails if: the task name is too short (characters) or long 128 (characters),
+    /// the description is longer than 2048 characters, the task list doesn't exist,
+    /// the status is not valid or the user is not authorised.
+    /// </summary>
+    /// <param name="taskItem"></param>
+    /// <returns>The list of tasks</returns>
     [HttpPost]
     public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItem)
     {
@@ -50,7 +59,8 @@ public class TaskItemController : ControllerBase
             {
                 return BadRequest("Description name cannot be more than 2048 characters long.");
             }
-            if (taskItem.TaskListId == -1) // -1 is assigned to taskListId if nothing was provided
+            
+            if (taskItem.TaskListId == -1 || await _taskService.GetTaskListByIdAsync(taskItem.TaskListId) == null) // -1 is assigned to taskListId if nothing was provided
             {
                 return BadRequest("Every task needs a list! Create one first.");
             }

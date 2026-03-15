@@ -2,7 +2,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
-using System.Globalization;
 namespace SENG302.Api.Services;
 
 public interface ITaskService
@@ -93,7 +92,7 @@ public class TaskService : ITaskService
         var taskList = await context.Set<TaskList>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (taskList == null)
         {
-            throw new ArgumentException("Task list with the provided ID does not exist.");
+            return null;
         }
 
         return taskList;

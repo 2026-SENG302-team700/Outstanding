@@ -3,7 +3,6 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
-    import { SvelteDate } from "svelte/reactivity";
     import { addToast } from "$lib/toast/toast";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
@@ -59,6 +58,11 @@
         return valid;
     }
 
+
+    /**
+     * queries the backend with the information for creating a task. Throws errors if the backend finds
+     * issues with the query, and reloads the page once the the query has been excepted.
+     */
     async function createTask() {
         if (!validateInputs()) return;
 

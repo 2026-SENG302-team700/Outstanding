@@ -29,7 +29,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         {
             Name = "Test Task List",
         };
-        var message = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
@@ -50,7 +50,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         {
             Name = "ab", // Short name that is less than 3 characters
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -74,7 +74,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         {
             Name = "test!", // Invalid character in name
         };
-        var response = await HttpClient.PostAsJsonAsync("/api/tasks", data);
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
