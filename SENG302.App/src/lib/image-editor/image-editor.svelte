@@ -94,10 +94,7 @@
         movingOffset.y = moveY;
     }
 
-    function updateZoom(zoomEvent: Event) {
-        if (zoomEvent.target === null) return;
-
-        const newZoom = zoomEvent.target.value;
+    function updateZoom(newZoom : number) {
         const zoomDiff = newZoom / zoom;
 
         yOffset *= zoomDiff;
@@ -142,7 +139,7 @@
         max={profileSize * 10}
         min={profileSize}
         id="zoom-range"
-        oninput={(e: Event) => updateZoom(e)}
+        oninput={(e: Event) => {if (e.target) updateZoom(parseFloat((<HTMLInputElement>e.target).value))}}
         value={zoom}
     />
 </div>
