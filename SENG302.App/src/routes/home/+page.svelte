@@ -12,6 +12,7 @@
         fetchLists();
     });
 
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
@@ -60,9 +61,9 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 300px; overflow: scroll;">
             <table class="table table-hover">
-                <thead>
+                <thead style="position: sticky; top: 0;">
                     <tr>
                         <th>Name</th>
                     </tr>
@@ -72,7 +73,7 @@
                         <tr
                             on:click={() =>
                                 goto(`/home/task-list/${taskList.id}`)}
-                            style="cursor: pointer;"
+                            style="cursor: pointer; white-space: pre;"
                         >
                             <td>{taskList.name}</td>
                         </tr>

@@ -5,6 +5,7 @@ namespace SENG302.Api.Models.Entities;
 public class User
 {
     [Key]
+    public int Id { get; set; }
     public required string Email { get; set; }
 
     [MinLength(3)]

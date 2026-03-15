@@ -9,13 +9,32 @@
     let name = $state("");
 
     /// <summary>
-    /// Creates a new task list for the user with the given name. Validates the name
+    /// Creates a new task list for the user with the given name. Trims and then validates the name
     /// before sending the request to the backend. If creation is successful, navigates
     /// back to the home screen. If there is an error, displays the error message.
     /// </summary>
     async function createList() {
-        if (!name) {
-            error = "Please enter a name for the list.";
+
+        const trimmedName = name.trim();
+
+        const errors = [];
+        
+        if (trimmedName == "") {
+            error = "Task list name cannot be empty";
+            return;
+        }
+
+        if (trimmedName.length < 3 || trimmedName.length > 128) {
+            errors.push("List name is required and must be between 3 and 128 characters long");
+        }
+
+        const nameRegex = /^[\p{L}0-9\s'-]+$/u;
+        if (!nameRegex.test(trimmedName)) {
+            errors.push("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+        }
+
+        if (errors.length > 0) {
+            error = errors.join("\n").trim();
             return;
         }
 
@@ -28,7 +47,7 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    Name: name,
+                    Name: trimmedName,
                 }),
                 credentials: "include",
             });
@@ -73,7 +92,7 @@
                 disabled={loading}
             />
             {#if error}
-                <div class="text-danger mt-1">{error}</div>
+                <div class="text-danger mt-1" style="white-space: pre-wrap">{error}</div>
             {/if}
         </div>
         <div>

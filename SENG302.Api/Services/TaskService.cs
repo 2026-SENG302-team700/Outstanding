@@ -52,6 +52,9 @@ public class TaskService : ITaskService
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
+        // Remove trailing whitespace
+        name = name.Trim();
+
         // Validate name length
         if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
         {
