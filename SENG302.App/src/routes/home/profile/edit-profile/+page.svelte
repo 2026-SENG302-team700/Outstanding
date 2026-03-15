@@ -12,6 +12,11 @@
     let email = $state("");
     let country = $state("");
 
+    let errors = $state({
+        email: "",
+        displayName: "",
+    });
+
     onMount(() => {
         retrieveUserData();
     });
@@ -49,6 +54,46 @@
     /// </summary>
     async function updateUser() {
         try {
+            // Clear errors
+            errors = {
+                email: "",
+                displayName: "",
+            };
+
+            // Front end Validation
+            let valid = true;
+
+            // Check email format
+            const emailRegex = new RegExp(
+                "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
+                    "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
+                    "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
+                    "(\\.([-]*[A-Za-z0-9]+)+)+$",
+            );
+            if (!emailRegex.test(email) && email) {
+                errors.email =
+                    "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+                valid = false;
+            }
+
+            // Check Display name length
+            if (displayName.length < 3 || displayName.length > 64) {
+                errors.displayName =
+                    "Display name must be between 3 and 64 characters";
+                valid = false;
+            }
+
+            // Display Name format
+            const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
+            if (!displayNameRegex.test(displayName)) {
+                errors.displayName =
+                    "Display name must only include letters, spaces, hyphens or apostrophes.";
+                valid = false;
+            }
+
+            // Return if error
+            if (!valid) return;
+
             const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
@@ -81,18 +126,30 @@
             <input
                 type="text"
                 class="form-control"
+                class:is-invalid={errors.displayName}
                 bind:value={displayName}
                 id="displayName"
             />
+            {#if errors.displayName}
+                <div class="invalid-feedback">
+                    {errors.displayName}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <label for="userEmail" class="form-label">Email</label>
             <input
-                type="email"
+                type="text"
                 class="form-control"
+                class:is-invalid={errors.email}
                 id="userEmail"
                 bind:value={email}
             />
+            {#if errors.email}
+                <div class="invalid-feedback">
+                    {errors.email}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <label for="country" class="form-label">Country</label>
