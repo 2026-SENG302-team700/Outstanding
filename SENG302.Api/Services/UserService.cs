@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Services;
 
@@ -289,7 +290,7 @@ public class UserService : IUserService
         {
             return false;
         }
-        
+
         try
         {
             return Regex.IsMatch(email,
@@ -487,6 +488,12 @@ public class UserService : IUserService
     public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        // Validation
+        if (EmailAlreadyExists(context, newEmail))
+        {
+            throw new DuplicateEmailException("This email address is already in use by another account.");
+        }
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 

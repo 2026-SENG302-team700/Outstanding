@@ -174,14 +174,7 @@
                 return;
             }
 
-            localStorage.setItem("username", displayName);
-            localStorage.setItem("userEmail", email);
-
             addToast("Registration successful. Please log in.", "success");
-
-            goto(resolve(`/login`));
-
-            localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
             console.error(err);

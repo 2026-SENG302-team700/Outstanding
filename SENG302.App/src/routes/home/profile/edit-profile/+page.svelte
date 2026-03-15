@@ -105,10 +105,10 @@
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
-        try {
-            // Return if error
-            if (!isValid()) return;
+        // Return if error
+        if (!isValid()) return;
 
+        try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
@@ -127,6 +127,19 @@
                 const updatedUser = await response.json();
                 user.set(updatedUser);
                 goto(resolve("/home"));
+            } else {
+                const data = await response.json().catch(() => null);
+                switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email = data.message;
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
+                return;
             }
         } catch (err) {
             addToast((err as Error).message);
