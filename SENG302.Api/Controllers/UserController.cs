@@ -66,6 +66,10 @@ public class UserController : ControllerBase
         try
         {
             var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
+            if (user == null)
+            {
+                throw new Exception("Couldn't find user");
+            }
 
             // Re login user to update claims
             var claims = new List<Claim>
