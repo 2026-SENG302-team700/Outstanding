@@ -8,7 +8,6 @@
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
-    let email = "";
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Trims and then validates the name
@@ -50,7 +49,6 @@
                 },
                 body: JSON.stringify({
                     Name: trimmedName,
-                    userEmail: user.;
                 }),
                 credentials: "include",
             });
