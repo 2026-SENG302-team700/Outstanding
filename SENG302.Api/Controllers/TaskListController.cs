@@ -66,8 +66,8 @@ public class TaskListController : ControllerBase
         try
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
-                return Unauthorized();
+            if (string.IsNullOrEmpty(userEmail)) 
+                return Unauthorized();               
             await _taskService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
             return Ok("Task list created successfully");
         }

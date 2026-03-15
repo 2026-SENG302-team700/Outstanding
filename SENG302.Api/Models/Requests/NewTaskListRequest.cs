@@ -9,6 +9,6 @@ namespace SENG302.Api.Models.Requests;
 public class NewTaskListRequest
 {
 
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty; 
 
 }

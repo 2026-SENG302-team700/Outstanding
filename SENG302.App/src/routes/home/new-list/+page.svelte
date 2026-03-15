@@ -2,11 +2,13 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { user } from "$lib/stores/user";
     import { onMount } from "svelte";
 
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
+    let email = "";
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Trims and then validates the name
@@ -48,6 +50,7 @@
                 },
                 body: JSON.stringify({
                     Name: trimmedName,
+                    userEmail: user.;
                 }),
                 credentials: "include",
             });

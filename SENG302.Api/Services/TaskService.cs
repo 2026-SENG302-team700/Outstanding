@@ -66,8 +66,9 @@ public class TaskService : ITaskService
             throw new ArgumentException("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
         }
 
+        var user = await context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync();
         // Validate user email exists in db
-        if (!VerifyUserExists(context, userEmail))
+        if (user == null)
         {
             throw new ArgumentException("User with the provided email does not exist.");
         }
@@ -136,11 +137,6 @@ public class TaskService : ITaskService
     public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        //enforces date formatting requirements
-        /** 
-        * ##ENSURE LOCALE HERE##
-        */
 
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
         if (taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001"){

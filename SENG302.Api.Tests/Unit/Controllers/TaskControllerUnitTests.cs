@@ -48,6 +48,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
 
         var data = new NewTaskListRequest
         {
+
             Name = "ab", // Short name that is less than 3 characters
         };
         var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
