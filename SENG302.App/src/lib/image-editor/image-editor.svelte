@@ -106,10 +106,10 @@
 
     onMount(() => {
         setImg(testImage);
-        document.body.addEventListener("mouseup", () => {
+        document.addEventListener("mouseup", () => {
             isMoving = false;
         });
-        document.body.addEventListener("mousemove", (e: MouseEvent) => {
+        document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
     });
