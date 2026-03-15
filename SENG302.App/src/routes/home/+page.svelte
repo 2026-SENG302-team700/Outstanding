@@ -11,7 +11,7 @@
     onMount(() => {
         fetchLists();
     });
-    
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
@@ -69,7 +69,7 @@
                 <tbody>
                     {#each taskLists as list}
                         <tr>
-                            <td>{list.name}</td>
+                            <td style="white-space: pre;">{list.name}</td>
                         </tr>
                     {/each}
                 </tbody>
