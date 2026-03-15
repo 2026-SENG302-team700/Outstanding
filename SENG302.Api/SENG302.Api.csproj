@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -9,6 +9,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <RootNamespace>SENG302.Api</RootNamespace>
+    <UserSecretsId>95ed29f1-cba5-4bad-9304-bdf811d6dbfc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

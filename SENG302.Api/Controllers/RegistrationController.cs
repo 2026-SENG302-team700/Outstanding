@@ -70,7 +70,20 @@ public class RegistrationController : ControllerBase
             });
         }
 
-        // _emailService2.SendEmailAsync(user.Email, "Email Registration", "Thankyou for registering with outstanding");
+        try
+        {
+            await _emailService2.SendEmailAsync(user.Email, "Email Registration",
+                "Thankyou for registering with outstanding");
+        }
+        catch (Exception e)
+        {
+            Console.Write(e);
+            return BadRequest(new
+            {
+                message = e.Message
+            });
+        }
+        
         return Ok(new
         {
             message = "Registration successful. Please log in."
