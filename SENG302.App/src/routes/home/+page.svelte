@@ -59,9 +59,9 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 300px; overflow: scroll;">
             <table class="table table-hover">
-                <thead>
+                <thead style="position: sticky; top: 0;">
                     <tr>
                         <th>Name</th>
                     </tr>
