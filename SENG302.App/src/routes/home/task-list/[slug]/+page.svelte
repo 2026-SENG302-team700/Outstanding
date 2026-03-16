@@ -6,12 +6,14 @@
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
-    let listName = $state("");
+    let listName = $state();
+    let tasks = $state([]);
     let error = $state("");
     let { params } = $props();
 
     onMount(() => {
         GetList();
+        //GetTasks();
     });
 
     /// <summary>
@@ -44,6 +46,30 @@
         }
     }
 
+    async function GetTasks() {
+        try {
+            loading = true;
+            error = "";
+            const response = await fetchWithCsrf(
+                resolve(`api/taskItem/${params.slug}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+
+            const data = await response.json();
+            if (!response.ok) {
+                error = data;
+                return;
+            }
+            tasks = data;
+        } catch (err) {
+            error = "Failed to get tasks: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
 </script>
 
 <div class="container">
@@ -56,8 +82,36 @@
         <button
             type="button"
             class="btn btn-primary"
-            on:click={() => goto(resolve(`/home/task-list/${params.slug}/create-task`))}
+            on:click={() =>
+                goto(resolve(`/home/task-list/${params.slug}/create-task`))}
             >+ Create Task
         </button>
     </div>
+    {#if loading && tasks.length === 0}
+        <div class="text-center text-muted py-4">Loading tasks...</div>
+    {:else if tasks.length === 0}
+        <div class="text-center text-muted py-4">
+            No tasks yet. Create your first task above!
+        </div>
+    {:else}
+        <div
+            class="table-responsive"
+            style="max-height: 300px; overflow: scroll;"
+        >
+            <table class="table table-hover">
+                <thead style="position: sticky; top: 0;">
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each tasks as task}
+                        <tr style="cursor: pointer; white-space: pre;">
+                            <td>{task.name}</td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </div>
