@@ -287,11 +287,11 @@ public class UserService : IUserService
     {
         // regex below allow a-z, A-Z, - and ' -- 
         var validCharsRegex = new Regex(
-            @"^[\p{L}0-9\s'-]+$",
+            @"^[\p{L} '-]+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
             );
-        return (validCharsRegex.IsMatch(displayName));
+        return validCharsRegex.IsMatch(displayName);
     }
 
     /// <summary>
