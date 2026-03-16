@@ -20,7 +20,7 @@ public class TestAuthHandler
     {
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, "test@example.com"),
+            new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimTypes.Name, "Test User"),
             new Claim(ClaimTypes.Email, "test@example.com")
         };
