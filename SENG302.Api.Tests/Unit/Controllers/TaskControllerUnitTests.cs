@@ -85,7 +85,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task GetTasksFromList_SuccessfulFetch_ReturnTaskItems()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -121,20 +121,20 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         taskItems.Length.ShouldBe(1);
     }
 
-    //generates a string 10 times the size of loop
-    private string generateString(int loops)
+    //generates a string of length n
+    private string generateString(int n)
     {
         string value = "";
-        for (int i = 0; i <loops; i++)
+        for (int i = 0; i < n; i++)
         {
-            value += "aaaaaaaaaa";
+            value += "a";
         }
         return value;
     }
     [Fact]
     public async Task CreateTaskItem_EmptyTaskName_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -166,7 +166,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_ShortTaskName_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -186,7 +186,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         await context.SaveChangesAsync();
         var data = new NewTaskItemRequest
         {
-            Name = "b",
+            Name = "ba",
             Description = "test",
             TaskListId = 1,
         };
@@ -198,7 +198,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_LongTaskName_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -216,7 +216,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
             UserEmail = "test@example.com"
         });
         await context.SaveChangesAsync();
-        var name = generateString(13);// generates a string of 130 characters
+        var name = generateString(129);// generates a string of 129 characters
         var data = new NewTaskItemRequest
         {
             Name = name,
@@ -231,7 +231,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_LongDescription_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -264,7 +264,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_InvalidTaskListId_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -296,7 +296,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_IncorrectEmail_Unauthorized()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -328,7 +328,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_NonExistentTaskList_BadRequest()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -354,7 +354,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
     [Fact]
     public async Task CreateTaskItem_ValidData_Ok()
     {
-         // Create DB
+        // Create DB
         await using var context = DbContextFactory.CreateDbContext();
 
         // Add user to DB
@@ -382,5 +382,5 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         var message = await HttpClient.PostAsJsonAsync("/api/taskItem", data);
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
-    
+
 }

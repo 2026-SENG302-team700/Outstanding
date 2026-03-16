@@ -59,7 +59,6 @@
         return valid;
     }
 
-
     /**
      * queries the backend with the information for creating a task. Throws errors if the backend finds
      * issues with the query, and reloads the page once the the query has been excepted.
@@ -70,20 +69,23 @@
         try {
             console.log(taskDue);
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/taskItem` as any), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetchWithCsrf(
+                resolve(`/api/taskItem` as any),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        taskListId: params.slug,
+                        name,
+                        description,
+                        DueDate: taskDue,
+                        currentStatus: taskStatus,
+                    }),
+                    credentials: "include",
                 },
-                body: JSON.stringify({
-                    taskListId: params.slug,
-                    name,
-                    description,
-                    DueDate: taskDue,
-                    currentStatus: taskStatus,
-                }),
-                credentials: "include",
-            });
+            );
 
             const data = await response.json().catch(() => null);
 
@@ -149,7 +151,7 @@
         <button
             type="button"
             class="btn btn-secondary"
-            on:click={() => goto(resolve("/home"))}
+            on:click={() => goto(".")}
             >Cancel
         </button>
     </div>
@@ -194,15 +196,15 @@
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                 >
-                {#if taskStatus == 1}
-                    Doing
-                {/if}
-                {#if taskStatus == 2}
-                    Done
-                {/if}
-                {#if taskStatus == 0}
-                    Todo
-                {/if}
+                    {#if taskStatus == 1}
+                        Doing
+                    {/if}
+                    {#if taskStatus == 2}
+                        Done
+                    {/if}
+                    {#if taskStatus == 0}
+                        Todo
+                    {/if}
                 </button>
                 <ul class="dropdown-menu">
                     <li>
