@@ -15,7 +15,8 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
-    Task<User> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
 
 public enum UserVerificationResult
@@ -491,6 +492,21 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User?> SetUserProfilePicture(int userId, int fileId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null) return null;
+        
+        user.ProfilePicture = fileId;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();

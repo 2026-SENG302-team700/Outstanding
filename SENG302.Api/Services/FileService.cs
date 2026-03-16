@@ -8,6 +8,8 @@ public interface IFileService
 {
     Task<CustomFile> SaveFileAsync(IFormFile file, int ownerId);
     Task<CustomFile> GetFileByIdAsync(int id);
+    Task DeleteFileAsync(string fileKey);
+    Task<Byte[]> GetFileContentAsync(string fileKey);
 }
 
 public class FileService : IFileService
@@ -27,8 +29,6 @@ public class FileService : IFileService
         _basePath = config["FileStorage:BasePath"];
         if (string.IsNullOrEmpty(_basePath))
         {
-            Console.WriteLine("BASE PATH: ");
-            Console.WriteLine(_basePath);
             throw new InvalidOperationException("Base path not set");
         }
         Directory.CreateDirectory(_basePath);
@@ -40,7 +40,7 @@ public class FileService : IFileService
     /// </summary>
     /// <param name="file">The file we are saving</param>
     /// <returns>A generated safe file key to use in our bucket storage.</returns>
-    private string GenerateFilename(IFormFile file)
+    private string GenerateFileKey(IFormFile file)
     {
         var extension = Path.GetExtension(file.FileName);
         var fileKey = $"{Guid.NewGuid()}{extension}";
@@ -97,7 +97,7 @@ public class FileService : IFileService
     /// <returns>The custom file entity object</returns>
     public async Task<CustomFile> SaveFileAsync(IFormFile file, int ownerId)
     {
-        var fileKey = GenerateFilename(file);
+        var fileKey = GenerateFileKey(file);
         await WriteFile(file, fileKey);
         var customFile = await SaveFileEntity(file, ownerId, fileKey);
         return customFile;
@@ -127,5 +127,14 @@ public class FileService : IFileService
     {
         var path = Path.Combine(_basePath, fileKey);
         return await File.ReadAllBytesAsync(path);
+    }
+
+    public async Task DeleteFileAsync(string fileKey)
+    {
+        var path = Path.Combine(_basePath, fileKey);
+        File.Delete(path);
+        
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        await context.CustomFiles.Where(f => f.FileKey == fileKey).ExecuteDeleteAsync();
     }
 }

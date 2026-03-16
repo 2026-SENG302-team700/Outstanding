@@ -17,7 +17,7 @@ public class User
 
     public required string Country { get; set; }
 
-    public string ProfilePicture { get; set; } = String.Empty;
+    public int ProfilePicture { get; set; }
 
     public DateTimeOffset TimeCreated { get; set; }
 }

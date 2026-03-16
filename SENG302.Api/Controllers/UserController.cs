@@ -93,7 +93,19 @@ public class UserController : ControllerBase
         }
 
         var userId = int.Parse(userIdString);
+        var user = await _userService.GetUserByIdAsync(userId);
+        var userPfpId = user.ProfilePicture;
+
+        if (userPfpId != 0)
+        {
+            var oldPfpFile = await _fileService.GetFileByIdAsync(userPfpId);
+            await _fileService.DeleteFileAsync(oldPfpFile.FileKey);
+            await _userService.SetUserProfilePicture(userId, 0);
+        }
+        
         var customFile = await _fileService.SaveFileAsync(file, userId);
+        var customFileId = customFile.Id;
+        await _userService.SetUserProfilePicture(userId, customFileId);
         return Ok();
     }
 }
