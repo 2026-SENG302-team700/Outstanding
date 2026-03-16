@@ -23,14 +23,10 @@ public class TaskItem
 {
     public int TaskId { get; init; }
     public required int TaskListId { get; set; }
-
     [MaxLength(128)]
     public required string Name { get; set; }
-
     [MaxLength(2048)]
     public required string Description { get; set; } //constructor gives Description the value "No Description." if nothing was entered
-
-    [AllowNull]
     public DateTime DueDate { get; set; }
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
 }

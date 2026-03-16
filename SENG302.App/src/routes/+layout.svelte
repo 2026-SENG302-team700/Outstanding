@@ -3,7 +3,7 @@
 	import 'bootstrap-icons/font/bootstrap-icons.css'
 	import '../app.css';
 	import Toast from '$lib/toast/toast.svelte';
-	
+	import { onMount } from 'svelte';
 	interface Props {
 		children?: import("svelte").Snippet;
 	}

@@ -137,50 +137,30 @@ public class TaskService : ITaskService
     public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
+        Console.WriteLine(taskItem.DueDate.Date.ToString("dd/MM/yyyy"));
+       
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
-        if (taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001"){
-            DateTime today = DateTime.Now;
-            if (taskItem.DueDate < today) 
-            {
-                throw new ArgumentException("Invalid due date, date must be in the future");
-            }
-
-            context.TaskLists.Where(u => u.Id == list.Id)
-                         .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
-            await context.SaveChangesAsync();
-            var newTask = new TaskItem()
-            {
-                TaskListId = taskItem.TaskListId,
-                TaskId = list.NextId,
-                Name = taskItem.Name,
-                Description = taskItem.Description,
-                CurrentStatus = taskItem.CurrentStatus,
-                DueDate = taskItem.DueDate
-            };
-            context.Set<TaskItem>().Add(newTask);
-            await context.SaveChangesAsync();
-            return newTask;
-        } 
-        else {
-            context.TaskLists.Where(u => u.Id == list.Id)
-                         .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
-            await context.SaveChangesAsync();
-            var newTask = new TaskItem()
-            {
-                TaskListId = taskItem.TaskListId,
-                TaskId = list.NextId,
-                Name = taskItem.Name,
-                Description = taskItem.Description,
-                CurrentStatus = taskItem.CurrentStatus,
-                //ommits the due date
-            };
-            context.Set<TaskItem>().Add(newTask);
-            await context.SaveChangesAsync();
-            return newTask;
+        DateTime today = DateTime.Now;
+        if (taskItem.DueDate < today && taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001") 
+        {
+            throw new ArgumentException("Invalid due date, date must be in the future");
         }
 
-
+        context.TaskLists.Where(u => u.Id == list.Id)
+                         .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
+        await context.SaveChangesAsync();
+        var newTask = new TaskItem()
+        {
+            TaskListId = taskItem.TaskListId,
+            TaskId = list.NextId,
+            Name = taskItem.Name,
+            Description = taskItem.Description,
+            CurrentStatus = taskItem.CurrentStatus,
+            DueDate = taskItem.DueDate
+        };
+        context.Set<TaskItem>().Add(newTask);
+        await context.SaveChangesAsync();
+        return newTask;
     }
 
     /// <summary>

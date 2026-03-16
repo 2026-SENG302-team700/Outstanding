@@ -51,6 +51,9 @@ public class TaskItemController : ControllerBase
     {
         try
         {
+            if (taskItem.DueDate == null) {
+                taskItem.DueDate = new DateTime(0001/01/01);
+            }
             if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
             {
                 return BadRequest("Title is required and must be between 3 and 128 characters long");
