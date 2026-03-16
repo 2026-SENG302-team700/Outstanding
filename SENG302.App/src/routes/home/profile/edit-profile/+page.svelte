@@ -49,6 +49,12 @@
         }
     }
 
+    /**
+     * Handles front end validation
+     * Updates error messages for invalid fields
+     *
+     * returns true if all fields are valid, false otherwise
+     */
     function isValid() {
         // Clear errors
         errors = {
@@ -80,7 +86,7 @@
         }
 
         // Display Name format
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
+        const displayNameRegex = /^[\p{L} '-]+$/u;
         if (!displayNameRegex.test(displayName)) {
             errors.displayName =
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
