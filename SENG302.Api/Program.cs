@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 

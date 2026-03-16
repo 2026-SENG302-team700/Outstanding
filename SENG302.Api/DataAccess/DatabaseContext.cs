@@ -11,6 +11,6 @@ public class DatabaseContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-
     public DbSet<TaskList> TaskLists { get; set; }
+    public DbSet<TaskItem> TaskItems { get; set; }
 }
