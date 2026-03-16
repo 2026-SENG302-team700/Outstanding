@@ -16,4 +16,6 @@ public class TaskList
 
     public string UserEmail { get; set; } = string.Empty; // Foreign key to the User that owns this task list
 
+    public int NextId { get; set; } = 0; // When a task is created, it'll be assigned this Id and this variable will be incremented
+
 }

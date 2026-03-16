@@ -1,9 +1,5 @@
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute.ReceivedExtensions;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;

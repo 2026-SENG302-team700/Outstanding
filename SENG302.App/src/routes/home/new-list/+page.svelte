@@ -2,13 +2,13 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import {onMount} from "svelte";
+    import { user } from "$lib/stores/user";
+    import { onMount } from "svelte";
 
     let loading = $state(false);
     let error = $state("");
     let name = $state("");
-    
-    
+
     /// <summary>
     /// Creates a new task list for the user with the given name. Trims and then validates the name
     /// before sending the request to the backend. If creation is successful, navigates
@@ -42,7 +42,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -70,7 +70,9 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">Name your new task list</h1>
+        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
+            Name your new task list
+        </h1>
     </div>
     <div class="mb-3">
         <button
