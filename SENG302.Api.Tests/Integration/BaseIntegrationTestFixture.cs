@@ -51,7 +51,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 {
                     {
                         // Mocking a file service path with a fake one to not build up unnecessary files.
-                        "FileService:BasePath", FakeTestDirectory
+                        "FileStorage:BasePath", FakeTestDirectory
                     }
                 });
             });
