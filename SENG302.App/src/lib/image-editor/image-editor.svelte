@@ -1,5 +1,5 @@
 <script lang="ts">
-    import testImage from "$lib/assets/images/target.jpg";
+    import testImage from "$lib/assets/images/defaultProfile.png";
     import { onMount } from "svelte";
 
     const profileSize = $state(300.0);
@@ -106,16 +106,21 @@
 
     async function submitImage(ctx: CanvasRenderingContext2D) {
         // create cropped image
-        const x = 0,
-            y = 0,
-            w = 400,
-            h = 800;
+
+        const w = (width / newWidth) * (profileSize / zoom) * profileSize;
+        const h = (height / newHeight) * (profileSize / zoom) * profileSize;
+
+        const centerX = (width / 2) - w / 2;
+        const centerY = (height / 2) - h / 2;
+
+        const x = centerX// - (xOffset / zoom * profileSize);
+        const y = centerY// - (yOffset / zoom * profileSize);
 
         const img = new Image();
         img.src = imageSrc;
 
         await img.decode();
-        console.log("heyo");
+        
         ctx.drawImage(img, x, y, w, h, 0, 0, profileSize, profileSize);
     }
 
@@ -138,7 +143,9 @@
             document
                 .getElementById("submitButton")
                 ?.addEventListener("click", (e) => {
+                    ctx.reset();
                     submitImage(ctx);
+                    
                 });
         }
     });
@@ -176,7 +183,10 @@
     />
     <canvas
         id="editCanvas"
-        style="width: {profileSize}px; height: {profileSize}px; background-color: black;"
+        class="image-editor-image-parent"
+        style="height: {profileSize}px; width: {profileSize}px; background-color: red;"
+        width='{profileSize}'
+        height='{profileSize}'
     ></canvas>
     <button id="submitButton">Submit</button>
 </div>
