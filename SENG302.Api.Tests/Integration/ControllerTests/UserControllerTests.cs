@@ -11,6 +11,7 @@ using Shouldly;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.CompilerServices;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -20,8 +21,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
 
-    [Fact]
-    public async Task UpdateUser_Success_ReturnOk()
+    private async Task AddTestUser()
     {
         // Add user to be updated to db
         await using var context = DbContextFactory.CreateDbContext();
@@ -34,6 +34,12 @@ public class UserControllerTests : BaseIntegrationTestFixture
             Country = "Test Country"
         });
         await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task UpdateUser_Success_ReturnOk()
+    {
+        await AddTestUser();
 
         // Send update request
         var data = new
@@ -54,6 +60,110 @@ public class UserControllerTests : BaseIntegrationTestFixture
         updatedUser.Country.ShouldBe("US");
     }
 
+    [Theory]
+    [InlineData("", "test", "NZ")]
+    [InlineData("updated@example.com", "", "NZ")]
+    [InlineData("updated@example.com", "test", "")]
+    public async Task UpdateUser_MissingField_BadRequest(string newEmail, string newDisplayName, string newCountry)
+    {
+        await AddTestUser();
 
+        // Send update request
+        var data = new
+        {
+            Email = newEmail,
+            DisplayName = newDisplayName,
+            Country = newCountry
+        };
+        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
 
+        // Get updated context and verify
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("test.userexample.com")]      // Missing @ symbol
+    [InlineData("@example.com")]              // Missing username
+    [InlineData("test.user@")]                // Missing domain
+    [InlineData("test.user@example")]         // Missing top-level domain (TLD)
+    [InlineData("t st.user@example.com")]     // Spaces
+    [InlineData("te..st.user@example.com")]   // Consecutive periods
+    [InlineData("test@user@example.com")]     // Multiple @ symbols
+    [InlineData("test.user@gmail,com")]       // Missing dot in domain
+    public async Task UpdateUser_MalformedEmail_BadRequest(string newEmail)
+    {
+        await AddTestUser();
+
+        // Send update request
+        var data = new
+        {
+            Email = newEmail,
+            DisplayName = "Test",
+            Country = "NZ"
+        };
+        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
+
+        // Get updated context and verify
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateUser_EmailAlreadyExists_BadRequest()
+    {
+        await AddTestUser();
+
+        // Add user to be updated to db
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 2,
+            Email = "update@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+
+        // Send update request
+        var data = new
+        {
+            Email = "update@example.com",
+            DisplayName = "Test",
+            Country = "NZ"
+        };
+        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
+
+        // Get updated context and verify
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("Hi")]
+    [InlineData("Hi!")]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // 65 'a's
+    public async Task UpdateUser_InvalidDisplayName_BadRequest(string newDisplayName)
+    {
+        await AddTestUser();
+
+        // Send update request
+        var data = new
+        {
+            Email = "update@example.com",
+            DisplayName = newDisplayName,
+            Country = "NZ"
+        };
+        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
+
+        // Get updated context and verify
+        await using var verifyContext = DbContextFactory.CreateDbContext();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+    }
 }
