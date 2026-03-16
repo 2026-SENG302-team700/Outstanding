@@ -249,7 +249,7 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
             UserEmail = "test@example.com"
         });
         await context.SaveChangesAsync();
-        var description = generateString(210);// generates a string of 2100 characters
+        var description = generateString(2049);// generates a string of 2049 characters
         var data = new NewTaskItemRequest
         {
             Name = "bnob",
