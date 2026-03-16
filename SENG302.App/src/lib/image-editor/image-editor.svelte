@@ -1,5 +1,5 @@
 <script lang="ts">
-    import testImage from "$lib/assets/images/tallProfile.png";
+    import testImage from "$lib/assets/images/target.jpg";
     import { onMount } from "svelte";
 
     const profileSize = $state(300.0);
@@ -94,7 +94,7 @@
         movingOffset.y = moveY;
     }
 
-    function updateZoom(newZoom : number) {
+    function updateZoom(newZoom: number) {
         const zoomDiff = newZoom / zoom;
 
         yOffset *= zoomDiff;
@@ -102,6 +102,21 @@
 
         zoom = newZoom;
         clampOffset();
+    }
+
+    async function submitImage(ctx: CanvasRenderingContext2D) {
+        // create cropped image
+        const x = 0,
+            y = 0,
+            w = 400,
+            h = 800;
+
+        const img = new Image();
+        img.src = imageSrc;
+
+        await img.decode();
+        console.log("heyo");
+        ctx.drawImage(img, x, y, w, h, 0, 0, profileSize, profileSize);
     }
 
     onMount(() => {
@@ -112,6 +127,20 @@
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
+
+        const canvas: HTMLCanvasElement = document.getElementById(
+            "editCanvas",
+        ) as HTMLCanvasElement; //document.createElement("canvas");
+
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+            document
+                .getElementById("submitButton")
+                ?.addEventListener("click", (e) => {
+                    submitImage(ctx);
+                });
+        }
     });
 </script>
 
@@ -139,9 +168,17 @@
         max={profileSize * 10}
         min={profileSize}
         id="zoom-range"
-        oninput={(e: Event) => {if (e.target) updateZoom(parseFloat((<HTMLInputElement>e.target).value))}}
+        oninput={(e: Event) => {
+            if (e.target)
+                updateZoom(parseFloat((<HTMLInputElement>e.target).value));
+        }}
         value={zoom}
     />
+    <canvas
+        id="editCanvas"
+        style="width: {profileSize}px; height: {profileSize}px; background-color: black;"
+    ></canvas>
+    <button id="submitButton">Submit</button>
 </div>
 
 <style>
