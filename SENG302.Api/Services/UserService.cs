@@ -530,15 +530,13 @@ public class UserService : IUserService
     public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) return null;
 
         // Validation
-        ValidateEmail(context, newEmail);
-        ValidateDisplayName(newDisplayName);
-        ValidateCountry(newCountry);
-
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user == null) return null;
+        if (user.Email != newEmail) ValidateEmail(context, newEmail);
+        if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
+        if (user.Country != newCountry) ValidateCountry(newCountry);
 
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
