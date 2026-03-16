@@ -12,6 +12,11 @@
     let email = $state("");
     let country = $state("");
 
+    let errors = $state({
+        email: "",
+        displayName: "",
+    });
+
     onMount(() => {
         retrieveUserData();
     });
@@ -44,10 +49,71 @@
         }
     }
 
+    /**
+     * Handles front end validation
+     * Updates error messages for invalid fields
+     *
+     * returns true if all fields are valid, false otherwise
+     */
+    function isValid() {
+        // Clear errors
+        errors = {
+            email: "",
+            displayName: "",
+        };
+
+        // Front end Validation
+        let valid = true;
+
+        // Check email format
+        const emailRegex = new RegExp(
+            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
+                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
+                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
+                "(\\.([-]*[A-Za-z0-9]+)+)+$",
+        );
+        if (!emailRegex.test(email) && email) {
+            errors.email =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+            valid = false;
+        }
+
+        // Check Display name length
+        if (displayName.length < 3 || displayName.length > 64) {
+            errors.displayName =
+                "Display name must be between 3 and 64 characters";
+            valid = false;
+        }
+
+        // Display Name format
+        const displayNameRegex = /^[\p{L} '-]+$/u;
+        if (!displayNameRegex.test(displayName)) {
+            errors.displayName =
+                "Display name must only include letters, spaces, hyphens or apostrophes.";
+            valid = false;
+        }
+
+        // Fields not empty
+        if (!email) {
+            errors.email = "Email is required.";
+            valid = false;
+        }
+
+        if (!displayName) {
+            errors.displayName = "Display name is required.";
+            valid = false;
+        }
+
+        return valid;
+    }
+
     /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
+        // Return if error
+        if (!isValid()) return;
+
         try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
@@ -67,6 +133,19 @@
                 const updatedUser = await response.json();
                 user.set(updatedUser);
                 goto(resolve("/home"));
+            } else {
+                const data = await response.json().catch(() => null);
+                switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email = data.message;
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
+                return;
             }
         } catch (err) {
             addToast((err as Error).message);
@@ -81,18 +160,30 @@
             <input
                 type="text"
                 class="form-control"
+                class:is-invalid={errors.displayName}
                 bind:value={displayName}
                 id="displayName"
             />
+            {#if errors.displayName}
+                <div class="invalid-feedback">
+                    {errors.displayName}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <label for="userEmail" class="form-label">Email</label>
             <input
-                type="email"
+                type="text"
                 class="form-control"
+                class:is-invalid={errors.email}
                 id="userEmail"
                 bind:value={email}
             />
+            {#if errors.email}
+                <div class="invalid-feedback">
+                    {errors.email}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
             <label for="country" class="form-label">Country</label>

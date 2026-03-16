@@ -49,35 +49,58 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    /// <summary>
+    /// Updates the users information
+    /// </summary>
+    /// <param name="updateUserRequest"></param>
+    /// <returns> The user upon successful update</returns>
     [HttpPut]
     public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
     {
+        // Get user from cookie
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
             return Unauthorized();
 
-        var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
-        // Re login user to update claims
-        var claims = new List<Claim>
+        // Call service to perform update logic
+        try
+        {
+            var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
+            if (user == null)
+            {
+                throw new Exception("Couldn't find user");
+            }
+
+            // Re login user to update claims
+            var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.DisplayName)
         };
 
-        var principle = new ClaimsPrincipal(
-            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
-        );
+            var principle = new ClaimsPrincipal(
+                new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+            );
 
-        // Sign them in with the auth cookie
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principle,
-            new AuthenticationProperties
+            // Sign them in with the auth cookie
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principle,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                });
+            return Ok(user);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new
             {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                message = e.Message,
+                errorType = e.GetType().Name
             });
-        return Ok(user);
+        }
     }
 }

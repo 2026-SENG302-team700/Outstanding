@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
 using System.Globalization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using SQLitePCL;
 
 namespace SENG302.Api.Services;
 
@@ -15,7 +17,7 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
-    Task<User> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
 }
 
 public enum UserVerificationResult
@@ -129,6 +131,83 @@ public class UserService : IUserService
     }
 
     /// <summary>
+    /// Runs all email validation checks and throws relavent exceptions
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="email"></param>
+    /// <exception cref="DuplicateEmailException"></exception>
+    /// <exception cref="InvalidEmailFormatException"></exception>
+    public void ValidateEmail(DatabaseContext context, string email)
+    {
+        if (EmailAlreadyExists(context, email))
+        {
+            throw new DuplicateEmailException("This email address is already in use by another account");
+        }
+
+        if (!CheckEmailFormat(email))
+        {
+            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
+        }
+    }
+
+    /// <summary>
+    /// Runs all display name validations and throws relavent exceptions
+    /// </summary>
+    /// <param name="displayName"></param>
+    /// <exception cref="InvalidDisplayNameLengthException"></exception>
+    /// <exception cref="InvalidDisplayNameCharsException"></exception>
+    public void ValidateDisplayName(string displayName)
+    {
+        if (DisplayNameLength(displayName))
+        {
+            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+        }
+
+        if (!DisplayNameChars(displayName))
+        {
+            throw new InvalidDisplayNameCharsException(
+                "Display name must only include letters, spaces, hyphens or apostrophes"
+                );
+        }
+    }
+    /// <summary>
+    /// Runs all password validations and throws relavent excpetions
+    /// </summary>
+    /// <param name="passwordOne"></param>
+    /// <param name="passwordTwo"></param>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public void ValidatePassword(string passwordOne, string passwordTwo)
+    {
+        if (!PasswordMatching(passwordOne, passwordTwo))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+
+        if (!CheckPassword(passwordOne))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+    }
+
+    /// <summary>
+    /// Runs all country validations and throws relavent exceptions
+    /// </summary>
+    /// <param name="country"></param>
+    /// <exception cref="InvalidCountryException"></exception>
+    public void ValidateCountry(string country)
+    {
+        if (!ValidCountry(country))
+        {
+            throw new InvalidCountryException(
+                "Invalid Country ISO code -- Front End sending wrong country codes"
+            );
+        }
+    }
+
+    /// <summary>
     /// Creates a new user object + hashes password
     /// </summary>
     /// <param name="email">E-mail string - e-mail of user to be generated</param> 
@@ -171,46 +250,10 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        if (EmailAlreadyExists(context, email))
-        {
-            throw new DuplicateEmailException("This email address is already in use by another account");
-        }
-
-        if (DisplayNameLength(displayName))
-        {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
-        }
-
-        if (!DisplayNameChars(displayName))
-        {
-            throw new InvalidDisplayNameCharsException(
-                "Display name must only include letters, spaces, hyphens or apostrophes"
-                );
-        }
-
-        if (!CheckEmailFormat(email))
-        {
-            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
-        }
-
-        if (!CheckPassword(passwordString))
-        {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
-            );
-        }
-
-        if (!PasswordMatching(passwordString, passwordConfirm))
-        {
-            throw new MismatchedPasswordException("Passwords do not match");
-        }
-
-        if (!ValidCountry(country))
-        {
-            throw new InvalidCountryException(
-                "Invalid Country ISO code -- Front End sending wrong country codes"
-            );
-        }
+        ValidateEmail(context, email);
+        ValidateDisplayName(displayName);
+        ValidatePassword(passwordString, passwordConfirm);
+        ValidateCountry(country);
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
@@ -244,11 +287,11 @@ public class UserService : IUserService
     {
         // regex below allow a-z, A-Z, - and ' -- 
         var validCharsRegex = new Regex(
-            @"^[\p{L}0-9\s'-]+$",
+            @"^[\p{L} '-]+$",
             RegexOptions.None, // Regex Options, can ignore, 
             TimeSpan.FromSeconds(2) // TimeSpan until regex times out
             );
-        return (validCharsRegex.IsMatch(displayName));
+        return validCharsRegex.IsMatch(displayName);
     }
 
     /// <summary>
@@ -289,7 +332,7 @@ public class UserService : IUserService
         {
             return false;
         }
-        
+
         try
         {
             return Regex.IsMatch(email,
@@ -487,10 +530,13 @@ public class UserService : IUserService
     public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-
         if (user == null) return null;
+
+        // Validation
+        if (user.Email != newEmail) ValidateEmail(context, newEmail);
+        if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
+        if (user.Country != newCountry) ValidateCountry(newCountry);
 
         user.Email = newEmail;
         user.DisplayName = newDisplayName;

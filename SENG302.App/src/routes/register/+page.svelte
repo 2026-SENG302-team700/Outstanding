@@ -21,7 +21,7 @@
         password: "",
         passwordConfirm: "",
     });
-    
+
     function validateInputs(): boolean {
         let valid = true;
         // Reset errors
@@ -35,11 +35,11 @@
 
         // Check email format
         const emailRegex = new RegExp(
-            '^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+' +
-            '(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*' +
-            '@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+' +
-            '(\\.([-]*[A-Za-z0-9]+)+)+$'
-            );
+            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
+                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
+                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
+                "(\\.([-]*[A-Za-z0-9]+)+)+$",
+        );
         if (!emailRegex.test(email) && email) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
@@ -114,12 +114,15 @@
         }
 
         // Check display name length
-        if ((displayName.length < 3 || displayName.length > 64) && displayName) {
+        if (
+            (displayName.length < 3 || displayName.length > 64) &&
+            displayName
+        ) {
             errors.displayName =
                 "Display name must be between 3 and 64 characters.";
             valid = false;
         }
-        
+
         return valid;
     }
     /**
@@ -129,7 +132,7 @@
      */
     async function registerUser() {
         if (!validateInputs()) return;
-        
+
         try {
             loading = true;
 
@@ -143,7 +146,7 @@
                     displayName,
                     passwordString: password,
                     passwordConfirm: password,
-                    country: selectedCountryCode
+                    country: selectedCountryCode,
                 }),
             });
 
@@ -155,12 +158,14 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                
+
                 switch (data.errorType) {
                     // check for duplicate email, throws regular error rather than "something went wrong"
                     case "DuplicateEmailException":
                         email = "";
-                        errors.email = data?.message || "This email address is already in use by another account.";
+                        errors.email =
+                            data?.message ||
+                            "This email address is already in use by another account.";
                         break;
                     default:
                         addToast(data?.message || "An error occured.", "error");
@@ -169,14 +174,7 @@
                 return;
             }
 
-            localStorage.setItem("username", displayName);
-            localStorage.setItem("userEmail", email);
-
             addToast("Registration successful. Please log in.", "success");
-
-            goto(resolve(`/login`));
-
-            localStorage.setItem("justRegistered", "true");
             goto(resolve(`/login`));
         } catch (err) {
             console.error(err);
