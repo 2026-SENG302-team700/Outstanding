@@ -24,7 +24,15 @@ public class FileService : IFileService
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
-        _basePath = config["FileService:BasePath"];
+        _basePath = config["FileStorage:BasePath"];
+        if (string.IsNullOrEmpty(_basePath))
+        {
+            Console.WriteLine("BASE PATH: ");
+            Console.WriteLine(_basePath);
+            throw new InvalidOperationException("Base path not set");
+        }
+        Directory.CreateDirectory(_basePath);
+
     }
 
     /// <summary>

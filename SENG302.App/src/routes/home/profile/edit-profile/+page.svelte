@@ -11,7 +11,7 @@
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
-    let files = $state("");
+    let files: FileList | null = $state(null);
 
     onMount(() => {
         retrieveUserData();
