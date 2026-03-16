@@ -10,7 +10,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = new Date("01/01/0001"); //used to represent no date
+    let taskDue = new Date("0001-01-01"); //used to represent no date
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -50,7 +50,7 @@
         // Check date validity
         let taskDueDate = new Date(taskDue).getTime();
         let date = new Date().getTime();
-        let nullDate = new Date("0001/01/01").getTime();
+        let nullDate = new Date("0001-01-01").getTime();
         if (date > taskDueDate && taskDueDate != nullDate) {
             errors.dueDate = "Invalid due date, date must be in the future";
             valid = false;
@@ -68,8 +68,9 @@
         if (!validateInputs()) return;
 
         try {
+            console.log(taskDue);
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/taskItem`), {
+            const response = await fetchWithCsrf(resolve(`/api/taskItem` as any), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -236,6 +237,7 @@
                     type="date"
                     class="form-control"
                     class:is-invalid={errors.dueDate}
+                    placeholder="Due Date"
                     bind:value={taskDue}
                     disabled={loading}
                 />
@@ -259,18 +261,14 @@
 </div>
 
 <style>
-    .cursor-pointer {
-        cursor: pointer;
-    }
-
     .row {
         display: grid;
         grid-template-columns: 20% 80%;
         width: 100%;
     }
 
-    .due-test {
-        height: 100%;
-        text-align: center;
+    .due-text {
+        margin: 8%;
+        position: relative;
     }
 </style>

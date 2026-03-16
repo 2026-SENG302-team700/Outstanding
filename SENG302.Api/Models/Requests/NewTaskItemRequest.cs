@@ -20,7 +20,6 @@ public class NewTaskItemRequest
     [MaxLength(2048)]
     public required string Description { get; set; } //constructor gives Description the value "No Description." if nothing was entered
 
-    [AllowNull]
     public DateTime DueDate { get; set; }
 
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
