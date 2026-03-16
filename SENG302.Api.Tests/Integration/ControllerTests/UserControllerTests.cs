@@ -1,17 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -77,9 +71,6 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
         var response = await HttpClient.PutAsJsonAsync("/api/user", data);
 
-        // Get updated context and verify
-        await using var verifyContext = DbContextFactory.CreateDbContext();
-
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -104,9 +95,6 @@ public class UserControllerTests : BaseIntegrationTestFixture
             Country = "NZ"
         };
         var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        // Get updated context and verify
-        await using var verifyContext = DbContextFactory.CreateDbContext();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -137,9 +125,6 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
         var response = await HttpClient.PutAsJsonAsync("/api/user", data);
 
-        // Get updated context and verify
-        await using var verifyContext = DbContextFactory.CreateDbContext();
-
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
@@ -159,9 +144,6 @@ public class UserControllerTests : BaseIntegrationTestFixture
             Country = "NZ"
         };
         var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        // Get updated context and verify
-        await using var verifyContext = DbContextFactory.CreateDbContext();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
 
