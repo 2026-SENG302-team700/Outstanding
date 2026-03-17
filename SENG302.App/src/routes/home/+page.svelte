@@ -13,6 +13,10 @@
         fetchLists();
     });
     
+    async function submitImage(imageUrl : string) {
+        console.log(imageUrl);
+    }
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
@@ -37,7 +41,7 @@
     }
 </script>
 
-<ImageEditor />
+<ImageEditor inputImage="defaultProfile.png" onImageSubmit={(u : string) => submitImage(u)} />
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">

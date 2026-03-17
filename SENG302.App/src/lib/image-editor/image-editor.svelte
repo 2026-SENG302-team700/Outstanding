@@ -1,6 +1,7 @@
 <script lang="ts">
-    import testImage from "$lib/assets/images/defaultProfile.png";
     import { onMount } from "svelte";
+
+    let { onImageSubmit, inputImage } = $props();
 
     const profileSize = $state(300.0);
 
@@ -104,28 +105,29 @@
         clampOffset();
     }
 
-    async function submitImage(ctx: CanvasRenderingContext2D) {
-        // create cropped image
+    async function stampImageOntoCTX(ctx: CanvasRenderingContext2D) {
+        const size = newWidth * (zoom / profileSize);
 
-        const w = (width / newWidth) * (profileSize / zoom) * profileSize;
-        const h = (height / newHeight) * (profileSize / zoom) * profileSize;
+        const scale = width / size;
 
-        const centerX = (width / 2) - w / 2;
-        const centerY = (height / 2) - h / 2;
+        const cropSize = profileSize * scale;
 
-        const x = centerX// - (xOffset / zoom * profileSize);
-        const y = centerY// - (yOffset / zoom * profileSize);
+        const x = (width / 2) - cropSize / 2 - xOffset * scale;
+        const y = (height / 2) - cropSize / 2 - yOffset * scale;
 
         const img = new Image();
         img.src = imageSrc;
 
         await img.decode();
         
-        ctx.drawImage(img, x, y, w, h, 0, 0, profileSize, profileSize);
+        ctx.drawImage(img, x, y, cropSize, cropSize, 0, 0, profileSize, profileSize);
     }
 
     onMount(() => {
-        setImg(testImage);
+        if (inputImage) {
+            setImg(inputImage);
+        }
+        
         document.addEventListener("mouseup", () => {
             isMoving = false;
         });
@@ -144,8 +146,9 @@
                 .getElementById("submitButton")
                 ?.addEventListener("click", (e) => {
                     ctx.reset();
-                    submitImage(ctx);
-                    
+                    stampImageOntoCTX(ctx);
+                    const url = canvas.toDataURL('image/jpeg');
+                    onImageSubmit(url);
                 });
         }
     });
