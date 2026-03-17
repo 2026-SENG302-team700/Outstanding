@@ -283,7 +283,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameChars(string displayName)
     {
-        return ValidationPatterns.DisplayName.IsMatch(displayName);
+        return ValidationPatterns.UserDisplayName.IsMatch(displayName);
     }
 
     /// <summary>
@@ -327,7 +327,7 @@ public class UserService : IUserService
 
         try
         {
-            return ValidationPatterns.Email.IsMatch(email);
+            return ValidationPatterns.UserEmail.IsMatch(email);
         }
         catch (RegexMatchTimeoutException)
         {
@@ -345,7 +345,7 @@ public class UserService : IUserService
     /// </returns>
     private bool CheckPassword(string password)
     {
-        return ValidationPatterns.Password.IsMatch(password);
+        return ValidationPatterns.UserPassword.IsMatch(password);
     }
 
     /// <summary>

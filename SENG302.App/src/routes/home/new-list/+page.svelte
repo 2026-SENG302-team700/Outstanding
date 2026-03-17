@@ -2,8 +2,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { user } from "$lib/stores/user";
-    import { onMount } from "svelte";
+    import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
 
     let loading = $state(false);
     let error = $state("");
@@ -15,23 +14,29 @@
     /// back to the home screen. If there is an error, displays the error message.
     /// </summary>
     async function createList() {
-
         const trimmedName = name.trim();
 
         const errors = [];
-        
+
         if (trimmedName == "") {
             error = "Task list name cannot be empty";
             return;
         }
 
         if (trimmedName.length < 3 || trimmedName.length > 128) {
-            errors.push("List name is required and must be between 3 and 128 characters long");
+            errors.push(
+                "List name is required and must be between 3 and 128 characters long",
+            );
         }
 
-        const nameRegex = /^[\p{L}0-9\s'-]+$/u;
+        const nameRegex = new RegExp(
+            regexPatterns.taskList.name.pattern,
+            regexPatterns.taskList.name.flags,
+        );
         if (!nameRegex.test(trimmedName)) {
-            errors.push("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
+            errors.push(
+                "List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers",
+            );
         }
 
         if (errors.length > 0) {
@@ -42,7 +47,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+            const response = await fetchWithCsrf(`/api/taskList`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -93,7 +98,9 @@
                 disabled={loading}
             />
             {#if error}
-                <div class="text-danger mt-1" style="white-space: pre-wrap">{error}</div>
+                <div class="text-danger mt-1" style="white-space: pre-wrap">
+                    {error}
+                </div>
             {/if}
         </div>
         <div>
