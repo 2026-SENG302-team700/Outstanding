@@ -104,9 +104,7 @@
         />
     </div>
 
-    <button type="button" class="btn btn-primary" on:click={
-    temporaryPutPFP
-    }>trial pfp</button>
+    <button type="button" class="btn btn-primary" on:click={temporaryPutPFP}>trial pfp</button>
 
     <form on:submit|preventDefault={updateUser}>
         <div class="mb-3">

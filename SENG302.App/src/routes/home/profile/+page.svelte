@@ -6,9 +6,12 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
+    import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    import { user } from "$lib/stores/user";
 
     let email = $state("");
     let username = $state("");
+    let pfpUrl: string | null = $state(null);
 
     onMount(() => {
         retrieveUserData();
@@ -49,12 +52,7 @@
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-        <img
-            class="profile-image"
-            ,
-            src="/defaultProfile.svg"
-            alt="No Profile Picture"
-        />
+        <ProfilePic pfpUrl={$user.pfpUrl} size="large" /> 
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
     </div>

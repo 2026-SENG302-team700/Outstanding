@@ -108,4 +108,27 @@ public class UserController : ControllerBase
         await _userService.SetUserProfilePicture(userId, customFileId);
         return Ok();
     }
+
+    [HttpGet("pfp")]
+    public async Task<IActionResult> GetProfilePicture()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        var userId = int.Parse(userIdString);
+        var user = await _userService.GetUserByIdAsync(userId);
+
+        if (user.ProfilePicture == 0)
+        {
+            return NotFound();
+        }
+
+        var customFile = await _fileService.GetFileByIdAsync(user.ProfilePicture);
+        var fileBytes = await _fileService.GetFileContentAsync(customFile.FileKey);
+        
+        return File(fileBytes, customFile.MimeType);
+    }
 }
