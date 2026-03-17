@@ -83,8 +83,8 @@
 
         // Display Name format
         const displayNameRegex = new RegExp(
-            regexPatterns.user.displayName,
-            "u",
+            regexPatterns.user.displayName.pattern,
+            regexPatterns.user.displayName.flags,
         );
         if (!displayNameRegex.test(displayName)) {
             errors.displayName =
