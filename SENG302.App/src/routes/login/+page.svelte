@@ -3,6 +3,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
+    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
     let email = $state("");
     let password = $state("");
@@ -30,12 +31,7 @@
         };
 
         // Check email format
-        const emailRegex = new RegExp(
-            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
-                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
-                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
-                "(\\.([-]*[A-Za-z0-9]+)+)+$",
-        );
+        const emailRegex = new RegExp(regexPatterns.user.email);
         if (email && !emailRegex.test(email)) {
             errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’";
@@ -72,7 +68,7 @@
             });
 
             const data = await response.json().catch(() => null);
-            
+
             if (response.status === 404 || response.status === 401) {
                 password = "";
                 errors.email = data?.message || "Invalid email or password.";
@@ -90,7 +86,7 @@
                 password = "";
                 error = data?.message || "Failed to login user: !response.ok";
                 addToast(error, "error");
-                console.error("!response.ok outside of 400, 401 and 404.")
+                console.error("!response.ok outside of 400, 401 and 404.");
                 return;
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
@@ -137,7 +133,9 @@
                 type="password"
                 class="form-control"
                 class:error={errors.password}
-                class:is-invalid={errors.password || errors.passwordErrorIndicator || error}
+                class:is-invalid={errors.password ||
+                    errors.passwordErrorIndicator ||
+                    error}
                 placeholder="Password *"
                 bind:value={password}
                 disabled={loading}

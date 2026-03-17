@@ -7,6 +7,7 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
+    import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
 
     let displayName = $state("");
     let email = $state("");
@@ -27,7 +28,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(`/api/user`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -66,12 +67,7 @@
         let valid = true;
 
         // Check email format
-        const emailRegex = new RegExp(
-            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
-                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
-                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
-                "(\\.([-]*[A-Za-z0-9]+)+)+$",
-        );
+        const emailRegex = new RegExp(regexPatterns.user.email);
         if (!emailRegex.test(email) && email) {
             errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’";
@@ -86,7 +82,10 @@
         }
 
         // Display Name format
-        const displayNameRegex = /^[\p{L} '-]+$/u;
+        const displayNameRegex = new RegExp(
+            regexPatterns.user.displayName,
+            "u",
+        );
         if (!displayNameRegex.test(displayName)) {
             errors.displayName =
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
@@ -115,7 +114,7 @@
         if (!isValid()) return;
 
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(`/api/user`, {
                 method: "PUT",
                 credentials: "include",
                 headers: {
