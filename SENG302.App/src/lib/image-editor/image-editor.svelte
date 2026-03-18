@@ -7,7 +7,8 @@
 
     let imageSrc = $state("");
 
-    let zoom = $state(300.0);
+    // svelte-ignore state_referenced_locally
+    let zoom = $state(profileSize);
     let shortDim = $state("width");
 
     let width = 0;
@@ -29,6 +30,13 @@
             ${yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
     );
 
+    /**
+     * Insert an image into this ImageEditor object
+     * Also calculates which side of the image is the long side,
+     * and calculates the max size the image can be
+     * Note: this function is called in onMount if inputImage is set
+     * @param url the data url of the image
+     */
     async function setImg(url: string) {
         try {
             imageSrc = url;
@@ -50,6 +58,10 @@
         }
     }
 
+    /**
+     * Get the dimensions of an image
+     * @param url the url of the image
+     */
     async function getImgDimensions(url: string) {
         try {
             const img = new Image();
@@ -66,6 +78,10 @@
         }
     }
 
+    /**
+     * Whenever the mouse moves this event is called, which moves the image and clamps the position
+     * @param event
+     */
     function imageMoveEvent(event: MouseEvent) {
         if (event !== undefined && isMoving) {
             xOffset += event.x - movingOffset.x;
@@ -78,6 +94,9 @@
         }
     }
 
+    /**
+     * Clamps the position within the bounds
+     */
     function clampOffset() {
         const xLeeway = profileSize - newWidth * (zoom / profileSize);
         const yLeeway = profileSize - newHeight * (zoom / profileSize);
@@ -89,12 +108,23 @@
         yOffset = Math.min(yOffset, -yLeeway / 2);
     }
 
+    /**
+     * When starting to click on the image, this function is called
+     * It sets the initial position of the mouse so that these coordinates
+     * can be used later to compare with the relative move of the mouse
+     * @param moveX x mouse position
+     * @param moveY y mouse position
+     */
     function startMove(moveX: number, moveY: number) {
         isMoving = true;
         movingOffset.x = moveX;
         movingOffset.y = moveY;
     }
 
+    /**
+     * sets the zoom and clamps the position
+     * @param newZoom the new zoom, in pixel width (starts at profileSize)
+     */
     function updateZoom(newZoom: number) {
         const zoomDiff = newZoom / zoom;
 
@@ -105,6 +135,11 @@
         clampOffset();
     }
 
+    /**
+     * Takes the current position and zoom of the
+     * image and stamps it onto a CanvasRenderingContext2D
+     * @param ctx The CanvasRenderingContext2D of a canvas
+     */
     async function stampImageOntoCTX(ctx: CanvasRenderingContext2D) {
         const size = newWidth * (zoom / profileSize);
 
