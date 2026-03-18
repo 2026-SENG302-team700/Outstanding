@@ -3,7 +3,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import ImageEditor from "$lib/image-editor/image-editor.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -14,12 +13,6 @@
     });
     
     let image = "";
-
-    async function submitImage(imageUrl : string) {
-        const img = new Image();
-        img.src = imageUrl;
-        document.body.appendChild(img);
-    }
 
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
