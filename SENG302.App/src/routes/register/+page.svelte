@@ -171,9 +171,10 @@
                 }
                 return;
             }
-
+            // set email in local storage for validation page
+            localStorage.setItem("email", email)
             addToast("Registration successful. Please log in.", "success");
-            goto(resolve(`/login`));
+            goto(resolve(`/register/verification`));
         } catch (err) {
             console.error(err);
             addToast(
