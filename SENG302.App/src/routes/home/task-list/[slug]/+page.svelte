@@ -12,7 +12,35 @@
 
     onMount(() => {
         GetList();
+        GetTasks();
     });
+
+    async function GetTasks() {
+        try {
+            loading = true;
+            error = "";
+            const response = await fetchWithCsrf(
+                resolve(`/api/taskItem/${params.slug}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            console.log(response);
+            const data = await response.json();
+            console.log("Data: ", data);
+            if (!response.ok) {
+                error = data;
+                return;
+            }
+            console.log(`The data: ${data}`);
+            tasks = data;
+        } catch (err) {
+            error = "Failed to get tasks: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Validates the name
