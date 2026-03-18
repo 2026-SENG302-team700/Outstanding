@@ -12,8 +12,6 @@
         fetchLists();
     });
     
-    let image = "";
-
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
