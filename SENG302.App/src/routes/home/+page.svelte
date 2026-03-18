@@ -13,8 +13,12 @@
         fetchLists();
     });
     
+    let image = "";
+
     async function submitImage(imageUrl : string) {
-        console.log(imageUrl);
+        const img = new Image();
+        img.src = imageUrl;
+        document.body.appendChild(img);
     }
 
     /// <summary>
@@ -40,8 +44,6 @@
         }
     }
 </script>
-
-<ImageEditor inputImage="defaultProfile.png" onImageSubmit={(u : string) => submitImage(u)} />
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">

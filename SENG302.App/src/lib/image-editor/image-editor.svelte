@@ -137,16 +137,16 @@
 
         const canvas: HTMLCanvasElement = document.getElementById(
             "editCanvas",
-        ) as HTMLCanvasElement; //document.createElement("canvas");
+        ) as HTMLCanvasElement;
 
         const ctx = canvas.getContext("2d");
 
         if (ctx) {
             document
                 .getElementById("submitButton")
-                ?.addEventListener("click", (e) => {
+                ?.addEventListener("click", async (e) => {
                     ctx.reset();
-                    stampImageOntoCTX(ctx);
+                    await stampImageOntoCTX(ctx);
                     const url = canvas.toDataURL('image/jpeg');
                     onImageSubmit(url);
                 });
@@ -187,11 +187,11 @@
     <canvas
         id="editCanvas"
         class="image-editor-image-parent"
-        style="height: {profileSize}px; width: {profileSize}px; background-color: red;"
+        style="height: {profileSize}px; width: {profileSize}px; display: none;"
         width='{profileSize}'
         height='{profileSize}'
     ></canvas>
-    <button id="submitButton">Submit</button>
+    <button id="submitButton" class="btn btn-primary w-15">Submit</button>
 </div>
 
 <style>
