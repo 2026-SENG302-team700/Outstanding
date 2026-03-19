@@ -6,7 +6,7 @@
 
     let loading = $state(false);
     let error = $state("");
-    let taskItem = null;
+    let taskItem = $state(null);
     let { params } = $props();
 
     onMount(() => {
@@ -74,7 +74,13 @@
             </div>
             <div class="mb-2">
                 <strong>Status:</strong>
-                {taskItem.currentStatus}
+                {#if taskItem.currentStatus === 0}
+                    TODO
+                {:else if taskItem.currentStatus === 1}
+                    In Progress
+                {:else}
+                    Done
+                {/if}
             </div>
             <div class="mb-2">
                 <strong>Created At:</strong>
