@@ -137,11 +137,10 @@ public class TaskService : ITaskService
     public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        Console.WriteLine(taskItem.DueDate.Date.ToString("dd/MM/yyyy"));
-       
+
         var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
         DateTime today = DateTime.Now;
-        if (taskItem.DueDate < today && taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001") 
+        if (taskItem.DueDate < today && taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001")
         {
             throw new ArgumentException("Invalid due date, date must be in the future");
         }
@@ -149,6 +148,11 @@ public class TaskService : ITaskService
         context.TaskLists.Where(u => u.Id == list.Id)
                          .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
         await context.SaveChangesAsync();
+
+        if (taskItem.Description == "")
+        {
+            taskItem.Description = "No Description";
+        }
         var newTask = new TaskItem()
         {
             TaskListId = taskItem.TaskListId,

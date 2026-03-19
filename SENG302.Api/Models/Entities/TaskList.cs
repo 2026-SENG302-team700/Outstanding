@@ -8,7 +8,6 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class TaskList
 {
-    [Key]
     public int Id { get; set; }
 
     [MaxLength(128)]

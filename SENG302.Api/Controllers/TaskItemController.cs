@@ -34,10 +34,10 @@ public class TaskItemController : ControllerBase
             return BadRequest("List not provided");
         }
         var taskList = await _taskService.GetTaskItemsByListAsync(listId);
+        Console.Write(taskList);
         return Ok(taskList);
     }
-
-
+    
     /// <summary>
     /// Given a task item request object, create a new task item and add it to the db
     /// Fails if: the task name is too short (characters) or long 128 (characters),
@@ -87,7 +87,5 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest(e);
         }
-
-
     }
 }

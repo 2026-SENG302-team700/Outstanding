@@ -58,7 +58,8 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
 
     [Theory]
     [InlineData("bob mcnugg", "testing", 2022, 04, 23, CurrentTaskStatus.Todo)]
-    public async Task CreateNewTaskItemAsync_InvalidDate_ThrowArgumentException(string name, string description, int year, int month, int day, CurrentTaskStatus currentStatus) {
+    public async Task CreateNewTaskItemAsync_InvalidDate_ThrowArgumentException(string name, string description, int year, int month, int day, CurrentTaskStatus currentStatus)
+    {
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User
@@ -69,14 +70,14 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
             Country = "The Atlantic",
         });
 
-        context.TaskLists.Add(new TaskList 
+        context.TaskLists.Add(new TaskList
         {
             Id = 3,
             Name = "Testlist",
             UserEmail = "fish@ocean.com"
 
         });
-        NewTaskItemRequest newTask = new NewTaskItemRequest 
+        NewTaskItemRequest newTask = new NewTaskItemRequest
         {
             TaskListId = 3,
             Name = name,
@@ -88,11 +89,11 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
         await Should.ThrowAsync<ArgumentException>(async () => await ServiceUnderTest.CreateNewTaskItemAsync(newTask));
     }
 
-        //generates a string 10 times the size of loop
+    //generates a string 10 times the size of loop
     private string generateString(int loops)
     {
         string value = "";
-        for (int i = 0; i <loops; i++)
+        for (int i = 0; i < loops; i++)
         {
             value += "aaaaaaaaaa";
         }
@@ -100,13 +101,14 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
     }
 
     [Theory]
-    [InlineData("bob", "",CurrentTaskStatus.Todo, 2027, 04, 23)]
+    [InlineData("bob", "", CurrentTaskStatus.Todo, 2027, 04, 23)]
     [InlineData(" ", "here is a lovely description!", CurrentTaskStatus.Todo, 6064, 04, 23)]
-    [InlineData("bob mcnugg", "",CurrentTaskStatus.Todo, 9998, 01, 31)]
-    [InlineData("meet angie @ the bar /w bob", " ",CurrentTaskStatus.Todo, 2027, 04, 23)]
-    [InlineData("meet angie @ the bar /w bob", " ",CurrentTaskStatus.Todo)]
-    [InlineData(" ", "",  CurrentTaskStatus.Todo)]
-    public async Task CreateNewTaskItemAsync_CreateTask_Success(string name, string description, CurrentTaskStatus currentStatus, int year = 0, int month = 0, int day = 0) {
+    [InlineData("bob mcnugg", "", CurrentTaskStatus.Todo, 9998, 01, 31)]
+    [InlineData("meet angie @ the bar /w bob", " ", CurrentTaskStatus.Todo, 2027, 04, 23)]
+    [InlineData("meet angie @ the bar /w bob", " ", CurrentTaskStatus.Todo)]
+    [InlineData(" ", "", CurrentTaskStatus.Todo)]
+    public async Task CreateNewTaskItemAsync_CreateTask_Success(string name, string description, CurrentTaskStatus currentStatus, int year = 0, int month = 0, int day = 0)
+    {
         await using var context = DbContextFactory.CreateDbContext();
 
         context.Users.Add(new User
@@ -116,7 +118,7 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
             PasswordKey = "averysecurepassword",
             Country = "The Atlantic",
         });
-        context.TaskLists.Add(new TaskList 
+        context.TaskLists.Add(new TaskList
         {
             Id = 3,
             Name = "Testlist",
@@ -125,16 +127,18 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
         if (description == " ")
         {
             description = generateString(200);
-        } 
-        else if (name == " ") {
+        }
+        else if (name == " ")
+        {
             name = generateString(10);
         }
         //sets due date to be zeroed out, but is changed to it's proper time if the year is not 0
-        var dueDate = new DateTime(0001,01,01);
-        if (year > 0) {
+        var dueDate = new DateTime(0001, 01, 01);
+        if (year > 0)
+        {
             dueDate = new DateTime(year, month, day);
-        } 
-        NewTaskItemRequest newTask = new NewTaskItemRequest 
+        }
+        NewTaskItemRequest newTask = new NewTaskItemRequest
         {
             TaskListId = 3,
             Name = name,
@@ -144,6 +148,13 @@ public class TaskServiceUnitTest : BaseUnitTestFixture
         };
         await context.SaveChangesAsync();
         var createdTask = await ServiceUnderTest.CreateNewTaskItemAsync(newTask);
-        createdTask.Description.ShouldBe(description);
+        if (description == "")
+        {
+            createdTask.Description.ShouldBe("No Description");
+        }
+        else
+        {
+            createdTask.Description.ShouldBe(description);
+        }
     }
 }
