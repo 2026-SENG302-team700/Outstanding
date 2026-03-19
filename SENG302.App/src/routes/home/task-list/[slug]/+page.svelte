@@ -4,7 +4,6 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
 
-    let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
     let listName = $state();
     let tasks = $state([]);
@@ -72,6 +71,14 @@
             loading = false;
         }
     }
+
+    /**
+     * formats the string based on the users locale
+     */
+    function formatDate(dateString: string) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString(); // automatically uses user's locale
+    }
 </script>
 
 <div class="container">
@@ -104,12 +111,28 @@
                 <thead style="position: sticky; top: 0;">
                     <tr>
                         <th>Name</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     {#each tasks as task}
                         <tr style="cursor: pointer; white-space: pre;">
-                            <td>{task.name}</td>
+                            <td class="text-truncate" style="max-width: 200px;"
+                                >{task.name}</td
+                            >
+                            <td class="text-truncate" style="max-width: 200px;"
+                                >{task.description}</td
+                            >
+                            {#if task.currentStatus === 0}
+                                <td>{"TODO"}</td>
+                            {:else if task.currentStatus === 1}
+                                <td>{"In Progress"}</td>
+                            {:else}
+                                <td>{"Done"}</td>
+                            {/if}
+                            <td>{formatDate(task.dueDate)}</td>
                         </tr>
                     {/each}
                 </tbody>
