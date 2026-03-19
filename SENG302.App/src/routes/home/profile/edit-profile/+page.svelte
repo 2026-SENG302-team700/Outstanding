@@ -7,11 +7,13 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
+    import ProfilePic from "$lib/profilepic/profilepic.svelte";
 
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
     let files: FileList | null = $state(null);
+    let pfpInput: HTMLInputElement;
 
     onMount(() => {
         retrieveUserData();
@@ -74,79 +76,103 @@
         }
     }
     
-    async function temporaryPutPFP() {
+    async function updatePfp() {
         if (!files || files.length === 0) return;
         
         try {
-            console.log(`File Selected: ${files[0]}`);
-
             const formData = new FormData();
             formData.append("file", files[0]);
-            
+
             const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
                 method: "PUT",
                 body: formData
-            })
+            });
+            
+            if (!response.ok) {
+                throw new Error("Failed to save profile picture.");
+            } else {
+                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const blob = await pfpResponse.blob();
+                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+            }
         } catch (err) {
             addToast((err as Error).message);
         }
     }
 </script>
 
-<div class="container">
-    <div class="mb-3">
-        <label for="pfp" class="form-label">upload pfp test</label>
-        <input accept="image/webp" 
-               bind:files
-               id="pfp"
-               name="pfp"
-               type="file"
-        />
-    </div>
+<div class="container d-flex flex-column flex-md-row">
+    <div class="d-flex flex-column align-items-center justify-content-center m-3">
+        <div class="position-relative d-inline-block">
+            <ProfilePic pfpUrl={$user.pfpUrl} size="xl" />
 
-    <button type="button" class="btn btn-primary" on:click={temporaryPutPFP}>trial pfp</button>
-
-    <form on:submit|preventDefault={updateUser}>
-        <div class="mb-3">
-            <label for="displayName" class="form-label">Display Name</label>
-            <input
-                type="text"
-                class="form-control"
-                bind:value={displayName}
-                id="displayName"
-            />
-        </div>
-        <div class="mb-3">
-            <label for="userEmail" class="form-label">Email</label>
-            <input
-                type="email"
-                class="form-control"
-                id="userEmail"
-                bind:value={email}
-            />
-        </div>
-        <div class="mb-3">
-            <label for="country" class="form-label">Country</label>
-            <select
-                class="form-control"
-                class:country-select={!country}
-                bind:value={country}
-                id="country"
+            <button
+                type="button"
+                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+                on:click={() => pfpInput.click()}
             >
-                {#each countries as country}
-                    <option value={country.code}>
-                        {country.name}
-                    </option>
-                {/each}
-            </select>
+                <i class="bi bi-pencil-square fs-2"></i>
+            </button>
+
+            <input
+                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                    bind:files
+                    bind:this={pfpInput}
+                    id="pfp"
+                    name="pfp"
+                    type="file"
+                    class="d-none"
+                    on:change={updatePfp}
+            />            
         </div>
-        <button type="submit" class="btn btn-primary">Update</button>
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => {
+    </div>
+    
+    <div class="flex-grow-1 m-3">
+        <form on:submit|preventDefault={updateUser}>
+            <div class="mb-3">
+                <label for="displayName" class="form-label">Display Name</label>
+                <input
+                        type="text"
+                        class="form-control"
+                        bind:value={displayName}
+                        id="displayName"
+                />
+            </div>
+            <div class="mb-3">
+                <label for="userEmail" class="form-label">Email</label>
+                <input
+                        type="email"
+                        class="form-control"
+                        id="userEmail"
+                        bind:value={email}
+                />
+            </div>
+            <div class="mb-3">
+                <label for="country" class="form-label">Country</label>
+                <select
+                        class="form-control"
+                        class:country-select={!country}
+                        bind:value={country}
+                        id="country"
+                >
+                    {#each countries as country}
+                        <option value={country.code}>
+                            {country.name}
+                        </option>
+                    {/each}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => {
                 goto(resolve("/home/profile"));
             }}>Cancel</button
-        >
-    </form>
+            >
+        </form>
+    </div>
 </div>

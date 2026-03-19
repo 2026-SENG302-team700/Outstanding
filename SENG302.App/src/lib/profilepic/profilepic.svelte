@@ -17,6 +17,7 @@
         .profile-image {
             object-fit: cover;
             border-radius: 50%;
+            aspect-ratio: 1 / 1;
         }
         .profile-image.small {
             width: 100%;
@@ -26,12 +27,21 @@
             width: 150px;
             height: 150px;
         }
+        .profile-image.xl {
+            width: 300px;
+            height: 300px;
+        }
         .icon.small {
             font-size: 40px;
             line-height: 1;
         }
         .icon.large {
             font-size: 150px;
+            line-height: 1;
+        }
+
+        .icon.xl {
+            font-size: 300px;
             line-height: 1;
         }
     </style>
