@@ -20,14 +20,7 @@ public class Program
             builder.Environment.EnvironmentName = Environments.Development;
         }
         Console.WriteLine($"*** CURRENT ENVIRONMENT: {builder.Environment.EnvironmentName} ***");
-        
-        foreach (var kvp in builder.Configuration.AsEnumerable()
-                     .Where(k => k.Key.StartsWith("EmailSettings")))
-        {
-            Console.WriteLine($"  {kvp.Key} = {kvp.Value}");
-        }
-        Console.WriteLine("==========================");
-        
+
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddOpenApi();
@@ -168,7 +161,7 @@ public class Program
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITaskService, TaskService>();
-        services.AddScoped<IEmailService2, EmailService2>();
+
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
     }
