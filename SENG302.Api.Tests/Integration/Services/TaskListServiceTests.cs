@@ -8,7 +8,7 @@ namespace SENG302.Api.Tests.Integration.Services;
 
 public class TaskServiceTests : BaseIntegrationTestFixture
 {
-    private ITaskService ServiceUnderTest => ServiceProvider.GetRequiredService<ITaskService>();
+    private ITaskListService ServiceUnderTest => ServiceProvider.GetRequiredService<ITaskListService>();
 
     public TaskServiceTests(WebApplicationFactory<Program> webAppFactory) : base(webAppFactory) { }
 

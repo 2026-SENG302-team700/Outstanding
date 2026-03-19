@@ -8,9 +8,9 @@ using Shouldly;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class TaskControllerTests : BaseIntegrationTestFixture
+public class TaskListControllerTests : BaseIntegrationTestFixture
 {
-    public TaskControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    public TaskListControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
 
     [Fact]
     public async Task CreateTaskList_SuccessfulCreation_ReturnOk()

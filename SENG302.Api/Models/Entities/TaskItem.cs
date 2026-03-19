@@ -21,6 +21,7 @@ public enum CurrentTaskStatus
 [PrimaryKey(nameof(TaskId), nameof(TaskListId))]
 public class TaskItem
 {
+    [Key]
     public int TaskId { get; init; }
     public required int TaskListId { get; set; }
     [MaxLength(128)]
