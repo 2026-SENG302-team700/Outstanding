@@ -132,7 +132,11 @@
                             {:else}
                                 <td>{"Done"}</td>
                             {/if}
-                            <td>{formatDate(task.dueDate)}</td>
+                            {#if task.dueDate === null}
+                                <td>No Due Date</td>
+                            {:else}
+                                <td>{formatDate(task.dueDate)}</td>
+                            {/if}
                         </tr>
                     {/each}
                 </tbody>

@@ -10,7 +10,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = "";
+    let taskDue = new Date("0001-01-01");
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -50,7 +50,8 @@
         // Check date validity
         let taskDueDate = new Date(taskDue).getTime();
         let now = new Date().getTime();
-        if (now > taskDueDate || taskDue === "") {
+        let nullDate = new Date("0001-01-01").getTime();
+        if (now > taskDueDate && taskDueDate != nullDate) {
             errors.dueDate = "Invalid due date, date must be in the future";
             valid = false;
         }
@@ -178,7 +179,7 @@
                 type="text"
                 class="form-control"
                 class:is-invalid={errors.description}
-                placeholder="Description (Optional)"
+                placeholder="Description"
                 bind:value={description}
                 disabled={loading}
             />

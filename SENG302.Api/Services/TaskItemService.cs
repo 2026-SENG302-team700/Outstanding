@@ -1,8 +1,8 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
-using System.ComponentModel;
+using Microsoft.VisualBasic;
+using System.Globalization;
 namespace SENG302.Api.Services;
 
 public interface ITaskItemService
@@ -55,10 +55,10 @@ public class TaskItemService : ITaskItemService
     /// </summary>
     /// <param name="dueDate"></param>
     /// <exception cref="ArgumentException"></exception>
-    public void ValidateTaskItemDueDate(DateTime dueDate)
+    public void ValidateTaskItemDueDate(DateTime? dueDate)
     {
         DateTime currentTime = DateTime.UtcNow;
-        if (currentTime > dueDate)
+        if (currentTime > dueDate && dueDate != null)
         {
             throw new ArgumentException("Invalid due date, date must be in the future");
         }
@@ -85,6 +85,7 @@ public class TaskItemService : ITaskItemService
 
         // Clean request
         taskItem.Name = taskItem.Name.Trim();
+        taskItem.DueDate = taskItem.DueDate == DateTime.MinValue ? null : taskItem.DueDate;
 
         // Validation
         ValidateTaskItemName(taskItem.Name);
@@ -92,10 +93,7 @@ public class TaskItemService : ITaskItemService
         ValidateTaskItemDueDate(taskItem.DueDate);
 
         // Set default descriptiom
-        if (taskItem.Description == "")
-        {
-            taskItem.Description = "No Description";
-        }
+        if (taskItem.Description == "") taskItem.Description = "No Description";
 
         // Add task item
         var newTask = new TaskItem()
