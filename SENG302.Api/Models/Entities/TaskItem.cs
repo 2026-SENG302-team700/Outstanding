@@ -29,4 +29,5 @@ public class TaskItem
     public required string Description { get; set; } //constructor gives Description the value "No Description." if nothing was entered
     public DateTime? DueDate { get; set; }
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
+    public DateTime creationTime { get; set; }
 }

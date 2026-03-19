@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
-using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -64,4 +62,19 @@ public class TaskItemController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+
+    [HttpGet("item/{id:int}")]
+    public async Task<ActionResult<TaskItem>> GetTaskItem(int id)
+    {
+        try
+        {
+            var response = await _taskItemService.GetTaskItemAsync(id);
+            return Ok(response);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
 }

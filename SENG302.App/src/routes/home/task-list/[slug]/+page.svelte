@@ -118,7 +118,13 @@
                 </thead>
                 <tbody>
                     {#each tasks as task}
-                        <tr style="cursor: pointer; white-space: pre;">
+                        <tr
+                            on:click={() =>
+                                goto(
+                                    `/home/task-list/${params.slug}/task/${task.taskId}`,
+                                )}
+                            style="cursor: pointer; white-space: pre;"
+                        >
                             <td class="text-truncate" style="max-width: 200px;"
                                 >{task.name}</td
                             >

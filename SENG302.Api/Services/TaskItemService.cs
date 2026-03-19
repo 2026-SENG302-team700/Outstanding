@@ -9,6 +9,7 @@ public interface ITaskItemService
 {
     Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
     Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
+    Task<TaskItem?> GetTaskItemAsync(int id);
 }
 
 
@@ -102,7 +103,8 @@ public class TaskItemService : ITaskItemService
             Name = taskItem.Name,
             Description = taskItem.Description,
             CurrentStatus = taskItem.CurrentStatus,
-            DueDate = taskItem.DueDate
+            DueDate = taskItem.DueDate,
+            creationTime = DateTime.UtcNow
         };
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
@@ -120,6 +122,13 @@ public class TaskItemService : ITaskItemService
         var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
 
         return taskItems;
+    }
+
+    public async Task<TaskItem?> GetTaskItemAsync(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.TaskId == id);
+        return taskItem;
     }
 
 }
