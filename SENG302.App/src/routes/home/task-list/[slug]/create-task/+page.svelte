@@ -10,7 +10,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = new Date("0001-01-01"); //used to represent no date
+    let taskDue = "";
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -49,9 +49,8 @@
         }
         // Check date validity
         let taskDueDate = new Date(taskDue).getTime();
-        let date = new Date().getTime();
-        let nullDate = new Date("0001-01-01").getTime();
-        if (date > taskDueDate && taskDueDate != nullDate) {
+        let now = new Date().getTime();
+        if (now > taskDueDate || taskDue === "") {
             errors.dueDate = "Invalid due date, date must be in the future";
             valid = false;
         }
@@ -87,13 +86,15 @@
                 },
             );
 
-            const data = await response.json().catch(() => null);
-
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                addToast(data?.message || "An error occured.", "error");
+
+                addToast(
+                    (await response.text()) || "An error occured.",
+                    "error",
+                );
                 return;
             }
 
@@ -196,14 +197,14 @@
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                 >
+                    {#if taskStatus == 0}
+                        Todo
+                    {/if}
                     {#if taskStatus == 1}
-                        Doing
+                        In Progress
                     {/if}
                     {#if taskStatus == 2}
                         Done
-                    {/if}
-                    {#if taskStatus == 0}
-                        Todo
                     {/if}
                 </button>
                 <ul class="dropdown-menu">
@@ -216,7 +217,7 @@
                     <li>
                         <a
                             class="dropdown-item"
-                            on:click={() => (taskStatus = 1)}>Doing</a
+                            on:click={() => (taskStatus = 1)}>In Progress</a
                         >
                     </li>
                     <li>

@@ -2,6 +2,7 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 namespace SENG302.Api.Services;
 
 public interface ITaskItemService
@@ -23,6 +24,47 @@ public class TaskItemService : ITaskItemService
     }
 
     /// <summary>
+    /// Checks the task item name is valid, returns nothing if valid
+    /// but throws error if invalid
+    /// </summary>
+    /// <param name="name">The name being tested</param>
+    /// <exception cref="InvalidLengthException"></exception>
+    public void ValidateTaskItemName(string name)
+    {
+        if (name.Length < 3 || name.Length > 128)
+        {
+            throw new InvalidLengthException("Title is required and must be between 3 and 128 characters long");
+        }
+    }
+
+    /// <summary>
+    /// Checks the description is valid 
+    /// </summary>
+    /// <param name="description">The description being tested</param>
+    /// <exception cref="InvalidLengthException"></exception>
+    public void ValidateTaskItemDescription(string description)
+    {
+        if (description.Length > 2048)
+        {
+            throw new InvalidLengthException("Description must be 2048 characters or less");
+        }
+    }
+
+    /// <summary>
+    /// Checks the due date is valid
+    /// </summary>
+    /// <param name="dueDate"></param>
+    /// <exception cref="ArgumentException"></exception>
+    public void ValidateTaskItemDueDate(DateTime dueDate)
+    {
+        DateTime currentTime = DateTime.UtcNow;
+        if (currentTime > dueDate)
+        {
+            throw new ArgumentException("Invalid due date, date must be in the future");
+        }
+    }
+
+    /// <summary>
     /// Adds a new task to the task list given owned by the given user. All parameters
     /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
     /// The name of the task must be between 3 and 128 characters, and the description
@@ -41,16 +83,21 @@ public class TaskItemService : ITaskItemService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        DateTime creationTime = DateTime.Now;
-        if (taskItem.DueDate < creationTime)
-        {
-            throw new ArgumentException("Invalid due date, date must be in the future");
-        }
+        // Clean request
+        taskItem.Name = taskItem.Name.Trim();
 
+        // Validation
+        ValidateTaskItemName(taskItem.Name);
+        ValidateTaskItemDescription(taskItem.Description);
+        ValidateTaskItemDueDate(taskItem.DueDate);
+
+        // Set default descriptiom
         if (taskItem.Description == "")
         {
             taskItem.Description = "No Description";
         }
+
+        // Add task item
         var newTask = new TaskItem()
         {
             TaskListId = taskItem.TaskListId,

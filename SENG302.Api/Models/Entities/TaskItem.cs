@@ -18,7 +18,6 @@ public enum CurrentTaskStatus
 /// and should not be set after the case, so therefore it does not 
 /// have a setter (and therefore, it cannot be set as required).
 /// </summary>
-[PrimaryKey(nameof(TaskId), nameof(TaskListId))]
 public class TaskItem
 {
     [Key]

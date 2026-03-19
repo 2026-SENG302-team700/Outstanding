@@ -52,12 +52,16 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
-            return Ok("Task created successfully");
+            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
+            return Ok(response);
         }
-        catch (Exception)
+        catch (InvalidLengthException e)
         {
-            return BadRequest();
+            return BadRequest(e.Message);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
         }
     }
 }

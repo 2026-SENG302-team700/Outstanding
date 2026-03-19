@@ -70,13 +70,13 @@ public class UserService : IUserService
     /// Runs all display name validations and throws relavent exceptions
     /// </summary>
     /// <param name="displayName"></param>
-    /// <exception cref="InvalidDisplayNameLengthException"></exception>
+    /// <exception cref="InvalidLengthException"></exception>
     /// <exception cref="InvalidDisplayNameCharsException"></exception>
     public void ValidateDisplayName(string displayName)
     {
         if (DisplayNameLength(displayName))
         {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+            throw new InvalidLengthException("Display name must be between 3 and 64 characters");
         }
 
         if (!DisplayNameChars(displayName))

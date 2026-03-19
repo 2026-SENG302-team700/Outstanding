@@ -13,13 +13,13 @@ public class DuplicateEmailException : Exception
 /// <summary>
 /// Exception to throw when the display name has an invalid name length.
 /// </summary>
-public class InvalidDisplayNameLengthException : Exception
+public class InvalidLengthException : Exception
 {
-    public InvalidDisplayNameLengthException() { }
+    public InvalidLengthException() { }
 
-    public InvalidDisplayNameLengthException(string message) : base(message) { }
+    public InvalidLengthException(string message) : base(message) { }
 
-    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
+    public InvalidLengthException(string message, Exception inner) : base(message, inner) { }
 }
 
 /// <summary>
