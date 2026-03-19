@@ -34,7 +34,6 @@ public class TaskItemController : ControllerBase
             return BadRequest("List not provided");
         }
         var taskList = await _taskService.GetTaskItemsByListAsync(listId);
-        Console.Write(taskList);
         return Ok(taskList);
     }
     
