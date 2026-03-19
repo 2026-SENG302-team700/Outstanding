@@ -50,6 +50,21 @@ public class TaskItemServiceTests
         Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemName(name));
     }
 
+    [Fact]
+    public void ValidateDescription_longDescription_ThrowError()
+    {
+        Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemDescription(new string('a', 2049)));
+    }
 
+    [Fact]
+    public void ValidateDueDate_FutureDate_NoError()
+    {
+        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1)))); // One day in the future
+    }
 
+    [Fact]
+    public void ValidateDueDate_PastDate_ThrowError()
+    {
+        Should.Throw<ArgumentException>(() => ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)))); // One day in the future
+    }
 }
