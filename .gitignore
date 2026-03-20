@@ -29,3 +29,6 @@ SENG302.App/build
 
 # .env file
 .env
+
+# User Uploads File
+/UserUploads
