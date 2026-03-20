@@ -59,7 +59,7 @@ public class TaskItemService : ITaskItemService
     public void ValidateTaskItemDueDate(DateTime? dueDate)
     {
         DateTime currentTime = DateTime.UtcNow;
-        if (currentTime > dueDate && dueDate != null)
+        if (dueDate != null && currentTime > dueDate)
         {
             throw new ArgumentException("Invalid due date, date must be in the future");
         }

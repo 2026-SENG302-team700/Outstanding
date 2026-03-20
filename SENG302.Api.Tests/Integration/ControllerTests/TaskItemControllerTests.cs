@@ -40,7 +40,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             taskListId = 1,
             name = "name",
             description = "test",
-            dueDate = "2030-01-01",
+            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
             currentTaskStatus = 0
         });
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -120,9 +120,8 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         taskItem!.Description.ShouldBe("No Description");
     }
 
-    [Theory]
-    [InlineData("2000-01-01")] // due date in the past
-    public async Task CreateTaskItem_InvalidDate_BadRequest(string date)
+    [Fact]
+    public async Task CreateTaskItem_PastDate_BadRequest()
     {
         // Create DB
         await using var context = DbContextFactory.CreateDbContext();
@@ -148,7 +147,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
             taskListId = 1,
             name = "test name",
             description = "test",
-            dueDate = date,
+            dueDate = "2000-01-01",
             currentTaskStatus = 0
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

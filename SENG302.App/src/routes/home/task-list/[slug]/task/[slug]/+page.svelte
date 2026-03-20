@@ -13,6 +13,10 @@
         fetchTaskItem();
     });
 
+    /**
+     * Fetches the task item in order
+     * to display the information
+     */
     async function fetchTaskItem() {
         try {
             loading = true;

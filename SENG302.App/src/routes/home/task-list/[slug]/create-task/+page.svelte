@@ -163,7 +163,7 @@
                 type="text"
                 class="form-control"
                 class:is-invalid={errors.name}
-                placeholder="Name *"
+                placeholder="Title *"
                 bind:value={name}
                 disabled={loading}
             />
@@ -190,7 +190,8 @@
             {/if}
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3 d-flex align-items-center gap-2">
+            <label class="form-label mb-0">Status:</label>
             <div class="dropdown">
                 <button
                     type="button"
@@ -234,24 +235,23 @@
             {/if}
         </div>
 
-        <div class="mb-3">
-            <div class="row">
-                <p class="due-text">Due Date</p>
-                <input
-                    type="date"
-                    class="form-control"
-                    class:is-invalid={errors.dueDate}
-                    placeholder="Due Date"
-                    bind:value={taskDue}
-                    disabled={loading}
-                />
-                {#if errors.dueDate}
-                    <div class="invalid-feedback">
-                        {errors.dueDate}
-                    </div>
-                {/if}
-            </div>
+        <div class="mb-3 d-flex align-items-center gap-2">
+            <label class="form-label mb-0">Due Date:</label>
+
+            <input
+                type="date"
+                class="form-control w-auto"
+                class:is-invalid={errors.dueDate}
+                bind:value={taskDue}
+                disabled={loading}
+            />
         </div>
+
+        {#if errors.dueDate}
+            <div class="invalid-feedback d-block">
+                {errors.dueDate}
+            </div>
+        {/if}
         <div>
             <button
                 type="submit"

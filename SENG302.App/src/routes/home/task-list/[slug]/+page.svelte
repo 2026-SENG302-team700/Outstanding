@@ -14,7 +14,7 @@
         GetList();
         GetTasks();
     });
-    
+
     /// <Summary>
     /// Fetches tasks of the certain task list from the backend
     /// and stores them in the frontend as an array of objects
@@ -36,6 +36,7 @@
                 error = data;
                 return;
             }
+            tasks = data;
         } catch (err) {
             error = "Failed to get tasks: " + (err as Error).message;
         } finally {

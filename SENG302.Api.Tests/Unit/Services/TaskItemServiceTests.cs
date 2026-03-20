@@ -37,7 +37,7 @@ public class TaskItemServiceTests
     [Theory]
     [InlineData("Test")] // basic test
     [InlineData("Tēst")] // macron
-    public void validateName_validName_returnsNothing(string name)
+    public void ValidateName_ValidName_ReturnsNothing(string name)
     {
         Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemName(name));
     }
@@ -51,7 +51,7 @@ public class TaskItemServiceTests
     }
 
     [Fact]
-    public void ValidateDescription_longDescription_ThrowError()
+    public void ValidateDescription_LongDescription_ThrowError()
     {
         Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemDescription(new string('a', 2049)));
     }

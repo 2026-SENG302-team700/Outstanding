@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Newtonsoft.Json;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
@@ -118,13 +117,12 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         {
             Name = "Test Task List",
         };
-        var message = await HttpClient.PostAsJsonAsync("/api/taskList", data);
-        //message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure task list creation was successful
+        var response = await HttpClient.PostAsJsonAsync("/api/taskList", data);
 
         // Fetch task lists for the user
-        message = await HttpClient.GetAsync("/api/taskList");
-        message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
-        TaskList[] taskLists = JsonConvert.DeserializeObject<TaskList[]>(await message.Content.ReadAsStringAsync())!;
+        response = await HttpClient.GetAsync("/api/taskList");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
+        TaskList[] taskLists = await response.Content.ReadFromJsonAsync<TaskList[]>() ?? Array.Empty<TaskList>();
         taskLists.Length.ShouldBe(1);
     }
 }
