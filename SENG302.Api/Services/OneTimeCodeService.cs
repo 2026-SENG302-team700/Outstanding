@@ -2,27 +2,32 @@
 using System.Security.Cryptography;
 using SENG302.Api.DataAccess;
 using Microsoft.EntityFrameworkCore;
-// using System.Timers.Timer;
+using Microsoft.Extensions.Caching.Memory;
+using Timer = System.Timers.Timer;
+
 
 namespace SENG302.Api.Services;
 
 public interface IOneTimeCodeService
 {
     public int generateOneTimeCode();
+    public TimeSpan getTimerStartTime();
 }
 
 public class OneTimeCodeService : IOneTimeCodeService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly MemoryCache _memoryCache;
 
     private static Timer timer;
-    
     
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+        
+
     }
 
     public int generateOneTimeCode()
@@ -35,12 +40,21 @@ public class OneTimeCodeService : IOneTimeCodeService
         // Convert to 6 digits and pads with zeroes if necessary
         string paddedInt = Math.Abs(value % 1000000).ToString("D6");
         int oneTimeCode = int.Parse(paddedInt);
+        
+        
 
         return oneTimeCode;
     }
 
-    // public startCodeTimer()
-    // {
-    //     
-    // }
+    public void cacheCode(int code)
+    {
+        
+    }
+
+    public TimeSpan getTimerStartTime()
+    {
+        DateTimeOffset currentTime = _timeProvider.GetUtcNow();
+        // TimeOfDay is time component of DateTimeOffset, which is relative to UTC
+        return currentTime.TimeOfDay;
+    }
 }
