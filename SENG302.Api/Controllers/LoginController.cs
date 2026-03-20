@@ -29,7 +29,7 @@ public class LoginController : ControllerBase
     /// <returns>a Task<ActionResult<User></returns>
     [HttpPost]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
-    {
+    {   
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
             userCredentials.Email,

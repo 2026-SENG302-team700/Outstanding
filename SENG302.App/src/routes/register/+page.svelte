@@ -6,7 +6,6 @@
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
-    let user = $state(null);
     let email = $state("");
     let displayName = $state("");
     let selectedCountryCode = $state("");
@@ -65,6 +64,11 @@
             valid = false;
         }
 
+        if (displayName.trim() == '') {
+            errors.displayName = "Display name cannot be made entirely of spaces."
+            valid = false;
+        }
+
         // Check for empty fields
         if (!email) {
             errors.email = "Email is required.";
@@ -118,7 +122,12 @@
                 "Display name must be between 3 and 64 characters.";
             valid = false;
         }
-
+        
+        // clears password fields if the data is not valid
+        if (!valid) {
+            password = "";
+            passwordConfirm = "";
+        }
         return valid;
     }
     /**
@@ -141,19 +150,20 @@
                     email,
                     displayName,
                     passwordString: password,
-                    passwordConfirm: password,
+                    passwordConfirm: passwordConfirm,
                     country: selectedCountryCode,
                 }),
             });
 
             const data = await response.json().catch(() => null);
 
-            console.log(data);
-
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
+
+                password = "";
+                passwordConfirm = "";
 
                 switch (data.errorType) {
                     // check for duplicate email, throws regular error rather than "something went wrong"
