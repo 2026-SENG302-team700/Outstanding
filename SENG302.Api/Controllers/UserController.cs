@@ -67,8 +67,7 @@ public class UserController : ControllerBase
             userId, 
             updateUserRequest.Email, 
             updateUserRequest.DisplayName, 
-            updateUserRequest.Country,
-            oldUser.ProfilePicture);
+            updateUserRequest.Country);
         // Re login user to update claims
         var claims = new List<Claim>
         {

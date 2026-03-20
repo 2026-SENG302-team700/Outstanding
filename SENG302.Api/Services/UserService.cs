@@ -15,7 +15,7 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
-    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, int pfpId);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
 
@@ -484,8 +484,8 @@ public class UserService : IUserService
     public async Task<User?> UpdateUser(int userId, 
         string newEmail, 
         string newDisplayName, 
-        string newCountry, 
-        int pfpId)
+        string newCountry
+        )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -496,7 +496,9 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
-
+        
+        
+        
         context.Users.Update(user);
         await context.SaveChangesAsync();
         return user;
