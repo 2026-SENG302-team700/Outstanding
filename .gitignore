@@ -27,5 +27,5 @@ SENG302.App/build
 # Allow the specific one in the template directory
 !/SENG302.App/package-lock.json
 
-# .env file
-.env
+# local environment variables
+SENG302.Api/appsettings.Local.json
