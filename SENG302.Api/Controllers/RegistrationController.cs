@@ -13,21 +13,22 @@ namespace SENG302.Api.Controllers;
 public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IOneTimeCodeService _oneTimeCodeService;
 
-    public RegistrationController(IUserService userService)
+    public RegistrationController(IUserService userService, IOneTimeCodeService oneTimeCodeService)
     {
         _userService = userService;
+        _oneTimeCodeService = oneTimeCodeService;
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<User>> getUser(int id)
+    public async Task<ActionResult<User>> GetUser(int id)
     {
-        /*
         var user = await _userService.GetUserByIdAsync(id);
         if (user == null)
         {
             return NotFound();
-        } */
+        } 
         return Ok();
     }
 
@@ -74,5 +75,31 @@ public class RegistrationController : ControllerBase
             message = "Registration successful. Please log in."
         });
     }
+    
+    [HttpGet("/code/generation")]
+    public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
+    {
+        if (string.IsNullOrWhiteSpace(codeRequest.Email))
+        {
+            return BadRequest(new { message = "User email is missing", });
+        }
+        
+        int? id = await _userService.GetUserIdFromEmailAsync(codeRequest.Email);
+
+        if (id == null)
+        {
+            return NotFound();
+        }
+        
+        string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
+        int timerStartTime = _oneTimeCodeService.GetEpochTime();
+
+        if (oneTimeCode.Length != 6) return Problem();
+
+        User user = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime);
+        
+        return Ok(timerStartTime);
+    }
+    
 }
 

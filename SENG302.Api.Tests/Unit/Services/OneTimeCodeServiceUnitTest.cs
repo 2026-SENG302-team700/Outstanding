@@ -18,10 +18,9 @@ public class OneTimeCodeServiceUnitTest : BaseUnitTestFixture
     [Fact]
     public void GetServerTime_ValidCall_ExpectUTCTime()
     {
-        TimeSpan curTime = OneTimeCodeServiceTest.getTimerStartTime();
+        int curTime = OneTimeCodeServiceTest.GetEpochTime();
         
-        Console.WriteLine(curTime);
-        Assert.NotNull(curTime);
+        Assert.True(curTime > 0);
         
     }
 

@@ -19,5 +19,10 @@ public class User
 
     public required string Country { get; set; }
 
+    [StringLength(6)]
+    public string OneTimeCode { get; set; } = String.Empty;
+    
+    public int CodeGenerationTime { get; set; }
+
     public DateTimeOffset TimeCreated { get; set; }
 }

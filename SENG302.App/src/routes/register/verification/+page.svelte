@@ -15,15 +15,14 @@
     let errorMessage = $state("")
     let visible = $state(false);
     
-    function sendCode() {
-        return null;
-    }
+    let digit1 = $state("");
+    let digit2 = $state("");
+    let digit3 = $state("");
+    let digit4 = $state("");
+    let digit5 = $state("");
+    let digit6 = $state("");
     
-    function formatTime(seconds: number) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-    }
+    let serverStartTime;
 
     onMount(() => {
         intervalId = setInterval(() => {
@@ -38,6 +37,97 @@
             }
         }, 1000)
     })
+
+    function formatTime(seconds: number) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    
+    function inputValidation() {
+        
+        if (digit1.length === 0 ||
+            digit2.length === 0 ||
+            digit3.length === 0 ||
+            digit4.length === 0 ||
+            digit5.length === 0 ||
+            digit6.length === 0) {
+            errorMessage = "Digits are missing";
+            visible = true;
+            return false;
+        }
+        
+        const regex = /^\d{1}$/;
+        
+        if (!(regex.test(digit1) &&
+              regex.test(digit2) && 
+              regex.test(digit3) && 
+              regex.test(digit4) && 
+              regex.test(digit5) && 
+              regex.test(digit6)) {
+            errorMessage = "You must enter digits";
+            visible = true;
+            return false;
+        }) 
+            
+        return true;
+    }
+
+    async function sendCode() {
+        
+        try {
+            loading = true;
+
+            const response = await fetchWithCsrf(resolve(`/api/register/code/generate`), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: email,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                visible = true;
+                errorMessage = "Server start time was not received. Internal Server error";
+                return;
+            }
+        } catch (err e) {
+            errorMessage = e
+            visible = true;
+        } 
+    }
+
+    function checkCode() {
+        try {
+            loading = true;
+
+            const response = await fetchWithCsrf(resolve(`/api/register/code/validate`), {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: email,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                visible = true;
+                errorMessage = "Server start time was not received. Internal Server error";
+                return;
+            }
+        } catch (err e) {
+            errorMessage = e
+            visible = true;
+        }
+    }
+    
 
 </script>
 
@@ -54,14 +144,14 @@
                     {/if}
                 <p class="text-danger">{errorMessage}</p>
                 <div id="code-input" class="input-group">
-                    <input type="text" class="form-control text-center" maxlength="1">
-                    <input type="text" class="form-control text-center" maxlength="1">
-                    <input type="text" class="form-control text-center" maxlength="1">
-                    <input type="text" class="form-control text-center" maxlength="1">
-                    <input type="text" class="form-control text-center" maxlength="1">
-                    <input type="text" class="form-control text-center" maxlength="1">
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
                 </div>
-                <button style="margin-top: 10px" class="btn btn-primary w-100">Confirm registration</button>
+                <button style="margin-top: 10px" class="btn btn-primary w-100" on:click={checkCode}>Confirm registration</button>
             </div>
         </div>
            

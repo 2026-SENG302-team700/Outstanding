@@ -10,8 +10,8 @@ namespace SENG302.Api.Services;
 
 public interface IOneTimeCodeService
 {
-    public int generateOneTimeCode();
-    public TimeSpan getTimerStartTime();
+    public string GenerateOneTimeCode();
+    public int GetEpochTime();
 }
 
 public class OneTimeCodeService : IOneTimeCodeService
@@ -30,7 +30,11 @@ public class OneTimeCodeService : IOneTimeCodeService
 
     }
 
-    public int generateOneTimeCode()
+    /// <summary>
+    /// Generates a six digit one time code to be used
+    /// </summary>
+    /// <returns></returns>
+    public string GenerateOneTimeCode()
     {
         byte[] bytes = new byte[4];
         // Modifies array of bytes with random crytographically secure bytes
@@ -38,23 +42,22 @@ public class OneTimeCodeService : IOneTimeCodeService
 
         int value = BitConverter.ToInt32(bytes, 0);
         // Convert to 6 digits and pads with zeroes if necessary
-        string paddedInt = Math.Abs(value % 1000000).ToString("D6");
-        int oneTimeCode = int.Parse(paddedInt);
-        
-        
+        string sixDigitCode = Math.Abs(value % 1000000).ToString("D6");
 
-        return oneTimeCode;
+        return sixDigitCode;
     }
 
-    public void cacheCode(int code)
-    {
-        
-    }
-
-    public TimeSpan getTimerStartTime()
+    /// <summary>
+    /// Returns the Unix time or Epoch time of the server which is the number of seconds passed since Jan 1st 1970 midnight
+    /// </summary>
+    /// <returns>int representing amount of seconds since Jan 1st 1970</returns>
+    public int GetEpochTime()
     {
         DateTimeOffset currentTime = _timeProvider.GetUtcNow();
-        // TimeOfDay is time component of DateTimeOffset, which is relative to UTC
-        return currentTime.TimeOfDay;
+        TimeSpan currentEpochTime = currentTime - DateTimeOffset.UnixEpoch;
+        int epochTimeSeconds = (int)currentEpochTime.TotalSeconds;
+        
+        // currentEpochTime
+        return epochTimeSeconds;
     }
 }

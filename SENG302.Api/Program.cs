@@ -3,8 +3,6 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace SENG302.Api;
 
@@ -26,7 +24,7 @@ public class Program
             builder.Services.AddOpenApi();
         }
 
-        // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
+        // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
         // Add authorization service
@@ -37,8 +35,7 @@ public class Program
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         builder.Services.AddHttpContextAccessor();
-
-        builder.Services.AddMemoryCache();
+        
 
         // Register custom services
         RegisterServices(builder.Services);

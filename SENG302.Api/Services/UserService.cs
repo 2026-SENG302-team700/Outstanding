@@ -18,6 +18,7 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime);
 }
 
 public enum UserVerificationResult
@@ -93,6 +94,7 @@ public class InvalidPasswordException : Exception
     public InvalidPasswordException(string message) : base(message) { }
 
     public InvalidPasswordException(string message, Exception inner) : base(message, inner) { }
+    
 }
 
 /// <summary>
@@ -117,6 +119,15 @@ public class InvalidCountryException : Exception
     public InvalidCountryException(string message) : base(message) { }
 
     public InvalidCountryException(string message, Exception inner) : base(message, inner) { }
+}
+
+public class InvalidCodeException : Exception
+{
+    public InvalidCodeException() { }
+
+    public InvalidCodeException(string message) : base(message) { }
+
+    public InvalidCodeException(string message, Exception inner) : base(message, inner) { }
 }
 
 public class UserService : IUserService
@@ -490,7 +501,6 @@ public class UserService : IUserService
                 userVerificationResult = UserVerificationResult.DoesNotExist,
                 user = null
             };
-
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
@@ -541,6 +551,20 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        User? user = await GetUserByIdAsync((int)id);
+
+        user.OneTimeCode = oneTimeCode;
+        user.CodeGenerationTime = epochTime;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
