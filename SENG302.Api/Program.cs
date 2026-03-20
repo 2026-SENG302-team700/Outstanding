@@ -84,7 +84,14 @@ public class Program
                 });
             });
         }
-
+        
+        // add the custom environment file
+        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+        
+        // bind it in email service
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https

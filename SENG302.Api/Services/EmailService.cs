@@ -1,9 +1,13 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace SENG302.Api.Services;
 
+/**
+ * All the different email templates
+ */
 public enum EmailTemplate
 {
     VerifyEmailCode,
@@ -21,14 +25,13 @@ public interface IEmailService
 
 public class EmailService : IEmailService
 {
-    private readonly string noReplyEmail = "noreply.outstanding@gmail.com";
     private readonly EmailSettings _settings;
-
-    public EmailService(EmailSettings settings)
+    
+    public EmailService(IOptions<EmailSettings> options)
     {
-        _settings = settings;
+        _settings = options.Value;
     }
-
+    
     /// <summary>
     /// This method is a demo spike method to test and show sending emails works
     /// </summary>
@@ -39,10 +42,10 @@ public class EmailService : IEmailService
     public async Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model)
     {
         var (subject, htmlBody) = await RenderAsync(template, model);
-    
+        
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Sender", noReplyEmail));
-        message.To.Add(new MailboxAddress("Receiver", toEmail));
+        message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
+        message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
         message.Subject = subject;
 
         message.Body = new BodyBuilder
@@ -55,7 +58,7 @@ public class EmailService : IEmailService
         
         await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
         Console.WriteLine("connected");
-        await client.AuthenticateAsync(noReplyEmail, _settings.Password);
+        await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
         Console.WriteLine("authenticated");
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
@@ -120,11 +123,10 @@ public class EmailService : IEmailService
         System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", string.Empty);
 }
 
-public sealed class EmailSettings
+public class EmailSettings
 {
-    public string Host { get; set; } = "smtp.gmail.com";
+    public string Host { get; set; } = "";
     public int Port { get; set; } = 587;
-
-    public string? Password { get; set; } = "";
-    public string FromName { get; set; } = "Outstanding";
+    public string FromEmail { get; set; } = "";
+    public string Password { get; set; } = "";
 }
