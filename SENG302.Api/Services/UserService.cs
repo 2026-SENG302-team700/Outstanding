@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using SQLitePCL;
 
 namespace SENG302.Api.Services;
 
@@ -201,13 +199,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameChars(string displayName)
     {
-        // regex below allow a-z, A-Z, - and ' -- 
-        var validCharsRegex = new Regex(
-            @"^[\p{L} '-]+$",
-            RegexOptions.None, // Regex Options, can ignore, 
-            TimeSpan.FromSeconds(2) // TimeSpan until regex times out
-            );
-        return validCharsRegex.IsMatch(displayName);
+        return ValidationPatterns.UserDisplayName.IsMatch(displayName);
     }
 
     /// <summary>
@@ -251,12 +243,7 @@ public class UserService : IUserService
 
         try
         {
-            return Regex.IsMatch(email,
-                @"^(?=.{5,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+ 
-                          (\.[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+)*
-                           @(?=.{3,255}$)([A-Za-z0-9]+[-]*)+
-                           (\.([-]*[A-Za-z0-9]+)+)+$",
-                RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace, TimeSpan.FromMilliseconds(250));
+            return ValidationPatterns.UserEmail.IsMatch(email);
         }
         catch (RegexMatchTimeoutException)
         {
@@ -274,41 +261,7 @@ public class UserService : IUserService
     /// </returns>
     private bool CheckPassword(string password)
     {
-        var lowerCharRegex = new Regex(
-            @"[a-z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var upperCharRegex = new Regex(
-            @"[A-Z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var numCharRegex = new Regex(
-            @"[0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var specialCharRegex = new Regex(
-            @"[^a-zA-Z0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        if (
-            (password.Length < 8) ||
-            (!lowerCharRegex.IsMatch(password)) ||
-            (!upperCharRegex.IsMatch(password)) ||
-            (!numCharRegex.IsMatch(password)) ||
-            (!specialCharRegex.IsMatch(password))
-            )
-        {
-            return false;
-        }
-        return true;
+        return ValidationPatterns.UserPassword.IsMatch(password);
     }
 
     /// <summary>

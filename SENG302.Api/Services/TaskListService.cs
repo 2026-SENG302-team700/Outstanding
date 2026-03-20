@@ -58,7 +58,7 @@ public class TaskListService : ITaskListService
             throw new ArgumentException("List name is required and must be between 3 and 128 characters long");
         }
         // Validate name characters (only allow letters, numbers, spaces, hyphens, and apostrophes)
-        if (!Regex.IsMatch(name, @"^[\p{L}0-9\s'-]+$"))
+        if (!ValidationPatterns.TaskListName.IsMatch(name))
         {
             throw new ArgumentException("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
         }
