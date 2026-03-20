@@ -27,4 +27,10 @@
     <ProjectReference Include="..\SENG302.Shared\SENG302.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+  <Content Include="Resources\EmailTemplates\*.html">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </Content>
+</ItemGroup>
+
 </Project>
