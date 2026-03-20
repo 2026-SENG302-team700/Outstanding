@@ -68,7 +68,7 @@
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
-                user.set(updatedUser);
+                user.update(u => ({...u, displayName: updatedUser.displayName}));
                 goto(resolve("/home"));
             }
         } catch (err) {

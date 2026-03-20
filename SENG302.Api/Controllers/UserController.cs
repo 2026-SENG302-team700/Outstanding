@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.HttpResults;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers;
@@ -55,11 +56,19 @@ public class UserController : ControllerBase
     [HttpPut]
     public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
-
-        var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
+        
+        var userId = int.Parse(userIdString);
+        var oldUser = await _userService.GetUserByIdAsync(userId);
+        
+        var user = await _userService.UpdateUser(
+            userId, 
+            updateUserRequest.Email, 
+            updateUserRequest.DisplayName, 
+            updateUserRequest.Country,
+            oldUser.ProfilePicture);
         // Re login user to update claims
         var claims = new List<Claim>
         {
@@ -105,6 +114,12 @@ public class UserController : ControllerBase
 
         var userId = int.Parse(userIdString);
         var user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound("User not found.");
+        }
+        
         var userPfpId = user.ProfilePicture;
 
         if (userPfpId != 0)
