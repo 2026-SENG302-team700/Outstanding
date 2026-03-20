@@ -10,22 +10,23 @@ public interface IFileService
     Task<CustomFile> GetFileByIdAsync(int id);
     Task DeleteFileAsync(string fileKey);
     Task<Byte[]> GetFileContentAsync(string fileKey);
+    string GenerateFileKey(IFormFile file);
+    Task WriteFile(IFormFile file, string fileKey);
+    Task<CustomFile> SaveFileEntity(IFormFile file, int ownerId, string fileKey);
+
 }
 
 public class FileService : IFileService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    private readonly TimeProvider _timeProvider;
     private readonly string _basePath;
 
     public FileService(
         IDbContextFactory<DatabaseContext> dbContextFactory,
-        TimeProvider timeProvider,
         IConfiguration config
     )
     {
         _dbContextFactory = dbContextFactory;
-        _timeProvider = timeProvider;
         _basePath = config["FileStorage:BasePath"];
         if (string.IsNullOrEmpty(_basePath))
         {
@@ -40,7 +41,7 @@ public class FileService : IFileService
     /// </summary>
     /// <param name="file">The file we are saving</param>
     /// <returns>A generated safe file key to use in our bucket storage.</returns>
-    private string GenerateFileKey(IFormFile file)
+    public string GenerateFileKey(IFormFile file)
     {
         var extension = Path.GetExtension(file.FileName);
         var fileKey = $"{Guid.NewGuid()}{extension}";
@@ -52,11 +53,19 @@ public class FileService : IFileService
     /// </summary>
     /// <param name="file">The file to copy to the new file</param>
     /// <param name="fileKey">File key of new file</param>
-    private async Task WriteFile(IFormFile file, string fileKey)
+    public async Task WriteFile(IFormFile file, string fileKey)
     {
-        var path = Path.Combine(_basePath, fileKey); 
-        await using var stream = File.Create(path); 
-        await file.CopyToAsync(stream);
+        try
+        {
+            var path = Path.Combine(_basePath, fileKey);
+            await using var stream = File.Create(path);
+            await file.CopyToAsync(stream);
+        }
+        catch (Exception e)
+        {
+            throw new IOException(e.Message);
+        }
+
     }
 
     /// <summary>
@@ -66,7 +75,7 @@ public class FileService : IFileService
     /// <param name="ownerId">Owner of the file</param>
     /// <param name="fileKey">File Key of the file to save into db</param>
     /// <returns>Returns saved entity as an object.</returns>
-    private async Task<CustomFile> SaveFileEntity(IFormFile file, int ownerId, string fileKey)
+    public async Task<CustomFile> SaveFileEntity(IFormFile file, int ownerId, string fileKey)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -125,10 +134,22 @@ public class FileService : IFileService
     /// <returns>File content of matching file key</returns>
     public async Task<Byte[]> GetFileContentAsync(string fileKey)
     {
-        var path = Path.Combine(_basePath, fileKey);
-        return await File.ReadAllBytesAsync(path);
+        try
+        {
+            var path = Path.Combine(_basePath, fileKey);
+            var content = await File.ReadAllBytesAsync(path);
+            return content;
+        }
+        catch (Exception e)
+        {
+            throw new FileNotFoundException("File does not exist but has key", e.Message);
+        }
     }
 
+    /// <summary>
+    /// Deletes content from bucket first, then from db.
+    /// </summary>
+    /// <param name="fileKey">fileKey of item to be deleted.</param>
     public async Task DeleteFileAsync(string fileKey)
     {
         var path = Path.Combine(_basePath, fileKey);

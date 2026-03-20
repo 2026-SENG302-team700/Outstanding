@@ -65,4 +65,71 @@ public class FileServiceTests : BaseIntegrationTestFixture
         var getFileEntity = await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
         getFileEntity.ShouldBeEquivalentTo(fileEntity);
     }
+
+    [Fact]
+    public async Task GenerateFileKey_FileInput_FileNameDifferFileKey()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileKey = ServiceUnderTest.GenerateFileKey(mockFile);
+        fileKey.ShouldNotBe(mockFile.FileName);
+    }
+
+    [Fact]
+    public async Task GetFileContent_Valid_ReturnsFileContentyBytes()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        var newFile = await ServiceUnderTest.GetFileContentAsync(fileEntity.FileKey);
+        newFile.ShouldBe(mockFileContent);
+    }
+
+    [Fact]
+    public async Task GetFileId_InvalidID_KeyNotFoundException()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetFileByIdAsync(22);
+        });
+    }
+
+    [Fact]
+    public async Task DeleteFile_Valid_DeleteFileFromDiskDb()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        
+        var mockFileContent = File.ReadAllBytes("resources/panda.webp");
+        
+        var mockFile = GetMockFile(
+            "mocka",
+            mockFileContent,
+            "image/webp");
+        
+        var fileEntity = await ServiceUnderTest.SaveFileAsync(mockFile, 0);
+        
+        await ServiceUnderTest.DeleteFileAsync(fileEntity.FileKey);
+        
+        await Should.ThrowAsync<KeyNotFoundException>(async () =>
+        {
+            await ServiceUnderTest.GetFileByIdAsync(fileEntity.Id);
+        });
+    }
 }

@@ -99,7 +99,7 @@
                 user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
             }
         } catch (err) {
-            addToast((err as Error).message);
+            addToast((err as Error).message, "error");
         }
     }
 </script>

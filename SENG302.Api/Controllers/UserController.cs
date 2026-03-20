@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers;
 
@@ -50,7 +51,7 @@ public class UserController : ControllerBase
         user.PasswordKey = "---";
         return Ok(user);
     }
-    
+
     [HttpPut]
     public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
     {
@@ -83,6 +84,11 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    /// <summary>
+    /// Takes an image from a Form and if valid, sends to file service for saving.
+    /// </summary>
+    /// <param name="file">The file received from the API endpoint, should be an image</param>
+    /// <returns>Returns an OK statement with nothing</returns>
     [HttpPut("pfp")]
     public async Task<ActionResult<CustomFile>> UploadProfilePicture([FromForm] IFormFile file)
     {
@@ -90,6 +96,11 @@ public class UserController : ControllerBase
         if (string.IsNullOrEmpty(userIdString))
         {
             return Unauthorized();
+        }
+
+        if (!MimeTypeSets.Images.Contains(file.ContentType))
+        {
+            return BadRequest("Unsupported file type.");
         }
 
         var userId = int.Parse(userIdString);
@@ -109,6 +120,10 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Gets a user's profile picture and sends it as a form
+    /// </summary>
+    /// <returns>A BLOB containing the user's profile picture image.</returns>
     [HttpGet("pfp")]
     public async Task<IActionResult> GetProfilePicture()
     {
