@@ -18,13 +18,11 @@ public class TaskService : ITaskService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-    private readonly IEmailService _emailService;
     
-    public TaskService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider, IEmailService emailService)
+    public TaskService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
-        _emailService = emailService;
     }
 
     /// <summary>
@@ -34,17 +32,6 @@ public class TaskService : ITaskService
     /// <returns></returns>
     public async Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail)
     {
-        await _emailService.SendEmailAsync(
-            toEmail: "email",
-            template: EmailTemplate.VerifyEmailCode,
-            model: new Dictionary<string, string>
-            {
-                ["DISPLAY_NAME"] = "SamLad",
-                ["CODE"] = "123456",
-                ["MINUTES"] = "5"
-            }
-        );
-        
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var taskLists = await context.Set<TaskList>().Where(t => t.UserEmail == userEmail).ToListAsync();

@@ -131,7 +131,7 @@ public class Program
         
         app.UseAntiforgery();
 
-        // CSRF token endpoint
+        // CSRF token endpoint`
         app.MapGet("/api/csrf-token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext context) =>
         {
             var tokens = antiforgery.GetAndStoreTokens(context);

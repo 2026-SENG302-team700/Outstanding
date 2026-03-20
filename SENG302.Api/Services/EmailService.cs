@@ -33,11 +33,12 @@ public class EmailService : IEmailService
     }
     
     /// <summary>
-    /// This method is a demo spike method to test and show sending emails works
+    /// This method is the main method for sending emails to users. I takes a html template, an email address and a dictionary that includes
+    /// key information to about the email being sent.
     /// </summary>
     /// <param name="toEmail">The address to send the email to</param>
-    /// <param name="subject">The subject of the email being sent</param>
-    /// <param name="body">The body of the email being sent</param>
+    /// <param name="template">The html template of the email to send</param>
+    /// <param name="model">The values to inject into the email template</param>
     /// <returns></returns>
     public async Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model)
     {
@@ -57,14 +58,22 @@ public class EmailService : IEmailService
         using var client = new SmtpClient();
         
         await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
-        Console.WriteLine("connected");
-        await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
-        Console.WriteLine("authenticated");
+        // if password isnt provided dont authenticate for testing
+        if (_settings.Password != "")
+        {
+            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+        }
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
-        Console.WriteLine("email sent");
     }
 
+    /// <summary>
+    /// Find the correct template file and then call the method to split the html file into the subject and the html body,
+    /// then inject the values into the body and subject.
+    /// </summary>
+    /// <param name="template">The template that is being sent</param>
+    /// <param name="model">The Dictionary containing the user information</param>
+    /// <returns></returns>
     private async Task<(string Subject, string HtmlBody)> RenderAsync(EmailTemplate template, Dictionary<string, string> model)
     {
         var fileName = template + ".html"; // e.g. VerifyEmailCode.html
@@ -84,6 +93,12 @@ public class EmailService : IEmailService
         return (subject, html);
     }
 
+    /// <summary>
+    /// Parse the raw html and split it into the subject and the body
+    /// </summary>
+    /// <param name="raw">The raw text in the html file</param>
+    /// <returns>The split up subject and body</returns>
+    /// <exception cref="InvalidOperationException"></exception>
     private static (string Subject, string HtmlBody) ParseSubjectAndBody(string raw)
     {
         raw = raw.Replace("\r\n", "\n");
@@ -122,7 +137,9 @@ public class EmailService : IEmailService
     private static string StripHtml(string html) =>
         System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", string.Empty);
 }
-
+/// <summary>
+/// The class that secrets are injected into.
+/// </summary>
 public class EmailSettings
 {
     public string Host { get; set; } = "";
