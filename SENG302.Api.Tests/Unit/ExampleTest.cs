@@ -8,7 +8,7 @@ namespace SENG302.Api.Tests.Unit;
 public class ExampleTest
 {
     [Fact]
-    public Task Example()
+    public void Example()
     {
         var a = 1;
         a.ShouldBe(1);
