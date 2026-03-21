@@ -8,12 +8,13 @@
 
     let user = $state(null);
     let email = $state(localStorage.getItem("email"));
-    let initialSeconds = 15;
+    let initialSeconds = 30;
     let remainingSeconds = $state(initialSeconds);
     let intervalId;
     let timeRemainingText = $state("");
     let errorMessage = $state("")
-    let visible = $state(false);
+    let resendLinkVisible = $state(false);
+    let loading = $state(false);
     
     let digit1 = $state("");
     let digit2 = $state("");
@@ -22,28 +23,55 @@
     let digit5 = $state("");
     let digit6 = $state("");
     
-    let serverStartTime;
 
     onMount(() => {
+        sendCode()
+    })
+
+    /**
+     * Removes any error messages and Resend button before restarting countdown timer
+     */
+    async function countDownTimer() {
+        displayError("", false);
+        clearInterval(intervalId);
+        remainingSeconds = initialSeconds;
         intervalId = setInterval(() => {
             if (remainingSeconds > 0) {
                 remainingSeconds -= 1;
                 timeRemainingText = formatTime(remainingSeconds)
                 if (remainingSeconds == initialSeconds-10) {
-                   visible=true; 
+                    resendLinkVisible=true;
                 }
             } else {
-                errorMessage = "One time code has expired"
+                displayError("Code is no longer valid, account no longer exists", false);
+                checkCode();
             }
         }, 1000)
-    })
+    }
 
+    /**
+     * Format a given number of seconds into a user friendly readable time for the countdown timer
+     * @param seconds
+     */
     function formatTime(seconds: number) {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
     }
-    
+
+    /**
+     * Takes an error message and displays it to the user while also making visible a 'resend code' button
+     * @param error
+     */
+    function displayError(error: string, visible: boolean) {
+        if (!(resendLinkVisible == visible)) resendLinkVisible = visible;
+        errorMessage = error;
+    }
+
+    /**
+     * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating has done so
+     * 
+     */
     function inputValidation() {
         
         if (digit1.length === 0 ||
@@ -52,8 +80,7 @@
             digit4.length === 0 ||
             digit5.length === 0 ||
             digit6.length === 0) {
-            errorMessage = "Digits are missing";
-            visible = true;
+            displayError("Digits are missing", true);
             return false;
         }
         
@@ -64,22 +91,25 @@
               regex.test(digit3) && 
               regex.test(digit4) && 
               regex.test(digit5) && 
-              regex.test(digit6)) {
-            errorMessage = "You must enter digits";
-            visible = true;
+              regex.test(digit6))) {
+            displayError("You must enter digits", true);
             return false;
-        }) 
+        }; 
             
         return true;
     }
 
+    /**
+     * Send the one time code to the users email and starts the timer count down
+     */
     async function sendCode() {
-        
         try {
+            await countDownTimer()
+            
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/register/code/generate`), {
-                method: "POST",
+            const response = await fetchWithCsrf(resolve(`/api/register/code/generation`), {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -87,48 +117,63 @@
                     email: email,
                 }),
             });
-
+            
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                visible = true;
-                errorMessage = "Server start time was not received. Internal Server error";
+                displayError("Server start time was not received. Internal Server error", true);
+                clearInterval(intervalId);
                 return;
             }
-        } catch (err e) {
-            errorMessage = e
-            visible = true;
+            
+        } catch (err) {
+            displayError(err.message, true);
         } 
     }
 
-    function checkCode() {
+    /**
+     * Checks if the code that the user has entered, matches the one that was sent to their email
+     * If it does, the user is redirected to the login page, if not, a corresponding error message is displayed
+     */
+    async function checkCode() {
+        // Only validate input on front end before timeout has occured
+        if (remainingSeconds > 0) {
+            if (!inputValidation()) return;
+        }
+
+        clearInterval(intervalId);
+        
         try {
             loading = true;
+            
+            let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
 
-            const response = await fetchWithCsrf(resolve(`/api/register/code/validate`), {
-                method: "POST",
+            const response = await fetchWithCsrf(resolve(`/api/register/code/validation`), {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email: email,
+                    Email: email,
+                    Code: userCode,
                 }),
             });
 
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                visible = true;
-                errorMessage = "Server start time was not received. Internal Server error";
+                displayError(data.message, false);
                 return;
+            } else {
+                addToast("Registration successful. Please log in.", "success");
+                goto(resolve(`/login`));
             }
-        } catch (err e) {
-            errorMessage = e
-            visible = true;
+        } catch (err) {
+            
+            displayError(err.message, true);
         }
     }
     
-
 </script>
 
 <div class="d-flex justify-content-center align-items-start vh-100 bg-light">
@@ -139,17 +184,19 @@
             <div class="col-md-3">
                 <h5>A verification code has been sent to <strong>{email}</strong></h5>
                 <p class="small">Please check your inbox and enter the verification code below to verify your email address. The code will expire in <strong>{timeRemainingText}</strong></p>
-                    {#if visible}
+                {#key resendLinkVisible}
+                    {#if resendLinkVisible}
                         <a role="button" class="text-decoration-underline" on:click={sendCode}>Resend Code</a>
                     {/if}
+                {/key}
                 <p class="text-danger">{errorMessage}</p>
                 <div id="code-input" class="input-group">
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
-                    <input type="text" class="form-control text-center" maxlength="1" bind:value={}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit1}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit2}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit3}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit4}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit5}>
+                    <input type="text" class="form-control text-center" maxlength="1" bind:value={digit6}>
                 </div>
                 <button style="margin-top: 10px" class="btn btn-primary w-100" on:click={checkCode}>Confirm registration</button>
             </div>

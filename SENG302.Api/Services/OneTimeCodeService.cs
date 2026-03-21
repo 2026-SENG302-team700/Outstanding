@@ -2,8 +2,6 @@
 using System.Security.Cryptography;
 using SENG302.Api.DataAccess;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Timer = System.Timers.Timer;
 
 
 namespace SENG302.Api.Services;
@@ -12,15 +10,17 @@ public interface IOneTimeCodeService
 {
     public string GenerateOneTimeCode();
     public int GetEpochTime();
+    public bool CompareTimes(int startTime, int endTime);
+    public bool CompareCodes(string enteredCode, string originalCode);
 }
 
 public class OneTimeCodeService : IOneTimeCodeService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-    private readonly MemoryCache _memoryCache;
-
-    private static Timer timer;
+    
+    // Static variable representing the time limit for the code to be entered in
+    private static int timeoutTimeSeconds = 30;
     
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
@@ -59,5 +59,32 @@ public class OneTimeCodeService : IOneTimeCodeService
         
         // currentEpochTime
         return epochTimeSeconds;
+    }
+    
+    /// <summary>
+    /// Compares the start and end time to see if it is under the time limit specified in timeoutTimeSeconds.
+    /// </summary>
+    /// <param name="startTime"></param> The time the code was generated (stored in the database)
+    /// <param name="endTime"></param> The time that the user called the api/register/code/validation endpoint in the
+    /// Registration Controller.
+    /// <returns>
+    /// A boolean indicating if the code was entered in time or not
+    /// </returns>
+    public bool CompareTimes(int startTime, int endTime)
+    {
+        return endTime - startTime < timeoutTimeSeconds;
+    }
+    
+    /// <summary>
+    /// Compares the two codes passed in
+    /// </summary>
+    /// <param name="enteredCode"></param> This is the code that the user entered
+    /// <param name="originalCode"></param> The original code that was generated
+    /// <returns>
+    /// Returns a boolean indicating if the codes are equal
+    /// </returns>
+    public bool CompareCodes(string enteredCode, string originalCode)
+    {
+        return enteredCode == originalCode;
     }
 }

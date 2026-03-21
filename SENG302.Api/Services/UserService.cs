@@ -18,7 +18,8 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
-    Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime);
+    Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime);
+    Task<bool> DeleteUserByIdAsync(int id);
 }
 
 public enum UserVerificationResult
@@ -556,18 +557,43 @@ public class UserService : IUserService
         await context.SaveChangesAsync();
         return user;
     }
-
-    public async Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime)
+    
+    /// <summary>
+    /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
+    /// </summary>
+    /// <param name="id"></param> The user id
+    /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
+    /// an empty string if the code is expired
+    /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
+    /// <returns>
+    /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
+    /// </returns>
+    public async Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         
         User? user = await GetUserByIdAsync((int)id);
+        if (user == null) return false;
 
         user.OneTimeCode = oneTimeCode;
         user.CodeGenerationTime = epochTime;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
-        return user;
+        return true;
+    }
+
+    public async Task<bool> DeleteUserByIdAsync(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user != null)
+        {
+            context.Users.Remove(user);
+            await context.SaveChangesAsync();
+            return true;
+        }
+        return false;
     }
 }
