@@ -143,13 +143,21 @@
                 <div class="text-danger mt-1">{errors.password}</div>
             {/if}
         </div>
-        <div>
+        <div class="mb-3">
             <button
                 type="submit"
                 class="btn btn-primary w-100"
                 disabled={loading}
             >
                 {loading ? "Loading..." : "Login"}
+            </button>
+        </div>
+        <div class="mb-3">
+            <button
+                class="btn btn-primary w-100"
+                hidden={errors.email != "Email not verified"}
+            >
+                Verify Email
             </button>
         </div>
     </form>
