@@ -182,58 +182,6 @@
     }
 </script>
 
-<div class="container">
-    <form on:submit|preventDefault={updateUser}>
-        <div class="mb-3">
-            <label for="displayName" class="form-label">Display Name</label>
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.displayName}
-                bind:value={displayName}
-                id="displayName"
-            />
-            {#if errors.displayName}
-                <div class="invalid-feedback">
-                    {errors.displayName}
-                </div>
-            {/if}
-        </div>
-        <div class="mb-3">
-            <label for="userEmail" class="form-label">Email</label>
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.email}
-                id="userEmail"
-                bind:value={email}
-            />
-            {#if errors.email}
-                <div class="invalid-feedback">
-                    {errors.email}
-                </div>
-            {/if}
-        </div>
-        <div class="mb-3">
-            <label for="country" class="form-label">Country</label>
-            <select
-                class="form-control"
-                class:country-select={!country}
-                bind:value={country}
-                id="country"
-            >
-                {#each countries as country}
-                    <option value={country.code}>
-                        {country.name}
-                    </option>
-                {/each}
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Update</button>
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => {
 <div class="container d-flex flex-column flex-md-row">
     <div class="d-flex flex-column align-items-center justify-content-center m-3">
         <div class="position-relative d-inline-block">
@@ -302,7 +250,7 @@
                     on:click={() => {
                 goto(resolve("/home/profile"));
             }}>Cancel</button
-            >
-        </form>
+        >
+    </form>
     </div>
 </div>
