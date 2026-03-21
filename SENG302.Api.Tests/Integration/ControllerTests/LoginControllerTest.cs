@@ -114,6 +114,38 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         json.GetProperty("message").GetString().ShouldBe("JJ Devy");
     }
 
+    [Fact]
+    public async Task LoginUser_DifferentEmailCasing_ReturnLoginSuccess()
+    {
+        var register = new
+        {
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy",
+            PasswordString = "c00lPasSw0rdont@ME",
+            PasswordConfirm = "c00lPasSw0rdont@ME",
+            Country = "AU"
+        };
+
+        var message = await HttpClient.PostAsJsonAsync("/api/register", register);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var login = new
+        {
+            Email = "JdEv@deV.com",
+            PasswordString = "c00lPasSw0rdont@ME",
+        };
+
+        var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
+
+        message2.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var content = await message2.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(true);
+        json.GetProperty("message").GetString().ShouldBe("JJ Devy");
+    }
+
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep.gmail.com", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "2016swag", "NZ")]

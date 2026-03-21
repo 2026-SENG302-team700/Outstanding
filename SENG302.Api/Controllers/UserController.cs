@@ -65,6 +65,7 @@ public class UserController : ControllerBase
         // Call service to perform update logic
         try
         {
+            updateUserRequest.Email = updateUserRequest.Email.ToLower();
             var user = await _userService.UpdateUser(int.Parse(userId), updateUserRequest.Email, updateUserRequest.DisplayName, updateUserRequest.Country);
             if (user == null)
             {
