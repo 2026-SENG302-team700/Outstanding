@@ -25,7 +25,8 @@ public enum UserVerificationResult
     Failed,
     MalformedEmail,
     Success,
-    SuccessRehashNeeded
+    SuccessRehashNeeded,
+    AccountUnverified
 }
 
 public class UserVerificationResponse
@@ -444,7 +445,15 @@ public class UserService : IUserService
                 userVerificationResult = UserVerificationResult.DoesNotExist,
                 user = null
             };
+        }
 
+        if (!user.EmailVerified)
+        {
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.AccountUnverified,
+                user = user
+            };
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);

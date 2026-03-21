@@ -23,4 +23,6 @@ public class User
     public int ProfilePicture { get; set; }
 
     public DateTimeOffset TimeCreated { get; set; }
+
+    public bool EmailVerified { get; set; } = false;
 }
