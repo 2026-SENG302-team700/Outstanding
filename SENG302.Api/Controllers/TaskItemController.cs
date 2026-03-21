@@ -36,8 +36,7 @@ public class TaskItemController : ControllerBase
         var taskList = await _taskService.GetTaskItemsByListAsync(listId);
         return Ok(taskList);
     }
-
-
+    
     /// <summary>
     /// Given a task item request object, create a new task item and add it to the db
     /// Fails if: the task name is too short (characters) or long 128 (characters),
@@ -87,7 +86,5 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest(e);
         }
-
-
     }
 }

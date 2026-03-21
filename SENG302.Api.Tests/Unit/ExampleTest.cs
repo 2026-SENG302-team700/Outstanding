@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Models.Entities;
+using SENG302.Api.Services;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit;
@@ -5,11 +8,9 @@ namespace SENG302.Api.Tests.Unit;
 public class ExampleTest
 {
     [Fact]
-    public void ExampleTestDeleteMe()
+    public void Example()
     {
-        // We don't really have anything to unit test just yet, but if we do, it will go in the Unit directory.
-        // For now, we'll just check that 1 + 1 = 2, please delete this test when you actually start writing your own.
-        var result = 1 + 1;
-        result.ShouldBe(2);
+        var a = 1;
+        a.ShouldBe(1);
     }
 }

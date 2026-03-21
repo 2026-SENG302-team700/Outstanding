@@ -20,6 +20,7 @@ public interface IUserService
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
     Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime);
     Task<bool> DeleteUserByIdAsync(int id);
+    Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
 
 public enum UserVerificationResult
@@ -28,7 +29,8 @@ public enum UserVerificationResult
     Failed,
     MalformedEmail,
     Success,
-    SuccessRehashNeeded
+    SuccessRehashNeeded,
+    AccountUnverified
 }
 
 public class UserVerificationResponse
@@ -297,13 +299,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameChars(string displayName)
     {
-        // regex below allow a-z, A-Z, - and ' -- 
-        var validCharsRegex = new Regex(
-            @"^[\p{L} '-]+$",
-            RegexOptions.None, // Regex Options, can ignore, 
-            TimeSpan.FromSeconds(2) // TimeSpan until regex times out
-            );
-        return validCharsRegex.IsMatch(displayName);
+        return ValidationPatterns.UserDisplayName.IsMatch(displayName);
     }
 
     /// <summary>
@@ -347,12 +343,7 @@ public class UserService : IUserService
 
         try
         {
-            return Regex.IsMatch(email,
-                @"^(?=.{5,254}$)(?=.{1,64}@)[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+ 
-                          (\.[A-Za-z0-9!#$%&‘*+–/=?^_`{|}~]+)*
-                           @(?=.{3,255}$)([A-Za-z0-9]+[-]*)+
-                           (\.([-]*[A-Za-z0-9]+)+)+$",
-                RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace, TimeSpan.FromMilliseconds(250));
+            return ValidationPatterns.UserEmail.IsMatch(email);
         }
         catch (RegexMatchTimeoutException)
         {
@@ -370,41 +361,7 @@ public class UserService : IUserService
     /// </returns>
     private bool CheckPassword(string password)
     {
-        var lowerCharRegex = new Regex(
-            @"[a-z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var upperCharRegex = new Regex(
-            @"[A-Z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var numCharRegex = new Regex(
-            @"[0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var specialCharRegex = new Regex(
-            @"[^a-zA-Z0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        if (
-            (password.Length < 8) ||
-            (!lowerCharRegex.IsMatch(password)) ||
-            (!upperCharRegex.IsMatch(password)) ||
-            (!numCharRegex.IsMatch(password)) ||
-            (!specialCharRegex.IsMatch(password))
-            )
-        {
-            return false;
-        }
-        return true;
+        return ValidationPatterns.UserPassword.IsMatch(password);
     }
 
     /// <summary>
@@ -504,6 +461,15 @@ public class UserService : IUserService
             };
         }
 
+        if (!user.EmailVerified)
+        {
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.AccountUnverified,
+                user = user
+            };
+        }
+
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
         switch (verificationResult)
         {
@@ -538,7 +504,11 @@ public class UserService : IUserService
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
     /// <returns>The new user that has been saved in the database</returns>
-    public async Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry)
+    public async Task<User?> UpdateUser(int userId, 
+        string newEmail, 
+        string newDisplayName, 
+        string newCountry
+        )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -548,10 +518,25 @@ public class UserService : IUserService
         if (user.Email != newEmail) ValidateEmail(context, newEmail);
         if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
         if (user.Country != newCountry) ValidateCountry(newCountry);
-
+        
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
+        
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task<User?> SetUserProfilePicture(int userId, int fileId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null) return null;
+        
+        user.ProfilePicture = fileId;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();

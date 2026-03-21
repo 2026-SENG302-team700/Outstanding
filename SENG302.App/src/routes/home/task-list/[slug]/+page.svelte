@@ -12,7 +12,36 @@
 
     onMount(() => {
         GetList();
+        GetTasks();
     });
+    
+    /// <Summary>
+    /// Fetches tasks of the certain task list from the backend
+    /// and stores them in the frontend as an array of objects
+    ///
+    /// <Summary>
+    async function GetTasks() {
+        try {
+            loading = true;
+            error = "";
+            const response = await fetchWithCsrf(
+                resolve(`/api/taskItem/${params.slug}` as any),
+                {
+                    method: "GET",
+                    credentials: "include",
+                },
+            );
+            const data = await response.json();
+            if (!response.ok) {
+                error = data;
+                return;
+            }
+        } catch (err) {
+            error = "Failed to get tasks: " + (err as Error).message;
+        } finally {
+            loading = false;
+        }
+    }
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Validates the name

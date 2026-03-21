@@ -82,7 +82,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%NNNS", "p4ukS__45`k%NNNS", "US"));
     }
     
-        [Fact]
+    [Fact]
     public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
     {
         await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>

@@ -119,6 +119,10 @@ public class TaskControllerUnitTests : BaseUnitTestFixture
         message.StatusCode.ShouldBe(HttpStatusCode.OK); // Ensure fetching task lists was successful
         TaskItem[] taskItems = JsonConvert.DeserializeObject<TaskItem[]>(await message.Content.ReadAsStringAsync())!;
         taskItems.Length.ShouldBe(1);
+        TaskItem task = taskItems[0];
+        task.Name.ShouldBe("Test Task");
+        task.Description.ShouldBe("test");
+        task.TaskListId.ShouldBe(1);
     }
 
     //generates a string of length n

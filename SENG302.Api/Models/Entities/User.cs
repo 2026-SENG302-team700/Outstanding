@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Models.Entities;
@@ -19,10 +20,14 @@ public class User
 
     public required string Country { get; set; }
 
+    public int ProfilePicture { get; set; }
+
     [StringLength(6)]
     public string OneTimeCode { get; set; } = String.Empty;
     
     public int CodeGenerationTime { get; set; }
 
     public DateTimeOffset TimeCreated { get; set; }
+
+    public bool EmailVerified { get; set; } = false;
 }

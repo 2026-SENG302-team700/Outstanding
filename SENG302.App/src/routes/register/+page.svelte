@@ -4,6 +4,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
+    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
     let user = $state(null);
     let email = $state("");
@@ -32,12 +33,7 @@
         };
 
         // Check email format
-        const emailRegex = new RegExp(
-            "^(?=.{5,254}$)(?=.{1,64}@)[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+" +
-                "(\\.[a-zA-Z0-9!#$%&‘*+–/=?^_`{|}~]+)*" +
-                "@(?=.{3,255}$)([A-Za-z0-9]+[-]*)+" +
-                "(\\.([-]*[A-Za-z0-9]+)+)+$",
-        );
+        const emailRegex = new RegExp(regexPatterns.user.email);
         if (!emailRegex.test(email) && email) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
@@ -59,7 +55,10 @@
         }
 
         // Check display name validity
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
+        const displayNameRegex = new RegExp(
+            regexPatterns.user.displayName.pattern,
+            regexPatterns.user.displayName.flags,
+        );
         if (!displayNameRegex.test(displayName)) {
             errors.displayName =
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
@@ -100,8 +99,7 @@
         }
 
         // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+        const passwordRegex = new RegExp(regexPatterns.user.password);
         if (!passwordRegex.test(password) && password) {
             // actual error stuff
             errors.password =
@@ -134,7 +132,7 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/register`), {
+            const response = await fetchWithCsrf(`/api/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -149,9 +147,6 @@
             });
 
             const data = await response.json().catch(() => null);
-
-            console.log(data);
-
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
