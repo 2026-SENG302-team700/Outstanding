@@ -14,11 +14,13 @@ public class RegistrationController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IOneTimeCodeService _oneTimeCodeService;
+    private readonly IEmailService _emailService;
 
-    public RegistrationController(IUserService userService, IOneTimeCodeService oneTimeCodeService)
+    public RegistrationController(IUserService userService, IOneTimeCodeService oneTimeCodeService, IEmailService emailService)
     {
         _userService = userService;
         _oneTimeCodeService = oneTimeCodeService;
+        _emailService = emailService;
     }
 
     [HttpGet("{id:int}")]
@@ -97,14 +99,26 @@ public class RegistrationController : ControllerBase
         int? id = await _userService.GetUserIdFromEmailAsync(codeRequest.Email);
         if (id == null) return NotFound(new { message = "Email not found" });
         
+        User? user = await _userService.GetUserByIdAsync((int)id);
+        if (user == null) return NotFound(new { message = "User not found" });
+        
         string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
         int timerStartTime = _oneTimeCodeService.GetEpochTime();
         Console.Write("\n\n" + oneTimeCode + "\n\n");
 
         if (oneTimeCode.Length != 6) return Problem();
 
-        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime);
+        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime, false);
         if (!userUpdated) return Problem();
+        
+        // Create a dictionary of important values to send in the email, then call function to send email
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", user.DisplayName},
+            {"CODE", oneTimeCode},
+            {"MINUTES", "5"}
+        };
+        await _emailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary);
         
         return Ok();
     }
@@ -112,7 +126,7 @@ public class RegistrationController : ControllerBase
     /// <summary>
     /// Gets the user object from the database and compares the code the user has entered compared to the one generated
     /// to verify them. Also compares the time created and the time currently to see if it is under the time limit.
-    /// Deletes the user object is the time limit is over.
+    /// Deletes the user object is the time limit is over. O
     /// </summary>
     /// <param name="validationRequest"></param> Validation Request contain the user email which is used for querying
     /// the database and the code which the user entered on the frontend
@@ -137,6 +151,7 @@ public class RegistrationController : ControllerBase
         User? user = await _userService.GetUserByIdAsync((int)id);
         if (user == null) return NotFound( new {message = "User not found"});
         
+        // If the code has timed-out, delete the user object associated with the email
         bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
         if (!codeValid)
         {
@@ -149,9 +164,10 @@ public class RegistrationController : ControllerBase
         if (!correctCode) return BadRequest(new { message = "Invalid Code" });
         
         
-        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, "", 0);
+        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, "", 0, true);
         if (!userUpdated) return Problem();
-
+        
+        
         return Ok();
     }
    

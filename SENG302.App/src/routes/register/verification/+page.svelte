@@ -8,13 +8,14 @@
 
     let user = $state(null);
     let email = $state(localStorage.getItem("email"));
-    let initialSeconds = 30;
+    let initialSeconds = 120;
     let remainingSeconds = $state(initialSeconds);
     let intervalId;
     let timeRemainingText = $state("");
     let errorMessage = $state("")
     let resendLinkVisible = $state(false);
     let loading = $state(false);
+    let buttonDisabled = $state(false);
     
     let digit1 = $state("");
     let digit2 = $state("");
@@ -43,6 +44,7 @@
                     resendLinkVisible=true;
                 }
             } else {
+                buttonDisabled = true;
                 displayError("Code is no longer valid, account no longer exists", false);
                 checkCode();
             }
@@ -66,6 +68,18 @@
     function displayError(error: string, visible: boolean) {
         if (!(resendLinkVisible == visible)) resendLinkVisible = visible;
         errorMessage = error;
+    }
+
+    /**
+     * Clears input fields containing digits if code is resent
+     */
+    function clearInputFields() {
+        digit1 = ""
+        digit2 = ""
+        digit3 = ""
+        digit4 = ""
+        digit5 = ""
+        digit6 = ""
     }
 
     /**
@@ -105,6 +119,7 @@
     async function sendCode() {
         try {
             await countDownTimer()
+            clearInputFields()
             
             loading = true;
 
@@ -198,7 +213,9 @@
                     <input type="text" class="form-control text-center" maxlength="1" bind:value={digit5}>
                     <input type="text" class="form-control text-center" maxlength="1" bind:value={digit6}>
                 </div>
-                <button style="margin-top: 10px" class="btn btn-primary w-100" on:click={checkCode}>Confirm registration</button>
+                {#key buttonDisabled}
+                    <button style="margin-top: 10px" class="btn btn-primary w-100" on:click={checkCode} disabled={buttonDisabled}>Confirm registration</button>
+                {/key}
             </div>
         </div>
            

@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using SQLitePCL;
 
 namespace SENG302.Api.Services;
 
@@ -18,7 +16,7 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
-    Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime);
+    Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime, bool userVerified);
     Task<bool> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
@@ -546,14 +544,15 @@ public class UserService : IUserService
     /// <summary>
     /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
     /// </summary>
-    /// <param name="id"></param> The user id
+    /// <param name="user"></param> The user object
     /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
     /// an empty string if the code is expired
     /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
+    /// <param name="userVerified"></param> A boolean that notifies method whether the user has successfully verified their account or not
     /// <returns>
     /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
     /// </returns>
-    public async Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime)
+    public async Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime, bool userVerified)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         
@@ -563,11 +562,21 @@ public class UserService : IUserService
         user.OneTimeCode = oneTimeCode;
         user.CodeGenerationTime = epochTime;
 
+        if (userVerified)
+        {
+            user.EmailVerified = true;
+        }
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
         return true;
     }
 
+    /// <summary>
+    /// Deletes the user based on the ID
+    /// </summary>
+    /// <param name="id"></param> User ID
+    /// <returns>A boolean representing if the user has been deleted properly</returns>
     public async Task<bool> DeleteUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();

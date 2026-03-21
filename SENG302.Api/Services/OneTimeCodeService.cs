@@ -20,7 +20,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     private readonly TimeProvider _timeProvider;
     
     // Static variable representing the time limit for the code to be entered in
-    private static int timeoutTimeSeconds = 30;
+    private static int timeoutTimeSeconds = 120;
     
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
