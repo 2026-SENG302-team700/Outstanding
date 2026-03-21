@@ -4,9 +4,9 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
 
-    let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
-    let listName = $state("");
+    let listName = $state();
+    let tasks = $state([]);
     let error = $state("");
     let { params } = $props();
 
@@ -14,7 +14,7 @@
         GetList();
         GetTasks();
     });
-    
+
     /// <Summary>
     /// Fetches tasks of the certain task list from the backend
     /// and stores them in the frontend as an array of objects
@@ -36,6 +36,7 @@
                 error = data;
                 return;
             }
+            tasks = data;
         } catch (err) {
             error = "Failed to get tasks: " + (err as Error).message;
         } finally {
@@ -73,6 +74,13 @@
         }
     }
 
+    /**
+     * formats the string based on the users locale
+     */
+    function formatDate(dateString: string) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString(); // automatically uses user's locale
+    }
 </script>
 
 <div class="container">
@@ -85,8 +93,62 @@
         <button
             type="button"
             class="btn btn-primary"
-            on:click={() => goto(resolve(`/home/task-list/${params.slug}/create-task`))}
+            on:click={() =>
+                goto(resolve(`/home/task-list/${params.slug}/create-task`))}
             >+ Create Task
         </button>
     </div>
+    {#if loading && tasks.length === 0}
+        <div class="text-center text-muted py-4">Loading tasks...</div>
+    {:else if tasks.length === 0}
+        <div class="text-center text-muted py-4">
+            No tasks yet. Create your first task above!
+        </div>
+    {:else}
+        <div
+            class="table-responsive"
+            style="max-height: 300px; overflow: scroll;"
+        >
+            <table class="table table-hover">
+                <thead style="position: sticky; top: 0;">
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each tasks as task}
+                        <tr
+                            on:click={() =>
+                                goto(
+                                    `/home/task-list/${params.slug}/task/${task.taskId}`,
+                                )}
+                            style="cursor: pointer; white-space: pre;"
+                        >
+                            <td class="text-truncate" style="max-width: 200px;"
+                                >{task.name}</td
+                            >
+                            <td class="text-truncate" style="max-width: 200px;"
+                                >{task.description}</td
+                            >
+                            {#if task.currentStatus === 0}
+                                <td>{"TODO"}</td>
+                            {:else if task.currentStatus === 1}
+                                <td>{"In Progress"}</td>
+                            {:else}
+                                <td>{"Done"}</td>
+                            {/if}
+                            {#if task.dueDate === null}
+                                <td>No Due Date</td>
+                            {:else}
+                                <td>{formatDate(task.dueDate)}</td>
+                            {/if}
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        </div>
+    {/if}
 </div>

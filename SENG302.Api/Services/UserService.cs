@@ -33,90 +33,6 @@ public class UserVerificationResponse
     public User? user;
 }
 
-/// <summary>
-/// Exception to throw when e-mail already exists in the db.
-/// </summary>
-public class DuplicateEmailException : Exception
-{
-    public DuplicateEmailException() { }
-
-    public DuplicateEmailException(string message) : base(message) { }
-
-    public DuplicateEmailException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name has an invalid name length.
-/// </summary>
-public class InvalidDisplayNameLengthException : Exception
-{
-    public InvalidDisplayNameLengthException() { }
-
-    public InvalidDisplayNameLengthException(string message) : base(message) { }
-
-    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name has invalid characters
-/// </summary>
-public class InvalidDisplayNameCharsException : Exception
-{
-    public InvalidDisplayNameCharsException() { }
-
-    public InvalidDisplayNameCharsException(string message) : base(message) { }
-
-    public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the email is of an invalid format
-/// </summary>
-public class InvalidEmailFormatException : Exception
-{
-    public InvalidEmailFormatException() { }
-
-    public InvalidEmailFormatException(string message) : base(message) { }
-
-    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the password formatting is invalid (doesn't meet requirements)
-/// </summary>
-public class InvalidPasswordException : Exception
-{
-    public InvalidPasswordException() { }
-
-    public InvalidPasswordException(string message) : base(message) { }
-
-    public InvalidPasswordException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when passwords are mismatched
-/// </summary>
-public class MismatchedPasswordException : Exception
-{
-    public MismatchedPasswordException() { }
-
-    public MismatchedPasswordException(string message) : base(message) { }
-
-    public MismatchedPasswordException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the country code given from the front-end is invalid
-/// </summary>
-public class InvalidCountryException : Exception
-{
-    public InvalidCountryException() { }
-
-    public InvalidCountryException(string message) : base(message) { }
-
-    public InvalidCountryException(string message, Exception inner) : base(message, inner) { }
-}
-
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -152,13 +68,13 @@ public class UserService : IUserService
     /// Runs all display name validations and throws relavent exceptions
     /// </summary>
     /// <param name="displayName"></param>
-    /// <exception cref="InvalidDisplayNameLengthException"></exception>
+    /// <exception cref="InvalidLengthException"></exception>
     /// <exception cref="InvalidDisplayNameCharsException"></exception>
     public void ValidateDisplayName(string displayName)
     {
         if (DisplayNameLength(displayName))
         {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+            throw new InvalidLengthException("Display name must be between 3 and 64 characters");
         }
 
         if (!DisplayNameChars(displayName))
