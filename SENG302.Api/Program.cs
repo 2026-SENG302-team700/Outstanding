@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
+using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 
 
 namespace SENG302.Api;
@@ -84,15 +86,15 @@ public class Program
                 });
             });
         }
-        
+
         // add the custom environment file
         builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
-        
+
         // bind it in email service
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
-        
+
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -129,7 +131,7 @@ public class Program
         // Tell app to use authentication and authorization middleware
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
         app.UseAntiforgery();
 
         // CSRF token endpoint`
@@ -160,6 +162,22 @@ public class Program
 
         // dbContext.Database.EnsureDeleted();
         dbContext.Database.EnsureCreated();
+
+        // Add admin user
+        if (!dbContext.Users.Any(u => u.Email == "admin@outstanding.com"))
+        {
+            var user = new User
+            {
+                DisplayName = "admin",
+                Email = "admin@outstanding.com",
+                Country = "NZ",
+                EmailVerified = true
+            };
+            var hasher = new PasswordHasher<User>();
+            user.PasswordKey = hasher.HashPassword(user, "Team700!");
+            dbContext.Users.Add(user);
+            dbContext.SaveChanges();
+        }
     }
 
     protected static void RegisterServices(IServiceCollection services)
