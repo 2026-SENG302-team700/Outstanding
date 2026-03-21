@@ -91,6 +91,7 @@ public class Program
         // bind it in email service
         builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
         
         var app = builder.Build();
 

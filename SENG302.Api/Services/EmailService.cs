@@ -26,10 +26,12 @@ public interface IEmailService
 public class EmailService : IEmailService
 {
     private readonly EmailSettings _settings;
+    private readonly ISmtpClientWrapper _smtpClient;
     
-    public EmailService(IOptions<EmailSettings> options)
+    public EmailService(IOptions<EmailSettings> options, ISmtpClientWrapper smtpClient)
     {
         _settings = options.Value;
+        _smtpClient = smtpClient;
     }
     
     /// <summary>
@@ -54,17 +56,11 @@ public class EmailService : IEmailService
             HtmlBody = htmlBody,
             TextBody = StripHtml(htmlBody)
         }.ToMessageBody();
-
-        using var client = new SmtpClient();
         
-        await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
-        // if password isnt provided dont authenticate for testing
-        if (_settings.Password != "")
-        {
-            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
-        }
-        await client.SendAsync(message);
-        await client.DisconnectAsync(true);
+        await _smtpClient.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
+        await _smtpClient.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+        await _smtpClient.SendAsync(message);
+        await _smtpClient.DisconnectAsync(true);
     }
 
     /// <summary>
