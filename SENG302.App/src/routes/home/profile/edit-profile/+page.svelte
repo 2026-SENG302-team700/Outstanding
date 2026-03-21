@@ -7,6 +7,7 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
+    import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
 
     let displayName = $state("");
@@ -14,6 +15,11 @@
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+
+    let errors = $state({
+        email: "",
+        displayName: "",
+    });
 
     onMount(() => {
         retrieveUserData();
@@ -25,7 +31,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(`/api/user`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -47,12 +53,71 @@
         }
     }
 
+    /**
+     * Handles front end validation
+     * Updates error messages for invalid fields
+     *
+     * returns true if all fields are valid, false otherwise
+     */
+    function isValid() {
+        // Clear errors
+        errors = {
+            email: "",
+            displayName: "",
+        };
+
+        // Front end Validation
+        let valid = true;
+
+        // Check email format
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (!emailRegex.test(email) && email) {
+            errors.email =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+            valid = false;
+        }
+
+        // Check Display name length
+        if (displayName.length < 3 || displayName.length > 64) {
+            errors.displayName =
+                "Display name must be between 3 and 64 characters";
+            valid = false;
+        }
+
+        // Display Name format
+        const displayNameRegex = new RegExp(
+            regexPatterns.user.displayName.pattern,
+            regexPatterns.user.displayName.flags,
+        );
+        if (!displayNameRegex.test(displayName)) {
+            errors.displayName =
+                "Display name must only include letters, spaces, hyphens or apostrophes.";
+            valid = false;
+        }
+
+        // Fields not empty
+        if (!email) {
+            errors.email = "Email is required.";
+            valid = false;
+        }
+
+        if (!displayName) {
+            errors.displayName = "Display name is required.";
+            valid = false;
+        }
+
+        return valid;
+    }
+
     /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
     async function updateUser() {
+        // Return if error
+        if (!isValid()) return;
+
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(`/api/user`, {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -70,6 +135,19 @@
                 const updatedUser = await response.json();
                 user.update(u => ({...u, displayName: updatedUser.displayName}));
                 goto(resolve("/home"));
+            } else {
+                const data = await response.json().catch(() => null);
+                switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email = data.message;
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
+                return;
             }
         } catch (err) {
             addToast((err as Error).message);
@@ -104,6 +182,58 @@
     }
 </script>
 
+<div class="container">
+    <form on:submit|preventDefault={updateUser}>
+        <div class="mb-3">
+            <label for="displayName" class="form-label">Display Name</label>
+            <input
+                type="text"
+                class="form-control"
+                class:is-invalid={errors.displayName}
+                bind:value={displayName}
+                id="displayName"
+            />
+            {#if errors.displayName}
+                <div class="invalid-feedback">
+                    {errors.displayName}
+                </div>
+            {/if}
+        </div>
+        <div class="mb-3">
+            <label for="userEmail" class="form-label">Email</label>
+            <input
+                type="text"
+                class="form-control"
+                class:is-invalid={errors.email}
+                id="userEmail"
+                bind:value={email}
+            />
+            {#if errors.email}
+                <div class="invalid-feedback">
+                    {errors.email}
+                </div>
+            {/if}
+        </div>
+        <div class="mb-3">
+            <label for="country" class="form-label">Country</label>
+            <select
+                class="form-control"
+                class:country-select={!country}
+                bind:value={country}
+                id="country"
+            >
+                {#each countries as country}
+                    <option value={country.code}>
+                        {country.name}
+                    </option>
+                {/each}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            on:click={() => {
 <div class="container d-flex flex-column flex-md-row">
     <div class="d-flex flex-column align-items-center justify-content-center m-3">
         <div class="position-relative d-inline-block">

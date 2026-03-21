@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 
@@ -85,7 +84,15 @@ public class Program
                 });
             });
         }
-
+        
+        // add the custom environment file
+        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+        
+        // bind it in email service
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
+        
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -125,7 +132,7 @@ public class Program
         
         app.UseAntiforgery();
 
-        // CSRF token endpoint
+        // CSRF token endpoint`
         app.MapGet("/api/csrf-token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext context) =>
         {
             var tokens = antiforgery.GetAndStoreTokens(context);

@@ -29,3 +29,6 @@ SENG302.App/build
 
 # User Uploads Bucket
 UserUploads/
+
+# local environment variables
+SENG302.Api/appsettings.Local.json

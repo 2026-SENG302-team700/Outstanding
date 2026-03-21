@@ -26,7 +26,7 @@ public class LoginController : ControllerBase
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
-    /// <returns>a Task<ActionResult<User>></returns>
+    /// <returns>a Task<ActionResult<User></returns>
     [HttpPost]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
@@ -84,7 +84,7 @@ public class LoginController : ControllerBase
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = false
             });
         }
@@ -93,7 +93,7 @@ public class LoginController : ControllerBase
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = true
             });
         }

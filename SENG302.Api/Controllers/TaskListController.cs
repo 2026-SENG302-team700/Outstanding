@@ -4,19 +4,18 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Filters;
 using System.Security.Claims;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/tasks")]
-public class TaskController : ControllerBase
+[Route("api/taskList")]
+public class TaskListController : ControllerBase
 {
     private readonly ITaskService _taskService;
 
-    public TaskController(ITaskService taskService)
+    public TaskListController(ITaskService taskService)
     {
         _taskService = taskService;
     }
@@ -67,8 +66,8 @@ public class TaskController : ControllerBase
         try
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
-                return Unauthorized();
+            if (string.IsNullOrEmpty(userEmail)) 
+                return Unauthorized();               
             await _taskService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
             return Ok("Task list created successfully");
         }

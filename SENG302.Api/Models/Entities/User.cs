@@ -1,8 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Models.Entities;
 
+
+[Index(nameof(Email), IsUnique = true)]
 public class User
 {
     [Key]

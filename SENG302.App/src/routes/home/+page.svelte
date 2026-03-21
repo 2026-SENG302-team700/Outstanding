@@ -11,14 +11,15 @@
     onMount(() => {
         fetchLists();
     });
-    
+
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
     async function fetchLists() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -28,6 +29,7 @@
                 return;
             }
             taskLists = data;
+            console.log(taskLists);
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -59,17 +61,21 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 300px; overflow: scroll;">
             <table class="table table-hover">
-                <thead>
+                <thead style="position: sticky; top: 0;">
                     <tr>
                         <th>Name</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {#each taskLists as list}
-                        <tr>
-                            <td>{list.name}</td>
+                    {#each taskLists as taskList}
+                        <tr
+                            on:click={() =>
+                                goto(`/home/task-list/${taskList.id}`)}
+                            style="cursor: pointer; white-space: pre;"
+                        >
+                            <td>{taskList.name}</td>
                         </tr>
                     {/each}
                 </tbody>

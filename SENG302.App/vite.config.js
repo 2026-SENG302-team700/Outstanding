@@ -1,5 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 
 export default defineConfig({
 	plugins: [sveltekit()],
@@ -11,6 +11,15 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false
 			}
+		},
+		fs: {
+			allow: [
+       
+        searchForWorkspaceRoot(process.cwd()),
+        // your custom rules
+        '/Users/Shutt/Documents/GitHub/team-700/node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff',
+		'/Users/Shutt/Documents/GitHub/team-700/node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2'
+      ],
 		}
 	}
 });

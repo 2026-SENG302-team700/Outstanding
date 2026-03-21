@@ -53,43 +53,67 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    /// <summary>
+    /// Updates the users information
+    /// </summary>
+    /// <param name="updateUserRequest"></param>
+    /// <returns> The user upon successful update</returns>
     [HttpPut]
     public async Task<ActionResult<User>> UpdateUser([FromBody] UpdateUserRequest updateUserRequest)
     {
+        // Get user from cookie
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
-        
-        var userId = int.Parse(userIdString);
-        var oldUser = await _userService.GetUserByIdAsync(userId);
-        
-        var user = await _userService.UpdateUser(
-            userId, 
-            updateUserRequest.Email, 
-            updateUserRequest.DisplayName, 
-            updateUserRequest.Country);
-        // Re login user to update claims
-        var claims = new List<Claim>
+
+        // Call service to perform update logic
+        try
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.DisplayName)
-        };
-
-        var principle = new ClaimsPrincipal(
-            new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
-        );
-
-        // Sign them in with the auth cookie
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principle,
-            new AuthenticationProperties
+            var userId = int.Parse(userIdString);
+            var oldUser = await _userService.GetUserByIdAsync(userId);
+            
+            var user = await _userService.UpdateUser(
+                    userId, 
+                    updateUserRequest.Email, 
+                    updateUserRequest.DisplayName, 
+                    updateUserRequest.Country);
+            
+            if (user == null)
             {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                throw new Exception("Couldn't find user");
+            }
+
+            // Re login user to update claims
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.DisplayName)
+            };
+
+            var principle = new ClaimsPrincipal(
+                new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+            );
+
+            // Sign them in with the auth cookie
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principle,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                });
+            return Ok(user);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(new
+            {
+                message = e.Message,
+                errorType = e.GetType().Name
             });
-        return Ok(user);
+        }
     }
 
     /// <summary>
