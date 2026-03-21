@@ -159,4 +159,35 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             );
         json.GetProperty("hashStatus").GetBoolean().ShouldBe(false);
     }
+
+    [Fact]
+    public async Task LoginUser_UnverifiedEmail_Unauthorized()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            Country = "NZ",
+            EmailVerified = false,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/login", new
+        {
+            Email = "test@example.com",
+            PasswordString = "Team700!"
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(false);
+        json.GetProperty("message").GetString().ShouldBe("Email not verified");
+    }
 }
