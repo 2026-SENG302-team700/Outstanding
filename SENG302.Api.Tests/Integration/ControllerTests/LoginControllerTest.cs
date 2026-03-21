@@ -188,6 +188,6 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var content = await message.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(false);
-        json.GetProperty("message").GetString().ShouldBe("Email not verified");
+        json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
     }
 }

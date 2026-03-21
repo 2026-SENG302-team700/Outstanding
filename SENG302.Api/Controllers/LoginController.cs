@@ -53,7 +53,7 @@ public class LoginController : ControllerBase
             return BadRequest(new
             {
                 login = false,
-                message = "Email not verified"
+                message = "Account is not validated yet, check your emails."
             });
         }
         else if (status == UserVerificationResult.MalformedEmail)

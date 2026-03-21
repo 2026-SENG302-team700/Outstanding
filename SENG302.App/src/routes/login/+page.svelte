@@ -155,7 +155,8 @@
         <div class="mb-3">
             <button
                 class="btn btn-primary w-100"
-                hidden={errors.email != "Email not verified"}
+                hidden={errors.email !=
+                    "Account is not validated yet, check your emails."}
             >
                 Verify Email
             </button>
