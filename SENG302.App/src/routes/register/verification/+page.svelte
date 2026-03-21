@@ -154,9 +154,11 @@
         // Only validate input on front end before timeout has occured
         if (remainingSeconds > 0) {
             if (!inputValidation()) return;
+        } else {
+            clearInterval(intervalId);
         }
 
-        clearInterval(intervalId);
+        
         
         try {
             loading = true;
