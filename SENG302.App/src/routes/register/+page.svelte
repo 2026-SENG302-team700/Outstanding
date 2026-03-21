@@ -147,9 +147,6 @@
             });
 
             const data = await response.json().catch(() => null);
-
-            console.log(data);
-
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response

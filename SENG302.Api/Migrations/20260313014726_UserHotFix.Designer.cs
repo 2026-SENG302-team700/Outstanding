@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SENG302.Api.DataAccess;
 
@@ -10,9 +11,11 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20260313014726_UserHotFix")]
+    partial class UserHotFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
@@ -89,8 +92,9 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ProfilePicture")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("ProfilePicture")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("TimeCreated")
                         .HasColumnType("TEXT");
