@@ -77,8 +77,7 @@
             }
 
             if (response.status === 400) {
-                errors.email =
-                    "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+                errors.email = data.message;
                 return;
             }
 

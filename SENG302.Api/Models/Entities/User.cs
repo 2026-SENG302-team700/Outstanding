@@ -20,4 +20,6 @@ public class User
     public required string Country { get; set; }
 
     public DateTimeOffset TimeCreated { get; set; }
+
+    public bool EmailVerified { get; set; } = false;
 }
