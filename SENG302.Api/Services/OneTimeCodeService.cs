@@ -9,8 +9,8 @@ namespace SENG302.Api.Services;
 public interface IOneTimeCodeService
 {
     public string GenerateOneTimeCode();
-    public int GetEpochTime();
-    public bool CompareTimes(int startTime, int endTime);
+    public long GetEpochTime();
+    public bool CompareTimes(long startTime, long endTime);
     public bool CompareCodes(string enteredCode, string originalCode);
 }
 
@@ -20,7 +20,8 @@ public class OneTimeCodeService : IOneTimeCodeService
     private readonly TimeProvider _timeProvider;
     
     // Static variable representing the time limit for the code to be entered in
-    private static int timeoutTimeSeconds = 120;
+    private static int _timeoutTimeSeconds = 300;
+    private static int _expectedCodeLength = 6;
     
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
@@ -37,7 +38,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     public string GenerateOneTimeCode()
     {
         byte[] bytes = new byte[4];
-        // Modifies array of bytes with random crytographically secure bytes
+        // Modifies array of bytes with random cryptographically secure bytes
         RandomNumberGenerator.Fill(bytes);
 
         int value = BitConverter.ToInt32(bytes, 0);
@@ -51,13 +52,10 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// Returns the Unix time or Epoch time of the server which is the number of seconds passed since Jan 1st 1970 midnight
     /// </summary>
     /// <returns>int representing amount of seconds since Jan 1st 1970</returns>
-    public int GetEpochTime()
+    public long GetEpochTime()
     {
-        DateTimeOffset currentTime = _timeProvider.GetUtcNow();
-        TimeSpan currentEpochTime = currentTime - DateTimeOffset.UnixEpoch;
-        int epochTimeSeconds = (int)currentEpochTime.TotalSeconds;
+        long epochTimeSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         
-        // currentEpochTime
         return epochTimeSeconds;
     }
     
@@ -70,9 +68,9 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// <returns>
     /// A boolean indicating if the code was entered in time or not
     /// </returns>
-    public bool CompareTimes(int startTime, int endTime)
+    public bool CompareTimes(long startTime, long endTime)
     {
-        return endTime - startTime < timeoutTimeSeconds;
+        return endTime - startTime < _timeoutTimeSeconds;
     }
     
     /// <summary>
@@ -85,6 +83,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// </returns>
     public bool CompareCodes(string enteredCode, string originalCode)
     {
+        if (originalCode.Length != _expectedCodeLength  || enteredCode.Length != _expectedCodeLength ) return false;
         return enteredCode == originalCode;
     }
 }

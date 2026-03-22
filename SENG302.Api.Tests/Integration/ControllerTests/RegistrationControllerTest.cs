@@ -89,4 +89,145 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("message").GetString().ShouldBe("This email address is already in use by another account");        
     }
+
+    [Theory]
+    [InlineData("   ")]
+    public async Task GenerateCode_MissingEmail_ReturnBadRequest(string? userEmail)
+    {
+        var data = new
+        {
+            email = userEmail
+        };
+        var message = await HttpClient.PutAsJsonAsync("/api/register/code/generation", data);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("message").GetString().ShouldBe("User email is missing");
+    }
+    
+    [Theory]
+    [InlineData("test@example.com")]
+    public async Task GenerateCode_ValidEmail_ReturnOk(string? userEmail)
+    {
+        
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        var data = new
+        {
+            email = userEmail
+        };
+        var message = await HttpClient.PutAsJsonAsync("/api/register/code/generation", data);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ValidateCode_IncorrectCode_ReturnBadRequest()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        long codeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            OneTimeCode = "608975",
+            CodeGenerationTime = codeGenerationTime,
+        });
+        await context.SaveChangesAsync();
+        var data = new
+        {
+            email = "test@example.com",
+            Code = "609809"
+        };
+        
+        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("message").GetString().ShouldBe("Invalid Code");
+    }
+    
+    
+    [Fact]
+    public async Task ValidateCode_InvalidTimedOutCode_ReturnBadRequest()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        long codeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 600;
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            OneTimeCode = "608975",
+            CodeGenerationTime = codeGenerationTime,
+        });
+        await context.SaveChangesAsync();
+        var data = new
+        {
+            email = "test@example.com",
+            Code = "609809"
+        };
+        
+        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("message").GetString().ShouldBe("Code is no longer valid, account no longer exists");
+    }
+    
+    [Fact]
+    public async Task ValidateCode_ValidCode_ReturnOk()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        long codeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            OneTimeCode = "608975",
+            CodeGenerationTime = codeGenerationTime,
+        });
+        await context.SaveChangesAsync();
+        var data = new
+        {
+            email = "test@example.com",
+            Code = "608975"
+        };
+        
+        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        
+        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+        
+        
+    }
 }

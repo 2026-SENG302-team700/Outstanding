@@ -16,8 +16,8 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
-    Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime, bool userVerified);
-    Task<bool> DeleteUserByIdAsync(int id);
+    Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
 
@@ -552,12 +552,12 @@ public class UserService : IUserService
     /// <returns>
     /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
     /// </returns>
-    public async Task<bool> UpdateUserOneTimeCode(int id, string oneTimeCode, int epochTime, bool userVerified)
+    public async Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, long epochTime, bool userVerified)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         
         User? user = await GetUserByIdAsync((int)id);
-        if (user == null) return false;
+        if (user == null) return user;
 
         user.OneTimeCode = oneTimeCode;
         user.CodeGenerationTime = epochTime;
@@ -569,7 +569,7 @@ public class UserService : IUserService
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
-        return true;
+        return user;
     }
 
     /// <summary>
@@ -577,7 +577,7 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="id"></param> User ID
     /// <returns>A boolean representing if the user has been deleted properly</returns>
-    public async Task<bool> DeleteUserByIdAsync(int id)
+    public async Task<User?> DeleteUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
@@ -586,8 +586,7 @@ public class UserService : IUserService
         {
             context.Users.Remove(user);
             await context.SaveChangesAsync();
-            return true;
         }
-        return false;
+        return user;
     }
 }

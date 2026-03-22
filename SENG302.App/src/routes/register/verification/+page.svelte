@@ -65,8 +65,8 @@
      * Takes an error message and displays it to the user while also making visible a 'resend code' button
      * @param error
      */
-    function displayError(error: string, visible: boolean) {
-        if (!(resendLinkVisible == visible)) resendLinkVisible = visible;
+    function displayError(error: string, makeResendLinkVisible: boolean) {
+        if (!(resendLinkVisible == makeResendLinkVisible)) resendLinkVisible = makeResendLinkVisible;
         errorMessage = error;
     }
 
@@ -179,7 +179,7 @@
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                displayError(data.message, false);
+                displayError(data.message, true);
                 return;
             } else {
                 addToast("Registration successful. Please log in.", "success");

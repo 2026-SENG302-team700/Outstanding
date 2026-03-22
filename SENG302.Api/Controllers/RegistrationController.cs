@@ -103,13 +103,13 @@ public class RegistrationController : ControllerBase
         if (user == null) return NotFound(new { message = "User not found" });
         
         string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
-        int timerStartTime = _oneTimeCodeService.GetEpochTime();
+        long timerStartTime = _oneTimeCodeService.GetEpochTime();
         Console.Write("\n\n" + oneTimeCode + "\n\n");
 
         if (oneTimeCode.Length != 6) return Problem();
 
-        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime, false);
-        if (!userUpdated) return Problem();
+        User? userUpdated = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime, false);
+        if (userUpdated == null) return Problem();
         
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -138,7 +138,7 @@ public class RegistrationController : ControllerBase
     [HttpPut("code/validation")]
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
-        int codeEnteredTime = _oneTimeCodeService.GetEpochTime();
+        long codeEnteredTime = _oneTimeCodeService.GetEpochTime();
         
         if (string.IsNullOrWhiteSpace(validationRequest.Email))
         {
@@ -151,8 +151,10 @@ public class RegistrationController : ControllerBase
         User? user = await _userService.GetUserByIdAsync((int)id);
         if (user == null) return NotFound( new {message = "User not found"});
         
+        
         // If the code has timed-out, delete the user object associated with the email
         bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
+        
         if (!codeValid)
         {
             await _userService.DeleteUserByIdAsync((int)id);
@@ -164,8 +166,8 @@ public class RegistrationController : ControllerBase
         if (!correctCode) return BadRequest(new { message = "Invalid Code" });
         
         
-        bool userUpdated = await _userService.UpdateUserOneTimeCode((int)id, "", 0, true);
-        if (!userUpdated) return Problem();
+        User? userUpdated = await _userService.UpdateUserOneTimeCode((int)id, "", 0, true);
+        if (userUpdated == null) return Problem();
         
         
         return Ok();

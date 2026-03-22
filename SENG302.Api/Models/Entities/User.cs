@@ -25,7 +25,7 @@ public class User
     [StringLength(6)]
     public string OneTimeCode { get; set; } = String.Empty;
     
-    public int CodeGenerationTime { get; set; }
+    public long CodeGenerationTime { get; set; }
 
     public DateTimeOffset TimeCreated { get; set; }
 
