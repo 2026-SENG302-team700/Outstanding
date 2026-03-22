@@ -9,12 +9,14 @@
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    import ImageEditor from "$lib/image-editor/image-editor.svelte";
 
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+    let imageEditor: ImageEditor;
 
     let errors = $state({
         email: "",
@@ -153,13 +155,17 @@
             addToast((err as Error).message);
         }
     }
-    
-    async function updatePfp() {
-        if (!files || files.length === 0) return;
+
+    async function sendToEditor() {
+        imageEditor.setImg()
+    }
+
+    async function updatePfp(image : File, xOffset : number, yOffset: number, zoom: number) {
+        //if (!files || files.length === 0) return;
         
         try {
             const formData = new FormData();
-            formData.append("file", files[0]);
+            formData.append("file", image);
 
             const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
                 method: "PUT",
@@ -190,21 +196,10 @@
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                on:click={() => pfpInput.click()}
+                data-bs-toggle="modal" data-bs-target="#pfpInputModal"
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
-
-            <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:change={updatePfp}
-            />            
         </div>
     </div>
     
@@ -253,4 +248,46 @@
         >
     </form>
     </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="pfpInputModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="pfpInputModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="pfpInputModalLabel">Modal title</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <button
+            type="button"
+            class="btn btn-primary"
+            on:click={() => pfpInput.click()}
+        >
+            Choose Image
+        </button>
+
+        <input
+            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+            bind:files
+            bind:this={pfpInput}
+            id="pfp"
+            name="pfp"
+            type="file"
+            class="d-none"
+            on:change={sendToEditor}
+        />
+
+        <ImageEditor
+            bind:this={imageEditor}
+            onImageSubmit={(image : File) => updatePfp(image, 0, 0, 1.0)} inputImage=null
+        />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Understood</button>
+      </div>
+    </div>
+  </div>
 </div>

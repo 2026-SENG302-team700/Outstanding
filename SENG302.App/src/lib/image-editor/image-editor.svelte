@@ -37,7 +37,7 @@
      * Note: this function is called in onMount if inputImage is set
      * @param url the data url of the image
      */
-    async function setImg(url: string) {
+    export async function setImg(url: string) {
         try {
             imageSrc = url;
             const dimensions = await getImgDimensions(imageSrc);
