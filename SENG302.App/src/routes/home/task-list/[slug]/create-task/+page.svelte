@@ -4,6 +4,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
     import { addToast } from "$lib/toast/toast";
+    import DatePicker from "$lib/datepicker/datepicker.svelte";
+    import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -192,44 +194,9 @@
 
         <div class="mb-3 d-flex align-items-center gap-2">
             <label class="form-label mb-0">Status:</label>
-            <div class="dropdown">
-                <button
-                    type="button"
-                    class="btn dropdown-toggle btn-primary"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                >
-                    {#if taskStatus == 0}
-                        Todo
-                    {/if}
-                    {#if taskStatus == 1}
-                        In Progress
-                    {/if}
-                    {#if taskStatus == 2}
-                        Done
-                    {/if}
-                </button>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a
-                            class="dropdown-item"
-                            on:click={() => (taskStatus = 0)}>Todo</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            class="dropdown-item"
-                            on:click={() => (taskStatus = 1)}>In Progress</a
-                        >
-                    </li>
-                    <li>
-                        <a
-                            class="dropdown-item"
-                            on:click={() => (taskStatus = 2)}>Done</a
-                        >
-                    </li>
-                </ul>
-            </div>
+            <StatusDropdown
+                bind:value={taskStatus}
+            />
             {#if error}
                 <div class="text-danger mt-1">{error}</div>
             {/if}
@@ -237,14 +204,10 @@
 
         <div class="mb-3 d-flex align-items-center gap-2">
             <label class="form-label mb-0">Due Date:</label>
-
-            <input
-                type="date"
-                class="form-control w-auto"
-                class:is-invalid={errors.dueDate}
-                bind:value={taskDue}
-                disabled={loading}
-            />
+            <DatePicker 
+                    bind:value={taskDue}
+                    error={errors.dueDate}
+                    disabled={loading} />
         </div>
 
         {#if errors.dueDate}
