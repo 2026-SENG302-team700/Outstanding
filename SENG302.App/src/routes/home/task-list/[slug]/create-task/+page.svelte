@@ -58,8 +58,8 @@
                     },
                     body: JSON.stringify({
                         taskListId: params.slug,
-                        name,
-                        description,
+                        name: name.trim(),
+                        description: description.trim(),
                         DueDate: taskDue,
                         currentStatus: taskStatus,
                     }),
