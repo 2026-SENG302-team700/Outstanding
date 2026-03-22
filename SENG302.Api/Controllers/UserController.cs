@@ -103,4 +103,7 @@ public class UserController : ControllerBase
             });
         }
     }
+
+    [HttpPost]
+    public async Task<ActionResult<User>> UpdateUserPassword([FromBody] )
 }

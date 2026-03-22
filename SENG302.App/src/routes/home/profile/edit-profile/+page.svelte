@@ -13,13 +13,18 @@
     let email = $state("");
     let country = $state("");
     let passwordEdit = $state(false);
+    let editVerified = $state(false);
     let currentPassword = $state("");
     let newPassword = $state("");
     let newPasswordConfirm = $state("");
+    let verificationCode = $state("");
+    let tempCode = "bob"; //TESTING PURPOSES ONLY
 
     let errors = $state({
         email: "",
         displayName: "",
+        password: "",
+        verification: "",
     });
 
     onMount(() => {
@@ -65,6 +70,8 @@
         errors = {
             email: "",
             displayName: "",
+            password:"",
+            verification: ""
         };
 
         // Front end Validation
@@ -211,7 +218,7 @@
         </div>
 
         <div class="mb-3">
-            {#if passwordEdit == false}
+            {#if !passwordEdit && !editVerified} <!--access verification code "inputter"-->
                 <button
                     type="reset"
                     class="btn btn-warning"
@@ -220,14 +227,33 @@
                     Edit Password
                 </button>
             {/if}
-            {#if passwordEdit == true}
+            {#if passwordEdit && !editVerified} <!--input verification code-->
+                <label for="displayName" class="form-label"
+                    >PLACEHOLDER VERIFICATION CODE</label
+                >
+                <input
+                    type="text"
+                    class="form-control"
+                    class:is-invalid={errors.verification}
+                    bind:value={verificationCode}
+                    id="displayName"
+                />
+                <button
+                    type="reset"
+                    class="btn btn-warning"
+                    on:click={() => initiatePasswordUpdate()}
+                >
+                    Verify Code
+                </button>
+            {/if}
+            {#if passwordEdit && editVerified} <!--edit password-->
                 <label for="displayName" class="form-label"
                     >Current Password</label
                 >
                 <input
                     type="password"
                     class="form-control"
-                    class:is-invalid={errors.displayName}
+                    class:is-invalid={errors.password}
                     bind:value={currentPassword}
                     id="displayName"
                 />
@@ -235,7 +261,7 @@
                 <input
                     type="password"
                     class="form-control"
-                    class:is-invalid={errors.displayName}
+                    class:is-invalid={errors.password}
                     bind:value={newPassword}
                     id="displayName"
                 />
@@ -245,7 +271,7 @@
                 <input
                     type="password"
                     class="form-control"
-                    class:is-invalid={errors.displayName}
+                    class:is-invalid={errors.password}
                     bind:value={newPasswordConfirm}
                     id="displayName"
                 />
