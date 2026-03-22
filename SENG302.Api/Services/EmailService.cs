@@ -56,18 +56,6 @@ public class EmailService : IEmailService
             HtmlBody = htmlBody,
             TextBody = StripHtml(htmlBody)
         }.ToMessageBody();
-
-        
-        if (OperatingSystem.IsWindows())
-        {
-            using var client = new SmtpClient();
-            client.CheckCertificateRevocation = false; 
-            await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-            return;
-        }
         
         await _smtpClient.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
         await _smtpClient.AuthenticateAsync(_settings.FromEmail, _settings.Password);
