@@ -12,6 +12,10 @@
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
+    let passwordEdit = $state(false);
+    let currentPassword = $state("");
+    let newPassword = $state("");
+    let newPasswordConfirm = $state("");
 
     let errors = $state({
         email: "",
@@ -106,6 +110,12 @@
         return valid;
     }
 
+    function initiatePasswordUpdate() {
+        passwordEdit = true;
+    }
+
+    async function updatePassword() {}
+
     /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
@@ -199,6 +209,49 @@
                 {/each}
             </select>
         </div>
+
+        <div class="mb-3">
+            {#if passwordEdit == false}
+                <button
+                    type="reset"
+                    class="btn btn-warning"
+                    on:click={() => initiatePasswordUpdate()}
+                >
+                    Edit Password
+                </button>
+            {/if}
+            {#if passwordEdit == true}
+                <label for="displayName" class="form-label"
+                    >Current Password</label
+                >
+                <input
+                    type="password"
+                    class="form-control"
+                    class:is-invalid={errors.displayName}
+                    bind:value={currentPassword}
+                    id="displayName"
+                />
+                <label for="displayName" class="form-label">New Password</label>
+                <input
+                    type="password"
+                    class="form-control"
+                    class:is-invalid={errors.displayName}
+                    bind:value={newPassword}
+                    id="displayName"
+                />
+                <label for="displayName" class="form-label"
+                    >Confirm New Password</label
+                >
+                <input
+                    type="password"
+                    class="form-control"
+                    class:is-invalid={errors.displayName}
+                    bind:value={newPasswordConfirm}
+                    id="displayName"
+                />
+            {/if}
+        </div>
+
         <button type="submit" class="btn btn-primary">Update</button>
         <button
             type="button"
