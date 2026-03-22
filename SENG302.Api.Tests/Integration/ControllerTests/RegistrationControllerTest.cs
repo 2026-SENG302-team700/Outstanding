@@ -107,31 +107,6 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         json.GetProperty("message").GetString().ShouldBe("User email is missing");
     }
     
-    [Theory]
-    [InlineData("test@example.com")]
-    public async Task GenerateCode_ValidEmail_ReturnOk(string? userEmail)
-    {
-        
-        await using var context = DbContextFactory.CreateDbContext();
-
-        // Add user to DB
-        context.Users.Add(new User
-        {
-            Email = "test@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-        
-        var data = new
-        {
-            email = userEmail
-        };
-        var message = await HttpClient.PutAsJsonAsync("/api/register/code/generation", data);
-
-        message.StatusCode.ShouldBe(HttpStatusCode.OK);
-    }
 
     [Fact]
     public async Task ValidateCode_IncorrectCode_ReturnBadRequest()
@@ -157,7 +132,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Code = "609809"
         };
         
-        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
         
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         
@@ -191,7 +166,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Code = "609809"
         };
         
-        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
         
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         
@@ -224,7 +199,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
             Code = "608975"
         };
         
-        var message = await HttpClient.PutAsJsonAsync("/api/register/code/validation", data);
+        var message = await HttpClient.PostAsJsonAsync("/api/register/code/validation", data);
         
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
         

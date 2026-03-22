@@ -16,7 +16,7 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
-    Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
 }
@@ -552,9 +552,12 @@ public class UserService : IUserService
     /// <returns>
     /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
     /// </returns>
-    public async Task<User?> UpdateUserOneTimeCode(int id, string oneTimeCode, long epochTime, bool userVerified)
+    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        int? id = await GetUserIdFromEmailAsync(email);
+        if (id == null) return null;
         
         User? user = await GetUserByIdAsync((int)id);
         if (user == null) return user;

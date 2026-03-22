@@ -96,29 +96,22 @@ public class RegistrationController : ControllerBase
             return BadRequest(new { message = "User email is missing", });
         }
         
-        int? id = await _userService.GetUserIdFromEmailAsync(codeRequest.Email);
-        if (id == null) return NotFound(new { message = "Email not found" });
-        
-        User? user = await _userService.GetUserByIdAsync((int)id);
-        if (user == null) return NotFound(new { message = "User not found" });
-        
         string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
         long timerStartTime = _oneTimeCodeService.GetEpochTime();
-        Console.Write("\n\n" + oneTimeCode + "\n\n");
 
         if (oneTimeCode.Length != 6) return Problem();
 
-        User? userUpdated = await _userService.UpdateUserOneTimeCode((int)id, oneTimeCode, timerStartTime, false);
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
         if (userUpdated == null) return Problem();
         
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
         {
-            {"DISPLAY_NAME", user.DisplayName},
+            {"DISPLAY_NAME", userUpdated.DisplayName},
             {"CODE", oneTimeCode},
             {"MINUTES", "5"}
         };
-        await _emailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary);
+        await _emailService.SendEmailAsync(userUpdated.Email, EmailTemplate.VerifyEmailCode, emailDictionary);
         
         return Ok();
     }
@@ -135,7 +128,7 @@ public class RegistrationController : ControllerBase
     /// If not, then a Bad Request is returned. If an internal server error occurs, a Problem is returned and if
     /// the User object is not found, an NotFound http error is returned. 
     /// </returns>
-    [HttpPut("code/validation")]
+    [HttpPost("code/validation")]
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
         long codeEnteredTime = _oneTimeCodeService.GetEpochTime();
@@ -144,31 +137,26 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest(new { message = "Invalid email", });
         }
-        
         int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
         if (id == null) return NotFound( new {message = "Email not found"});
         
         User? user = await _userService.GetUserByIdAsync((int)id);
         if (user == null) return NotFound( new {message = "User not found"});
         
-        
         // If the code has timed-out, delete the user object associated with the email
         bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
-        
         if (!codeValid)
         {
             await _userService.DeleteUserByIdAsync((int)id);
             return BadRequest(new { message = "Code is no longer valid, account no longer exists" });
-            
         }
 
         bool correctCode = _oneTimeCodeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
         if (!correctCode) return BadRequest(new { message = "Invalid Code" });
         
         
-        User? userUpdated = await _userService.UpdateUserOneTimeCode((int)id, "", 0, true);
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
         if (userUpdated == null) return Problem();
-        
         
         return Ok();
     }

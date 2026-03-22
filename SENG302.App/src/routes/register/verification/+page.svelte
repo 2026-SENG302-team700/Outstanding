@@ -8,7 +8,7 @@
 
     let user = $state(null);
     let email = $state(localStorage.getItem("email"));
-    let initialSeconds = 120;
+    let initialSeconds = 300;
     let remainingSeconds = $state(initialSeconds);
     let intervalId;
     let timeRemainingText = $state("");
@@ -118,7 +118,9 @@
      */
     async function sendCode() {
         try {
-            await countDownTimer()
+            if (remainingSeconds == initialSeconds) {
+                await countDownTimer()
+            }
             clearInputFields()
             
             loading = true;
@@ -166,7 +168,7 @@
             let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
 
             const response = await fetchWithCsrf(resolve(`/api/register/code/validation`), {
-                method: "PUT",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -179,9 +181,14 @@
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                displayError(data.message, true);
+                if (remainingSeconds > 0) {
+                    displayError(data.message, true);
+                } else {
+                    displayError("Code is no longer valid, account no longer exists", false);
+                }
                 return;
             } else {
+                clearInterval(intervalId);
                 addToast("Registration successful. Please log in.", "success");
                 goto(resolve(`/login`));
             }

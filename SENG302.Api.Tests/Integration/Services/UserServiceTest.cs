@@ -225,7 +225,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
 
         // Use the TaskService function to create a new task list with the name and user email
-        User? user = await ServiceUnderTest.UpdateUserOneTimeCode((int)id, code, timeCreated, userVerified);
+        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
 
         user.OneTimeCode.ShouldBe(code);
         user.CodeGenerationTime.ShouldBe(timeCreated);

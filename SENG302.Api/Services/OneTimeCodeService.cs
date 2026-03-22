@@ -83,7 +83,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// </returns>
     public bool CompareCodes(string enteredCode, string originalCode)
     {
-        if (originalCode.Length != _expectedCodeLength  || enteredCode.Length != _expectedCodeLength ) return false;
+        if (originalCode.Length != _expectedCodeLength  || enteredCode.Length != _expectedCodeLength) return false;
         return enteredCode == originalCode;
     }
 }
