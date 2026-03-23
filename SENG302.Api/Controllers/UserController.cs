@@ -71,6 +71,7 @@ public class UserController : ControllerBase
         {
             var userId = int.Parse(userIdString);
             var oldUser = await _userService.GetUserByIdAsync(userId);
+            updateUserRequest.Email = updateUserRequest.Email.ToLower();
             
             var user = await _userService.UpdateUser(
                     userId, 
