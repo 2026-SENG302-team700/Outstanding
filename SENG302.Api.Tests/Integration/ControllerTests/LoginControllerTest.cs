@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -120,30 +121,31 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task LoginUser_DifferentEmailCasing_ReturnLoginSuccess()
     {
-        var register = new
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
         {
+            Id = 1,
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
-            PasswordString = "c00lPasSw0rdont@ME",
-            PasswordConfirm = "c00lPasSw0rdont@ME",
-            Country = "AU"
+            Country = "AU",
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
         };
-
-        var message = await HttpClient.PostAsJsonAsync("/api/register", register);
-
-        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+        user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         var login = new
         {
-            Email = "JdEv@deV.com",
+            Email = "JDev@deV.cOm",
             PasswordString = "c00lPasSw0rdont@ME",
         };
+        var response = await HttpClient.PostAsJsonAsync("/api/login", login);
 
-        var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        message2.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var content = await message2.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(true);
         json.GetProperty("message").GetString().ShouldBe("JJ Devy");
