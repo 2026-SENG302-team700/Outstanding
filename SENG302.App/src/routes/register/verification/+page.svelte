@@ -166,8 +166,6 @@
             clearInterval(intervalId);
         }
 
-        
-        
         try {
             loading = true;
             
@@ -208,6 +206,13 @@
 
 <div class="d-flex justify-content-center align-items-start vh-100 bg-light">
     <div class="card shadow-sm p-4">
+    <div class="mb-3">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            on:click={() => goto(resolve("/register"))}>Cancel</button
+        >
+    </div>
         <h1 class="text-center mb-3">Verify your email address</h1>
         <hr style="height: 2px; background-color: black; width: 50%; margin-left: auto; margin-right: auto;">
         <div class="row justify-content-center">

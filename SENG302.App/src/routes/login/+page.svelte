@@ -157,6 +157,7 @@
                 class="btn btn-primary w-100"
                 hidden={errors.email !=
                     "Account is not validated yet, check your emails."}
+                    on:click={() => goto(resolve("/register/verification"))}
             >
                 Verify Email
             </button>
