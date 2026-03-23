@@ -1,79 +1,145 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace SENG302.Services;
+namespace SENG302.Api.Services;
 
-/// <summary>
-/// Config class that will hold the SMTP infromation
-/// </summary>
-class Config
+/**
+ * All the different email templates
+ */
+public enum EmailTemplate
 {
-    public string SmtpHost { get; set; }
-    public int SmtpPort { get; set; }
-    public string SmtpUser { get; set; }
-    public string SmtpPass { get; set; }
+    VerifyEmailCode,
+    ChangePasswordCode,
+    ResetPasswordCode,
+    PasswordChangedConfirmation,
+    PasswordResetConfirmation,
+    ResetCancelledWarning
 }
 
 public interface IEmailService
 {
-     Task SendEmailAsync(string toEmail, string subject, string body);
+    Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model);
 }
 
 public class EmailService : IEmailService
 {
-    /// <summary>
-    /// This method retrieves key 'secret' information from environment variables and returns a Config object
-    /// </summary>
-    /// <returns>Config object containing the SMTP information</returns>
-    static Config GetConfigFromEnv()
+    private readonly EmailSettings _settings;
+    private readonly ISmtpClientWrapper _smtpClient;
+    
+    public EmailService(IOptions<EmailSettings> options, ISmtpClientWrapper smtpClient)
     {
-        return new Config
-        {
-            // Get the SMTP variables from the env vars
-            SmtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? "localhost",
-            SmtpPort = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PORT"), out var port) ? port : 25,
-            SmtpUser = Environment.GetEnvironmentVariable("SMTP_USER") ?? "default-user@fake.com",
-            SmtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "password"
-        };
+        _settings = options.Value;
+        _smtpClient = smtpClient;
     }
-
+    
     /// <summary>
-    /// This method is a demo spike method to test and show sending emails works
+    /// This method is the main method for sending emails to users. I takes a html template, an email address and a dictionary that includes
+    /// key information to about the email being sent.
     /// </summary>
     /// <param name="toEmail">The address to send the email to</param>
-    /// <param name="subject">The subject of the email being sent</param>
-    /// <param name="body">The body of the email being sent</param>
+    /// <param name="template">The html template of the email to send</param>
+    /// <param name="model">The values to inject into the email template</param>
     /// <returns></returns>
-    public async Task SendEmailAsync(string toEmail, string subject, string body)
+    public async Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model)
     {
-        Config EmailConfig = GetConfigFromEnv();
-
+        var (subject, htmlBody) = await RenderAsync(template, model);
+        
         var message = new MimeMessage();
-
-        message.From.Add(new MailboxAddress("Sender", EmailConfig.SmtpUser));
-        message.To.Add(new MailboxAddress("Receiver", toEmail));
+        message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
+        message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
         message.Subject = subject;
 
-        message.Body = new TextPart("plain")
+        message.Body = new BodyBuilder
         {
-            Text = body
-        };
+            HtmlBody = htmlBody,
+            TextBody = StripHtml(htmlBody)
+        }.ToMessageBody();
+        
+        await _smtpClient.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
+        await _smtpClient.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+        await _smtpClient.SendAsync(message);
+        await _smtpClient.DisconnectAsync(true);
+    }
 
-        Console.WriteLine($"{EmailConfig.SmtpHost}");
+    /// <summary>
+    /// Find the correct template file and then call the method to split the html file into the subject and the html body,
+    /// then inject the values into the body and subject.
+    /// </summary>
+    /// <param name="template">The template that is being sent</param>
+    /// <param name="model">The Dictionary containing the user information</param>
+    /// <returns></returns>
+    private async Task<(string Subject, string HtmlBody)> RenderAsync(EmailTemplate template, Dictionary<string, string> model)
+    {
+        var fileName = template + ".html"; // e.g. VerifyEmailCode.html
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "EmailTemplates", fileName);
 
-        using (var client = new SmtpClient())
+        var raw = await File.ReadAllTextAsync(path);
+        // get subject and body
+        var (subject, html) = ParseSubjectAndBody(raw);
+
+        foreach (var kv in model)
         {
-            await client.ConnectAsync(EmailConfig.SmtpHost, EmailConfig.SmtpPort, SecureSocketOptions.StartTls);
-            Console.WriteLine("connected");
-            await client.AuthenticateAsync(EmailConfig.SmtpUser, EmailConfig.SmtpPass);
-            Console.WriteLine("authenticated");
-            await client.SendAsync(message);
-            
-            await client.DisconnectAsync(true);
+            var placeholder = "{{" + kv.Key + "}}";
+            subject = subject.Replace(placeholder, kv.Value);
+            html = html.Replace(placeholder, kv.Value);
         }
 
-        Console.WriteLine("Email sent!");
-
+        return (subject, html);
     }
+
+    /// <summary>
+    /// Parse the raw html and split it into the subject and the body
+    /// </summary>
+    /// <param name="raw">The raw text in the html file</param>
+    /// <returns>The split up subject and body</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private static (string Subject, string HtmlBody) ParseSubjectAndBody(string raw)
+    {
+        raw = raw.Replace("\r\n", "\n");
+
+        var lines = raw.Split('\n');
+        if (lines.Length == 0 || !lines[0].StartsWith("Subject:", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Email template missing 'Subject:' header on first line");
+        }
+
+        var subject = lines[0].Substring("Subject:".Length).Trim();
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            throw new InvalidOperationException("Email template subject is empty");
+        }
+
+        // find the first blank line after the subject header
+        var i = 1;
+        while (i < lines.Length && lines[i].Trim().Length != 0)
+        {
+            i++;
+        }
+
+        // skip blank lines
+        if (i < lines.Length) i++;
+
+        var htmlBody = string.Join("\n", lines.Skip(i));
+        if (string.IsNullOrWhiteSpace(htmlBody))
+        {
+            throw new InvalidOperationException("Email template body is empty.");
+        }
+
+        return (subject, htmlBody);
+    }
+
+    private static string StripHtml(string html) =>
+        System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", string.Empty);
+}
+/// <summary>
+/// The class that secrets are injected into.
+/// </summary>
+public class EmailSettings
+{
+    public string Host { get; set; } = "";
+    public int Port { get; set; } = 587;
+    public string FromEmail { get; set; } = "";
+    public string Password { get; set; } = "";
 }

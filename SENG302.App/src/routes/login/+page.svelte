@@ -77,8 +77,7 @@
             }
 
             if (response.status === 400) {
-                errors.email =
-                    "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+                errors.email = data.message;
                 return;
             }
 
@@ -144,13 +143,22 @@
                 <div class="text-danger mt-1">{errors.password}</div>
             {/if}
         </div>
-        <div>
+        <div class="mb-3">
             <button
                 type="submit"
                 class="btn btn-primary w-100"
                 disabled={loading}
             >
                 {loading ? "Loading..." : "Login"}
+            </button>
+        </div>
+        <div class="mb-3">
+            <button
+                class="btn btn-primary w-100"
+                hidden={errors.email !=
+                    "Account is not validated yet, check your emails."}
+            >
+                Verify Email
             </button>
         </div>
     </form>
