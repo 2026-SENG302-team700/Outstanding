@@ -43,16 +43,41 @@ public class RegistrationController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
-        if (string.IsNullOrWhiteSpace(user.Email) ||
-        string.IsNullOrWhiteSpace(user.DisplayName) ||
-        string.IsNullOrWhiteSpace(user.Country) ||
-        string.IsNullOrWhiteSpace(user.PasswordString) ||
-        string.IsNullOrWhiteSpace(user.PasswordConfirm)
-        )
-        {
+        user.Email = user.Email.ToLower();
+        if (string.IsNullOrWhiteSpace(user.Email)) {
             return BadRequest(new
             {
-                message = "User registration is missing information"
+                message = "Email is required!"
+            });
+        };
+        if (string.IsNullOrWhiteSpace(user.DisplayName)) {
+            return BadRequest(new
+            {
+                message = "Display name is required!"
+            });
+        }
+        if (user.DisplayName.Trim().Length < 3) {
+            return BadRequest(new
+            {
+                message = "Display name is not long enough!"
+            });
+        }
+        if (string.IsNullOrWhiteSpace(user.Country)) {
+            return BadRequest(new
+            {
+                message = "Country is required!"
+            });
+        } 
+        if (string.IsNullOrWhiteSpace(user.PasswordString)) {
+            return BadRequest(new
+            {
+                message = "A password is required!"
+            });
+        }
+        if (string.IsNullOrWhiteSpace(user.PasswordConfirm)) {
+            return BadRequest(new
+            {
+                message = "Passwords do not match"
             });
         }
 
