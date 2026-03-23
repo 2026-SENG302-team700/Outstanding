@@ -1,6 +1,7 @@
 <script lang="ts">
     // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
+    import { Modal } from 'bootstrap';
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -13,26 +14,32 @@
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
-    let passwordEdit = $state(false);
-    let editVerified = $state(false);
-    let currentPassword = $state("");
-    let newPassword = $state("");
-    let newPasswordConfirm = $state("");
-    let verificationCode = $state("");
-    let tempCode = "bob"; //TESTING PURPOSES ONLY
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+    let verificationCode = $state("");
+    let modalElement: HTMLElement | undefined = $state(); 
+    let authModal: Modal | undefined;
 
     let errors = $state({
         email: "",
         displayName: "",
-        password: "",
-        verification: "",
     });
 
     onMount(() => {
         retrieveUserData();
+        authModal = new Modal(modalElement);
     });
+
+    async function requestPasswordChange() {
+        authModal.show();
+    }
+
+    async function verifyCode() {
+        let success = false;
+        if (success) {
+            authModal.hide();
+        }
+    }
 
     /// <summary>
     /// Sends GET request for the users data and
@@ -73,8 +80,6 @@
         errors = {
             email: "",
             displayName: "",
-            password:"",
-            verification: ""
         };
 
         // Front end Validation
@@ -119,12 +124,6 @@
 
         return valid;
     }
-
-    function initiatePasswordUpdate() {
-        passwordEdit = true;
-    }
-
-    async function updatePassword() {}
 
     /// <summary>
     /// Updates the users information with the provided information
@@ -199,61 +198,123 @@
     }
 </script>
 
-<div class="container">
-    <form on:submit|preventDefault={updateUser}>
-        <div class="mb-3">
-            <label for="displayName" class="form-label">Display Name</label>
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.displayName}
-                bind:value={displayName}
-                id="displayName"
-            />
-            {#if errors.displayName}
-                <div class="invalid-feedback">
-                    {errors.displayName}
-                </div>
-            {/if}
-        </div>
-        <div class="mb-3">
-            <label for="userEmail" class="form-label">Email</label>
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.email}
-                id="userEmail"
-                bind:value={email}
-            />
-            {#if errors.email}
-                <div class="invalid-feedback">
-                    {errors.email}
-                </div>
-            {/if}
-        </div>
-        <div class="mb-3">
-            <label for="country" class="form-label">Country</label>
-            <select
-                class="form-control"
-                class:country-select={!country}
-                bind:value={country}
-                id="country"
+<div class="container d-flex flex-column flex-md-row">
+    <div class="d-flex flex-column align-items-center m-3">
+        <div class="position-relative d-inline-block">
+            <ProfilePic pfpUrl={$user.pfpUrl} size="xl" />
+
+            <button
+                type="button"
+                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+                on:click={() => pfpInput.click()}
             >
-                {#each countries as country}
-                    <option value={country.code}>
-                        {country.name}
-                    </option>
-                {/each}
-            </select>
+                <i class="bi bi-pencil-square fs-2"></i>
+            </button>
+
+            <input
+                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                    bind:files
+                    bind:this={pfpInput}
+                    id="pfp"
+                    name="pfp"
+                    type="file"
+                    class="d-none"
+                    on:change={updatePfp}
+            />            
         </div>
-        <button type="submit" class="btn btn-primary">Update</button>
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => {
+    </div>
+    
+    <div class="flex-grow-1 m-3">
+        <form on:submit|preventDefault={updateUser}>
+            <div class="mb-4">
+                <h5 class="text-muted mb-2">Personal Information</h5>
+                <hr class="mt-0" style="opacity: 0.15;">
+                <div class="mb-3">
+                    <label for="displayName" class="form-label">Display Name</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            bind:value={displayName}
+                            id="displayName"
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="userEmail" class="form-label">Email</label>
+                    <input
+                            type="email"
+                            class="form-control"
+                            id="userEmail"
+                            bind:value={email}
+                    />
+                </div>
+                <div class="mb-3">
+                    <label for="country" class="form-label">Country</label>
+                    <select
+                            class="form-select"
+                            class:country-select={!country}
+                            bind:value={country}
+                            id="country"
+                    >
+                        {#each countries as country}
+                            <option value={country.code}>
+                                {country.name}
+                            </option>
+                        {/each}
+                    </select>
+                </div>
+            </div>
+            <div class="mt-5 mb-4">
+                <h5 class="text-muted mb-2">Account Security</h5>
+                <hr class="mt-0" style="opacity: 0.15;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <p class="small text-secondary mb-0">Change your password to keep your account secure.</p>
+                    <button type="button" class="btn btn-outline-primary btn-sm" on:click={requestPasswordChange}>
+                        Update Password
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => {
                 goto(resolve("/home/profile"));
             }}>Cancel</button
         >
     </form>
+    </div>
+</div>
+
+<div class="modal fade" bind:this={modalElement} tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Verify Your Identity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-secondary">
+                    We've sent a 6-digit verification code to <br>
+                    <span class="text-dark fw-bold">{email}</span>
+                </p>
+                
+                <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                </div>
+
+                
+                <button class="btn btn-primary w-100 py-2 mb-2" on:click={verifyCode}>
+                    Verify Code
+                </button>
+                <button class="btn btn-link btn-sm text-decoration-none" on:click={requestPasswordChange}>
+                    Resend Code
+                </button>
+            </div>
+        </div>
     </div>
 </div>
