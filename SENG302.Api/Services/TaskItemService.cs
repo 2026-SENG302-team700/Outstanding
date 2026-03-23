@@ -138,36 +138,26 @@ public class TaskItemService : ITaskItemService
     public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItem = await context.TaskItems.FirstOrDefaultAsync(u => u.TaskListId == taskItemUpdates.taskId);
+        var taskItem = await context.TaskItems.FirstOrDefaultAsync(u => u.TaskId == taskItemUpdates.taskId);
         if (taskItem == null)
         {
             return null;
         }
         
-        if (taskItemUpdates.Name != null)
-        {
-            taskItemUpdates.Name = taskItemUpdates.Name.Trim();
-            ValidateTaskItemName(taskItemUpdates.Name);
-            taskItem.Name = taskItemUpdates.Name;
-        }
+        taskItemUpdates.Name = taskItemUpdates.Name.Trim();
+        ValidateTaskItemName(taskItemUpdates.Name);
+        taskItem.Name = taskItemUpdates.Name;
 
-        if (taskItemUpdates.Description != null)
-        {
-            ValidateTaskItemDescription(taskItemUpdates.Description);
-            taskItem.Description = taskItemUpdates.Description;
-        }
+        
+        ValidateTaskItemDescription(taskItemUpdates.Description);
+        taskItem.Description = taskItemUpdates.Description;
+        
 
-        if (taskItemUpdates.DueDate != null)
-        {
-            taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
-            ValidateTaskItemDueDate(taskItemUpdates.DueDate);
-            taskItem.DueDate = taskItemUpdates.DueDate;
-        }
-
-        if (taskItemUpdates.CurrentStatus != null)
-        {
-            taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
-        }
+        taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
+        ValidateTaskItemDueDate(taskItemUpdates.DueDate);
+        taskItem.DueDate = taskItemUpdates.DueDate;
+        
+        taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
         
         context.TaskItems.Update(taskItem);
         await context.SaveChangesAsync();

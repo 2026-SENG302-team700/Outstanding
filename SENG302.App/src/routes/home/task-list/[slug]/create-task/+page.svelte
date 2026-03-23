@@ -4,6 +4,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
     import { addToast } from "$lib/toast/toast";
+    import { validateTaskInput } from "$lib/validity/taskValidity"
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
 
@@ -12,7 +13,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = new Date("0001-01-01");
+    let taskDue = $state(new Date("0001-01-01"));
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -27,49 +28,26 @@
     });
 
     /**
-     * enforces form formatting is correct in the front end, for speed.
-     */
-    function validateInputs(): boolean {
-        let valid = true;
-        // Reset errors
-        errors = {
-            name: "",
-            description: "",
-            dueDate: "",
-            taskStatus: "",
-        };
-
-        // Check if name and description length
-        if (name.length > 128 || name.length < 3) {
-            errors.name =
-                "Title is required and must be between 3 and 128 characters long";
-            valid = false;
-        }
-        if (description.length > 2048) {
-            errors.description = "Description must be 2048 characters or less";
-            valid = false;
-        }
-        // Check date validity
-        let taskDueDate = new Date(taskDue).getTime();
-        let now = new Date().getTime();
-        let nullDate = new Date("0001-01-01").getTime();
-        if (now > taskDueDate && taskDueDate != nullDate) {
-            errors.dueDate = "Invalid due date, date must be in the future";
-            valid = false;
-        }
-
-        return valid;
-    }
-
-    /**
      * queries the backend with the information for creating a task. Throws errors if the backend finds
      * issues with the query, and reloads the page once the the query has been excepted.
      */
     async function createTask() {
-        if (!validateInputs()) return;
-
+        const validationData = validateTaskInput(
+            name,
+            description,
+            taskDue,
+            taskStatus
+        );
+        
+        if (!validationData.isValid) {
+            errors.name = validationData.name;
+            errors.description = validationData.description;
+            errors.dueDate = validationData.dueDate;
+            errors.taskStatus = validationData.taskStatus;
+            return;
+        }
+        
         try {
-            console.log(taskDue);
             loading = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/taskItem` as any),
@@ -202,19 +180,21 @@
             {/if}
         </div>
 
-        <div class="mb-3 d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Due Date:</label>
-            <DatePicker 
-                    bind:value={taskDue}
-                    error={errors.dueDate}
-                    disabled={loading} />
-        </div>
-
-        {#if errors.dueDate}
-            <div class="invalid-feedback d-block">
-                {errors.dueDate}
+        <div class="mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <label class="form-label mb-0">Due Date:</label>
+                <DatePicker
+                        bind:value={taskDue}
+                        error={errors.dueDate}
+                        disabled={loading} />
             </div>
-        {/if}
+            {#if errors.dueDate}
+                <div class="invalid-feedback d-block">
+                    {errors.dueDate}
+                </div>
+            {/if}
+        </div>
+        
         <div>
             <button
                 type="submit"

@@ -14,7 +14,10 @@
             bind:value
             {disabled}
     />
+    <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            {disabled}
+            onclick={() => value = ""}
+    >Clear</button>
 </div>
-{#if error}
-    <div class="invalid-feedback d-block">{error}</div>
-{/if}

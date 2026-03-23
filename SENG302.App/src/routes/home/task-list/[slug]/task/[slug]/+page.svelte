@@ -3,6 +3,9 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
+    import { validateTaskInput } from '$lib/validity/taskValidity';
+    import { formatDate } from "$lib/datepicker/formatDate"
+
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
 
@@ -13,10 +16,16 @@
     
     // edit mode variables
     let editMode = $state(false);
-    let editedTitle = $state(undefined);
+    let editedName = $state(undefined);
     let editedDesc = $state(undefined);
     let editedDueDate = $state(undefined);
     let editedStatus = $state(undefined);
+    let errors = $state({
+        name: "",
+        description: "",
+        dueDate: "",
+        taskStatus: "",
+    });
 
     onMount(() => {
         fetchTaskItem();
@@ -50,43 +59,21 @@
     }
 
     /**
-     * formats the string based on the users locale
+     * Updates task in backend w/ frontend validation checks
      */
-    function formatDate(dateString: string) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString(); // automatically uses user's locale
-    }
-
-    /**
-     * checks changed fields and sets to undefined if same as pre-existing
-     */
-    function checkChangedFields() {
-        if (editedTitle == taskItem.title) {
-            editedTitle = undefined;
-        }
-        
-        if (editedDesc == taskItem.desc) {
-            editedDesc = undefined;
-        }
-        
-        if (editedDueDate == taskItem.dueDate) {
-            editedDueDate = undefined;
-        }
-        
-        if (editedStatus == taskItem.status) {
-            editedStatus = undefined;
-        }
-    }
-    
-    function fieldValidity() {
-        console.log("to be implemented");
-        return true;
-    }
-    
     async function updateTask() {
-        checkChangedFields();
+        const validationData = validateTaskInput(
+            editedName,
+            editedDesc,
+            editedDueDate,
+            editedStatus
+        );
 
-        if (!fieldValidity()) {
+        if (!validationData.isValid) {
+            errors.name = validationData.name;
+            errors.description = validationData.description;
+            errors.dueDate = validationData.dueDate;
+            errors.taskStatus = validationData.taskStatus;
             return;
         }
 
@@ -94,7 +81,7 @@
             loading = true;
             error = "";
 
-            const taskId = taskItem.id;
+            const taskId = taskItem.taskId;
             
             const response = await fetchWithCsrf(
                 resolve(`/api/taskItem/item/${params.slug}` as any),
@@ -105,27 +92,26 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        taskId,
-                        editedTitle,
-                        editedDesc,
-                        editedDueDate,
-                        editedStatus,
-                    }),
-                },
+                        taskId: taskId,
+                        name: editedName,
+                        description: editedDesc,
+                        dueDate: editedDueDate || null,
+                        currentStatus: editedStatus,
+                    })
+                }
             );
 
             const data = await response.json();
             if (!response.ok) {
                 error = data.message || "Failed to update task.";
-                3
                 return;
             }
-
             taskItem = data;
         } catch (err) {
             error = `Failed to update task: ${err.message}`;
         } finally {
             loading = false;
+            goto("..")
         }
     }
 
@@ -135,13 +121,12 @@
     async function toggleEditMode() {
         if (editMode) {
             await updateTask();
-            editMode = false;
         } else {
             editedStatus = taskItem.currentStatus;
             editedDueDate = taskItem.dueDate
-                ? new Date(taskItem.dueDate).toISOString().split('T')[0]
+                ? taskItem.dueDate.split('T')[0]
                 : "";
-            editedTitle = taskItem.name;
+            editedName = taskItem.name;
             editedDesc = taskItem.description;
             editMode = true;
         }
@@ -150,13 +135,22 @@
 
 <div class="container">
     <div class="mb-3 card-body d-flex justify-content-between align-items-center">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto("..")}
+        {#if editMode}
+            <button
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => goto("../../..")}
             >Back
-        </button>
-
+            </button>  
+        {:else}
+            <button
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => goto("..")}
+            >Back
+            </button>
+        {/if}
+        
         <button
             type="button"
             class="btn btn-primary"
@@ -173,15 +167,22 @@
     {#if loading || taskItem === null}
         <div class="text-center text-muted py-4">Loading task...</div>
     {:else}
-        <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; flex-direction: column;"
+            class="mb-4">
             {#if editMode}
                 <strong>Title:</strong>
                 <input
                     type="text"
-                    class="form-control text-center mb-4 fs-3 fw-bold"
-                    bind:value={editedTitle}
+                    class="form-control text-center fs-3 fw-bold"
+                    class:is-invalid={errors.name}
+                    bind:value={editedName}
                     disabled={loading}
                 />
+                {#if errors.name}
+                    <div class="invalid-feedback">
+                        {errors.name}
+                    </div>
+                {/if}
             {:else}
                 <h1 class="text-center mb-4">{taskItem.name}</h1>
             {/if}
@@ -192,24 +193,36 @@
                     <input
                         type="text"
                         class="form-control"
+                        class:is-invalid="{errors.description}"
                         placeholder="Description"
                         bind:value={editedDesc}
                         disabled={loading}
                     />
+                    {#if errors.description}
+                        <div class="invalid-feedback">
+                            {errors.description}
+                        </div>
+                    {/if}
                 {:else}
                     <strong>Description:</strong>
                     {taskItem.description? taskItem.description : "No Description"}
                 {/if}
             </div>
             <div class="mb-2">
+                <strong>Due Date:</strong>
                 {#if editMode}
-                    <strong>Due Date:</strong>
                     <DatePicker
                             bind:value={editedDueDate}
+                            error={errors.dueDate}
                             disabled={loading} />
+                    {#if errors.dueDate}
+                        <div class="invalid-feedback d-block">
+                            {errors.dueDate}
+                        </div>
+                    {/if}
                 {:else if taskItem.dueDate === null}
+                        No Due Date
                 {:else}
-                    <strong>Due Date:</strong>
                     {formatDate(taskItem.dueDate)}
                 {/if}
             </div>
@@ -222,9 +235,6 @@
                         />
                     </div>
                 {:else}
-                    <!-- probably will search up how to make this 
-                    work better at a later point in the task,
-                    looks a little ugly. -->
                     <strong>Status:</strong>
                     {#if taskItem.currentStatus === 0}
                         TODO

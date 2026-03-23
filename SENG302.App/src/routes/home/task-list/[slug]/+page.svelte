@@ -3,6 +3,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
+    import { formatDate } from "$lib/datepicker/formatDate"
 
     let loading = $state(false);
     let listName = $state();
@@ -74,13 +75,7 @@
         }
     }
 
-    /**
-     * formats the string based on the users locale
-     */
-    function formatDate(dateString: string) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString(); // automatically uses user's locale
-    }
+
 </script>
 
 <div class="container">

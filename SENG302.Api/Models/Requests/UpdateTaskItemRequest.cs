@@ -17,7 +17,7 @@ public class UpdateTaskItemRequest
 
     [MaxLength(2048)] public string Description { get; set; } = string.Empty;
 
-    public DateTime? DueDate { get; set; }
+    public required DateTime? DueDate { get; set; }
 
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
 }
