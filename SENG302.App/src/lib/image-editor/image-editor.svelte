@@ -6,13 +6,6 @@
     let imageSrc = $state("");
     let imageFile = $state();
 
-    type ModifiedImageData = {
-        zoom : number;
-        xOffset : number;
-        yOffset : number;
-        data : File;
-    }
-
     // svelte-ignore state_referenced_locally
     let zoom = $state(profileSize);
     let shortDim = $state("width");
@@ -42,10 +35,9 @@
      * and calculates the max size the image can be
      * @param file the image file
      */
-    export async function setImg(file : File) {
+    export async function setImg(file: File) {
         reset();
         try {
-
             imageFile = file;
             imageSrc = URL.createObjectURL(file);
             const dimensions = await getImgDimensions(imageSrc);
@@ -89,7 +81,7 @@
     export async function reset() {
         zoom = profileSize;
         if (imageSrc) URL.revokeObjectURL(imageSrc);
-        imageSrc = '';
+        imageSrc = "";
         imageFile = null;
         xOffset = 0;
         yOffset = 0;
@@ -152,25 +144,30 @@
         clampOffset();
     }
 
-    export function exportData() : ModifiedImageData {
-        return {data : imageFile as File, xOffset : xOffset, yOffset : yOffset, zoom : zoom}
+    export function exportData(): { data: PfpData; file: File } {
+        return {
+            data: {
+                imageSource: URL.createObjectURL(imageFile as File),
+                offsetX: xOffset,
+                offsetY: yOffset,
+                zoom: zoom / profileSize,
+            },
+            file: imageFile as File,
+        };
     }
 
     onMount(() => {
-        
         document.addEventListener("mouseup", () => {
             isMoving = false;
         });
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
-
     });
 
     onDestroy(() => {
         if (imageSrc) URL.revokeObjectURL(imageSrc);
-    })
-
+    });
 </script>
 
 <div class="image-editor-content">
@@ -184,7 +181,7 @@
         <img
             draggable="false"
             src={imageSrc}
-            alt={imageSrc == '' ? "" : "New profile"}
+            alt={imageSrc == "" ? "" : "New profile"}
             class="image-editor-image-editing"
             style={imageStyle}
         />
@@ -207,8 +204,8 @@
         id="editCanvas"
         class="image-editor-image-parent"
         style="height: {profileSize}px; width: {profileSize}px; display: none;"
-        width='{profileSize}'
-        height='{profileSize}'
+        width={profileSize}
+        height={profileSize}
     ></canvas>
 </div>
 

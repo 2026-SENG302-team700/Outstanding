@@ -135,7 +135,10 @@
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
-                user.update(u => ({...u, displayName: updatedUser.displayName}));
+                user.update((u) => ({
+                    ...u,
+                    displayName: updatedUser.displayName,
+                }));
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
@@ -161,27 +164,31 @@
         imageEditor.setImg(files[0]);
     }
 
-    async function updatePfp(imageData : any) {
-        console.log(imageData);
-        
+    async function updatePfp(imageData: PfpData, imageFile: File) {
         try {
             const formData = new FormData();
-            formData.append("file", imageData.data);
+            formData.append("file", imageFile);
 
             const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
                 method: "PUT",
-                body: formData
+                body: formData,
             });
-            
+
             if (!response.ok) {
                 throw new Error("Failed to save profile picture.");
             } else {
-                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
-                    method: "GET",
-                    credentials: "include",
-                });
+                const pfpResponse = await fetchWithCsrf(
+                    resolve("/api/user/pfp"),
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    },
+                );
                 const blob = await pfpResponse.blob();
-                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+                user.update((u) => ({
+                    ...u,
+                    pfpData: imageData,
+                }));
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -190,48 +197,53 @@
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
-    <div class="d-flex flex-column align-items-center justify-content-center m-3">
+    <div
+        class="d-flex flex-column align-items-center justify-content-center m-3"
+    >
         <div class="position-relative d-inline-block">
-            <ProfilePic pfpUrl={$user.pfpUrl} size="xl" />
+            <ProfilePic pfpData={$user.pfpData} size="xl" />
 
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                data-bs-toggle="modal" data-bs-target="#pfpInputModal"
-                on:click={() => {imageEditor.reset();}}
+                data-bs-toggle="modal"
+                data-bs-target="#pfpInputModal"
+                on:click={() => {
+                    imageEditor.reset();
+                }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
         </div>
     </div>
-    
+
     <div class="flex-grow-1 m-3">
         <form on:submit|preventDefault={updateUser}>
             <div class="mb-3">
                 <label for="displayName" class="form-label">Display Name</label>
                 <input
-                        type="text"
-                        class="form-control"
-                        bind:value={displayName}
-                        id="displayName"
+                    type="text"
+                    class="form-control"
+                    bind:value={displayName}
+                    id="displayName"
                 />
             </div>
             <div class="mb-3">
                 <label for="userEmail" class="form-label">Email</label>
                 <input
-                        type="email"
-                        class="form-control"
-                        id="userEmail"
-                        bind:value={email}
+                    type="email"
+                    class="form-control"
+                    id="userEmail"
+                    bind:value={email}
                 />
             </div>
             <div class="mb-3">
                 <label for="country" class="form-label">Country</label>
                 <select
-                        class="form-control"
-                        class:country-select={!country}
-                        bind:value={country}
-                        id="country"
+                    class="form-control"
+                    class:country-select={!country}
+                    bind:value={country}
+                    id="country"
                 >
                     {#each countries as country}
                         <option value={country.code}>
@@ -242,53 +254,76 @@
             </div>
             <button type="submit" class="btn btn-primary">Update</button>
             <button
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={() => {
-                goto(resolve("/home/profile"));
-            }}>Cancel</button
-        >
-    </form>
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => {
+                    goto(resolve("/home/profile"));
+                }}>Cancel</button
+            >
+        </form>
     </div>
 </div>
 
 <!-- Modal for pfp selection -->
-<div class="modal fade" id="pfpInputModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="pfpInputModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="pfpInputModalLabel">Edit Profile Picture</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
+<div
+    class="modal fade"
+    id="pfpInputModal"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    aria-labelledby="pfpInputModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="pfpInputModalLabel">
+                    Edit Profile Picture
+                </h1>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    on:click={() => pfpInput.click()}
+                >
+                    Choose Image
+                </button>
 
-        <button
-            type="button"
-            class="btn btn-primary"
-            on:click={() => pfpInput.click()}
-        >
-            Choose Image
-        </button>
+                <input
+                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                    bind:files
+                    bind:this={pfpInput}
+                    id="pfp"
+                    name="pfp"
+                    type="file"
+                    class="d-none"
+                    on:change={sendToEditor}
+                />
 
-        <input
-            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-            bind:files
-            bind:this={pfpInput}
-            id="pfp"
-            name="pfp"
-            type="file"
-            class="d-none"
-            on:change={sendToEditor}
-        />
-
-        <ImageEditor
-            bind:this={imageEditor}
-        />
-      </div>
-      <div class="modal-footer">
-        <button type="button" on:click={() => updatePfp(imageEditor.exportData())} class="btn btn-primary">Submit</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
+                <ImageEditor bind:this={imageEditor} />
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    on:click={() => {
+                        const data = imageEditor.exportData();
+                        updatePfp(data.data, data.file);
+                    }}
+                    class="btn btn-primary">Submit</button
+                >
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Close</button
+                >
+            </div>
+        </div>
     </div>
-  </div>
 </div>
