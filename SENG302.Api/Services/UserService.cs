@@ -285,7 +285,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameLength(string displayName)
     {
-        return ((displayName.Length < 3) || (displayName.Length > 64));
+        return (displayName.Length < 3) || (displayName.Length > 64);
     }
 
     /// <summary>

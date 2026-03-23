@@ -2,11 +2,9 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { onMount } from "svelte";
 
-    let user = $state(null);
     let email = $state("");
     let serverTime = $state(0);
     let initialSeconds = 300;
@@ -58,18 +56,25 @@
                 checkCode();
             }
         }, 1000);
+        console.log(remainingSeconds);
     }
 
     async function getCountDownTime() {
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(`/api/user/${email}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/countdown`),
+                {
+                    method: "Post",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email,
+                    }),
                 },
-            });
+            );
 
             const data = await response.json();
             serverTime = data;
@@ -161,10 +166,8 @@
      * Send the one time code to the users email and starts the timer count down
      */
     async function sendCode() {
+        console.log("hello!");
         try {
-            if (remainingSeconds == initialSeconds) {
-                await countDownTimer();
-            }
             clearInputFields();
 
             loading = true;
@@ -192,6 +195,9 @@
                 clearInterval(intervalId);
                 return;
             }
+            await getCountDownTime();
+            countDownTimer();
+            console.log("bye!");
         } catch (err) {
             displayError(err.message, true);
         }

@@ -55,14 +55,14 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
-    [HttpGet("{id:string}")]
-    public async Task<ActionResult<long>> GetUserVerificationCountdownByEmail(string id)
+    [HttpPost("countdown")]
+    public async Task<ActionResult<long>> GetUserVerificationCountdownByEmail([FromBody] string email)
     {
-        var user = await _userService.GetUserFromEmailAsync(id);
+        var user = await _userService.GetUserFromEmailAsync(email);
         if (user == null) return NotFound();
         if (user.CodeGenerationTime == 0)
         {
-            return 300;
+            user.CodeGenerationTime = 300;
         }
         if (_codeService.GetEpochTime() - user.CodeGenerationTime > 300)
             return Unauthorized("Code is no longer valid, account no longer exists.");

@@ -6,7 +6,6 @@
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
-    let user = $state(null);
     let email = $state("");
     let displayName = $state("");
     let selectedCountryCode = $state("");
@@ -132,16 +131,16 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(`/api/register`, {
+            const response = await fetchWithCsrf(resolve(`/api/register`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email,
-                    displayName,
+                    email: email,
+                    displayName: displayName,
                     passwordString: password,
-                    passwordConfirm: password,
+                    passwordConfirm: passwordConfirm,
                     country: selectedCountryCode,
                 }),
             });
