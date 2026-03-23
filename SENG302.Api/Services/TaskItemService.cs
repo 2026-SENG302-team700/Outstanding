@@ -69,6 +69,22 @@ public class TaskItemService : ITaskItemService
     }
 
     /// <summary>
+    /// Checks to see if task item's current status is valid.
+    /// </summary>
+    /// <param name="currentStatus">the status of the task item</param>
+    /// <exception cref="ArgumentOutOfRangeException">if not valid status (shouldn't occur naturally)</exception>
+    public void ValidateTaskItemCurrentStatus(CurrentTaskStatus currentStatus)
+    {
+        if (!Enum.IsDefined(typeof(CurrentTaskStatus), currentStatus))
+        {
+            throw new ArgumentOutOfRangeException(
+                "currentStatus",
+                "Status invalid, refresh your browser (or internal server error)"
+                );
+        }
+    }
+
+    /// <summary>
     /// Adds a new task to the task list given owned by the given user. All parameters
     /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
     /// The name of the task must be between 3 and 128 characters, and the description
@@ -135,6 +151,14 @@ public class TaskItemService : ITaskItemService
         return taskItem;
     }
     
+    /// <summary>
+    /// Brings in an update task item request from the controller
+    /// Strips the name and modifies the due date to be valid
+    /// Validates incoming fields
+    /// Updates the content then pushes to DB.
+    /// </summary>
+    /// <param name="taskItemUpdates">Incoming Task Item Request</param>
+    /// <returns>The updated task item</returns>
     public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -145,18 +169,17 @@ public class TaskItemService : ITaskItemService
         }
         
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
+        taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
+        
         ValidateTaskItemName(taskItemUpdates.Name);
-        taskItem.Name = taskItemUpdates.Name;
-
-        
         ValidateTaskItemDescription(taskItemUpdates.Description);
-        taskItem.Description = taskItemUpdates.Description;
-        
-
-        taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
         ValidateTaskItemDueDate(taskItemUpdates.DueDate);
-        taskItem.DueDate = taskItemUpdates.DueDate;
+        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus);
         
+        taskItem.Name = taskItemUpdates.Name;
+        taskItem.Description = taskItemUpdates.Description;
+        taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
+        taskItem.DueDate = taskItemUpdates.DueDate;
         taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
         
         context.TaskItems.Update(taskItem);

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
 
@@ -66,5 +67,13 @@ public class TaskItemServiceTests
     public void ValidateDueDate_PastDate_ThrowError()
     {
         Should.Throw<ArgumentException>(() => ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)))); // One day in the future
+    }
+
+    [Fact]
+    public void ValidateCurrentStatus_Valid_NoProblems()
+    {
+        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Todo));                            
+        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.InProgress));                      
+        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Done));  
     }
 }

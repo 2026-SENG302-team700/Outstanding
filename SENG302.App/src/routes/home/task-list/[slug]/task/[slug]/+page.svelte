@@ -15,11 +15,13 @@
     let { params } = $props();
     
     // edit mode variables
-    let editMode = $state(false);
-    let editedName = $state(undefined);
-    let editedDesc = $state(undefined);
-    let editedDueDate = $state(undefined);
-    let editedStatus = $state(undefined);
+    let editMode = $state(false); // is in view mode or edit mode
+    let editedTask = $state({
+        editedName: undefined,
+        editedDesc: undefined,
+        editedDueDate: undefined,
+        editedStatus: undefined
+    })
     let errors = $state({
         name: "",
         description: "",
@@ -63,10 +65,10 @@
      */
     async function updateTask() {
         const validationData = validateTaskInput(
-            editedName,
-            editedDesc,
-            editedDueDate,
-            editedStatus
+            editedTask.editedName,
+            editedTask.editedDesc,
+            editedTask.editedDueDate,
+            editedTask.editedStatus
         );
 
         if (!validationData.isValid) {
@@ -93,10 +95,10 @@
                     },
                     body: JSON.stringify({
                         taskId: taskId,
-                        name: editedName,
-                        description: editedDesc,
-                        dueDate: editedDueDate || null,
-                        currentStatus: editedStatus,
+                        name: editedTask.editedName,
+                        description: editedTask.editedDesc,
+                        dueDate: editedTask.editedDueDate || null,
+                        currentStatus: editedTask.editedStatus,
                     })
                 }
             );
@@ -122,12 +124,12 @@
         if (editMode) {
             await updateTask();
         } else {
-            editedStatus = taskItem.currentStatus;
-            editedDueDate = taskItem.dueDate
+            editedTask.editedStatus = taskItem.currentStatus;
+            editedTask.editedDueDate = taskItem.dueDate
                 ? taskItem.dueDate.split('T')[0]
                 : "";
-            editedName = taskItem.name;
-            editedDesc = taskItem.description;
+            editedTask.editedName = taskItem.name;
+            editedTask.editedDesc = taskItem.description;
             editMode = true;
         }
     }
@@ -175,7 +177,7 @@
                     type="text"
                     class="form-control text-center fs-3 fw-bold"
                     class:is-invalid={errors.name}
-                    bind:value={editedName}
+                    bind:value={editedTask.editedName}
                     disabled={loading}
                 />
                 {#if errors.name}
@@ -195,7 +197,7 @@
                         class="form-control"
                         class:is-invalid="{errors.description}"
                         placeholder="Description"
-                        bind:value={editedDesc}
+                        bind:value={editedTask.editedDesc}
                         disabled={loading}
                     />
                     {#if errors.description}
@@ -212,7 +214,7 @@
                 <strong>Due Date:</strong>
                 {#if editMode}
                     <DatePicker
-                            bind:value={editedDueDate}
+                            bind:value={editedTask.editedDueDate}
                             error={errors.dueDate}
                             disabled={loading} />
                     {#if errors.dueDate}
@@ -231,7 +233,7 @@
                     <div>
                         <strong>Status:</strong>
                         <StatusDropdown 
-                            bind:value={editedStatus}
+                            bind:value={editedTask.editedStatus}
                         />
                     </div>
                 {:else}

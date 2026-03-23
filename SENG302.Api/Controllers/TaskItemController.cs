@@ -76,6 +76,15 @@ public class TaskItemController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Given a request to update a task, it will send a request to update that task
+    /// to the TaskItem Service
+    /// </summary>
+    /// <param name="taskItemUpdates">updated values for a task item</param>
+    /// <returns>
+    /// The updated task item if ok
+    /// A Bad Request if an error occured within (likely validation fail).
+    /// </returns>
     [HttpPut("item/{id:int}")]
     public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
     {

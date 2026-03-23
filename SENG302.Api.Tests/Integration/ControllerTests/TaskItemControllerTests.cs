@@ -152,4 +152,128 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         });
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task UpdateTaskItem_Valid_ReturnsOkAndUpdatedTaskItem()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { 
+            Email = "vlad@nistor.email", 
+            DisplayName = "Vlad Nistor", 
+            PasswordKey = "password", 
+            Country = "RO" });                                                                                                                      
+        context.TaskLists.Add(new TaskList
+        {
+            Id = 1, 
+            Name = "tasklist", 
+            UserEmail = "vlad@nistor.email"
+        });                            
+        context.TaskItems.Add(new TaskItem { 
+            TaskId = 1, 
+            TaskListId = 1,
+            Name = "mercedes", 
+            Description = "lewis hamilton f1 team", 
+            CurrentStatus = CurrentTaskStatus.Todo 
+        });                                                                                                    
+        await context.SaveChangesAsync();
+
+        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new
+        {
+            taskId = 1,
+            name = "ferrari",
+            description = "lewis hamilton new f1 team",
+            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)),
+            currentStatus = 1
+        });
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var task = await response.Content.ReadFromJsonAsync<TaskItem>();
+        task!.Name.ShouldBe("ferrari");
+        task.Description.ShouldBe("lewis hamilton new f1 team");
+        task.CurrentStatus.ShouldBe(CurrentTaskStatus.InProgress);
+    }
+    
+    [Theory]
+    [InlineData("aa")]
+    [InlineData("   ")]
+    [InlineData("aa    ")]
+    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")]
+    public async Task UpdateTaskItem_InvalidName_ReturnsBadRequest(string badName)
+    { 
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { 
+            Email = "vlad@nistor.email", 
+            DisplayName = "Vlad Nistor", 
+            PasswordKey = "password", 
+            Country = "RO" });                                                                                                                      
+        
+        context.TaskLists.Add(new TaskList 
+        { 
+            Id = 1, 
+            Name = "tasklist", 
+            UserEmail = "vlad@nistor.email"
+        });
+        
+        context.TaskItems.Add(new TaskItem { 
+            TaskId = 1, 
+            TaskListId = 1, 
+            Name = "goodName", 
+            Description = "", 
+            CurrentStatus = CurrentTaskStatus.Todo 
+        }); 
+        await context.SaveChangesAsync();
+        
+        
+        
+        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new 
+        { 
+            taskId = 1, 
+            name = badName, 
+            description = "", 
+            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)), 
+            currentStatus = 1
+        });
+            
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateTaskItem_InvalidDescription_ReturnsBadRequest()
+    { 
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User { 
+            Email = "vlad@nistor.email", 
+            DisplayName = "Vlad Nistor", 
+            PasswordKey = "password", 
+            Country = "RO" });                                                                                                                      
+        
+        context.TaskLists.Add(new TaskList 
+        { 
+            Id = 1, 
+            Name = "tasklist", 
+            UserEmail = "vlad@nistor.email"
+        });
+        
+        context.TaskItems.Add(new TaskItem { 
+            TaskId = 1, 
+            TaskListId = 1, 
+            Name = "goodName", 
+            Description = "", 
+            CurrentStatus = CurrentTaskStatus.Todo 
+        }); 
+        await context.SaveChangesAsync();
+        
+        
+        
+        var response = await HttpClient.PutAsJsonAsync("/api/taskItem/item/1", new 
+        { 
+            taskId = 1, 
+            name = "goodName", 
+            description = new string ('a', 2049), 
+            dueDate = DateTime.UtcNow.Add(TimeSpan.FromDays(1)), 
+            currentStatus = 1
+        });
+            
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
 }
