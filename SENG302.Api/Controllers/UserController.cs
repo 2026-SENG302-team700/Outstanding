@@ -56,7 +56,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("countdown")]
-    public async Task<ActionResult<long>> GetUserVerificationCountdownByEmail([FromBody] NewOneTimeCodeRequest request)
+    public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
     {
         long timeElapsed;
         

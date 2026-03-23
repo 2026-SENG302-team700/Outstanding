@@ -27,7 +27,6 @@
         email = localStorage.getItem("email") ?? "";
        
         await getCountDownTime();
-        console.log("What is server time: "+serverTime);
         countDownTimer();
         if (email) {
             if (serverTime === initialSeconds) {
@@ -81,7 +80,6 @@
             );
 
             const data = await response.json();
-            console.log("What is data "+data);
             serverTime = data;
             if (!response.ok) {
                 // in case front end form checks were tampered with,
@@ -92,7 +90,6 @@
                 return;
             }
         } catch (err) {
-            console.error(err);
             addToast("Code is invalid: " + (err as Error).message, "error");
         } finally {
             loading = false;
