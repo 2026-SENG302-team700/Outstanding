@@ -4,15 +4,18 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { user } from "$lib/stores/user";
+    import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    
+    let pfpUrl: string | null = null;
 
     onMount(() => {
-        retrieveUsername();
+        retrieveUser();
     });
 
-    /// <summary>
-    /// Retrieves the users Display name from the backend
-    /// </summary>
-    async function retrieveUsername() {
+    /**
+     * Retrieves user information from backend.
+     */
+    async function retrieveUser() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "GET",
@@ -24,11 +27,22 @@
                 goto(resolve("/"));
                 return;
             }
+            
             user.set(data);
+            
+            if (data.profilePicture !== 0) {
+                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const blob = await pfpResponse.blob();
+                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+            }
         } catch (err) {
             goto(resolve("/"));
         }
     }
+    
 </script>
 
 <nav class="navBar">
@@ -37,7 +51,7 @@
     >
         <button
             class="btn btn-primary w-15"
-            on:click={() => goto(resolve("/home"))}
+            onclick={() => goto(resolve("/home"))}
             style="margin-left: 7px;"
         >
             Home
@@ -50,10 +64,11 @@
             >
                 {$user.displayName}
             </p>
-            <i
-                class="bi bi-person-circle fs-2"
-                on:click={() => goto(resolve("/home/profile"))}
-            ></i>
+            <div class="profile-button" onclick={
+            () => goto(resolve("/home/profile"))
+            }>
+                <ProfilePic pfpUrl={$user.pfpUrl} size="small" />
+            </div>
         </div>
     </div>
 </nav>
@@ -64,7 +79,6 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        display: inline-block;
         border-radius: 50%;
         border-color: black;
     }
@@ -72,11 +86,11 @@
     .profile-button {
         width: 40px;
         height: 40px;
-        justfiy-content: flex-end;
-        border: None;
-        background-color: white;
+        padding: 0;
+        background: none;
         border-radius: 50%;
         margin-left: 5px;
+        cursor: pointer;
     }
 
     .navBar {

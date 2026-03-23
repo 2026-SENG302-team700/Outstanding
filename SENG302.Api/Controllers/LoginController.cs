@@ -29,7 +29,8 @@ public class LoginController : ControllerBase
     /// <returns>a Task<ActionResult<User></returns>
     [HttpPost]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
-    {
+    {   
+        userCredentials.Email = userCredentials.Email.ToLower();
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
             userCredentials.Email,
@@ -46,6 +47,14 @@ public class LoginController : ControllerBase
                 login = false,
                 message = "Invalid email or password",
                 hashStatus = false
+            });
+        }
+        else if (status == UserVerificationResult.AccountUnverified)
+        {
+            return BadRequest(new
+            {
+                login = false,
+                message = "Account is not validated yet, check your emails."
             });
         }
         else if (status == UserVerificationResult.MalformedEmail)

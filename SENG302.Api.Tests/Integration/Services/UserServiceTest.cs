@@ -85,13 +85,13 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
     {
-        await Should.ThrowAsync<InvalidLengthException>(async () =>
+        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
-                "vlad@nistor.me",
+                "vlad@nistor.me", 
                 "v", // Should throw exception
-                "12345678Ab$",
-                "12345678Ab$",
+                "12345678Ab$", 
+                "12345678Ab$", 
                 "RO");
         });
     }
@@ -99,13 +99,13 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [Fact]
     public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
     {
-        await Should.ThrowAsync<InvalidLengthException>(async () =>
+        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
                 "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan-ABCDEFGHIJKL", // Should throw exception
                 "12345678Ab$",
-                "12345678Ab$",
+                "12345678Ab$", 
                 "RO"
             );
         });
@@ -145,7 +145,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 userEmail,
                 "Vlad Nistor",
                 "12345678Ab$",
-                "12345678Ab$",
+                "12345678Ab$", 
                 "RO"
             );
         });

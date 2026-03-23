@@ -2,7 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using SENG302.Api.Models.Entities;
 using Shouldly;
+using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -17,24 +20,26 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [InlineData("steven@wilson.uk", "Porcupine", "TreeB0&a", "tree", "NZ")]
     public async Task LoginUser_IncorrectPasswords_ReturnUnauthorised(string userEmail, string userDisplayName, string passwordString, string otherPasswordString, string userCountry)
     {
-        var registerData = new
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
         {
+            Id = 1,
             Email = userEmail,
             DisplayName = userDisplayName,
-            PasswordString = passwordString,
-            PasswordConfirm = passwordString,
-            Country = userCountry
+            Country = userCountry,
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
         };
+        user.PasswordKey = passwordHasher.HashPassword(user, passwordString);
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
-        var loginData = new
+        var message = await HttpClient.PostAsJsonAsync("/api/login", new
         {
             Email = userEmail,
             PasswordString = otherPasswordString
-        };
-        var register = await HttpClient.PostAsJsonAsync("/api/register", registerData);
-        register.StatusCode.ShouldBe(HttpStatusCode.OK);
-
-        var message = await HttpClient.PostAsJsonAsync("/api/login", loginData);
+        });
         message.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
         var content = await message.Content.ReadAsStringAsync();
@@ -83,32 +88,64 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [Fact]
     public async Task LoginUser_CorrectLoginDetails_ReturnLoginSuccess()
     {
-        var register = new
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
         {
+            Id = 1,
             Email = "jdev@dev.com",
             DisplayName = "JJ Devy",
-            PasswordString = "c00lPasSw0rdont@ME",
-            PasswordConfirm = "c00lPasSw0rdont@ME",
-            Country = "AU"
+            Country = "AU",
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
         };
-
-        var message = await HttpClient.PostAsJsonAsync("/api/register", register);
-
-        message.StatusCode.ShouldBe(HttpStatusCode.OK);
+        user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         var login = new
         {
             Email = "jdev@dev.com",
             PasswordString = "c00lPasSw0rdont@ME",
         };
+        var response = await HttpClient.PostAsJsonAsync("/api/login", login);
 
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
+        var content = await response.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(true);
+        json.GetProperty("message").GetString().ShouldBe("JJ Devy");
+    }
 
-        var message2 = await HttpClient.PostAsJsonAsync("/api/login", login);
+    [Fact]
+    public async Task LoginUser_DifferentEmailCasing_ReturnLoginSuccess()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy",
+            Country = "AU",
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
-        message2.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var login = new
+        {
+            Email = "JDev@deV.cOm",
+            PasswordString = "c00lPasSw0rdont@ME",
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/login", login);
 
-        var content = await message2.Content.ReadAsStringAsync();
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var content = await response.Content.ReadAsStringAsync();
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(true);
         json.GetProperty("message").GetString().ShouldBe("JJ Devy");
@@ -155,5 +192,36 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             "Invalid email address. Email must be in the format 'jane@doe.nz'"
             );
         json.GetProperty("hashStatus").GetBoolean().ShouldBe(false);
+    }
+
+    [Fact]
+    public async Task LoginUser_UnverifiedEmail_Unauthorized()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            Country = "NZ",
+            EmailVerified = false,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/login", new
+        {
+            Email = "test@example.com",
+            PasswordString = "Team700!"
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(false);
+        json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
     }
 }
