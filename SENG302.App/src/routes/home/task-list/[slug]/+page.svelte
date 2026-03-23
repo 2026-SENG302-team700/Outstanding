@@ -131,7 +131,7 @@
                                 >{task.name}</td
                             >
                             <td class="text-truncate" style="max-width: 200px;"
-                                >{task.description}</td
+                                >{task.description? task.description : "No Description"}</td
                             >
                             {#if task.currentStatus === 0}
                                 <td>{"TODO"}</td>

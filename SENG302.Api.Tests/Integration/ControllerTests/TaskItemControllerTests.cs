@@ -117,7 +117,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         var taskItem = await response.Content.ReadFromJsonAsync<TaskItem>();
-        taskItem!.Description.ShouldBe("No Description");
+        taskItem!.Description.ShouldBe("");
     }
 
     [Fact]

@@ -117,7 +117,7 @@
                     />
                 {:else}
                     <strong>Description:</strong>
-                    {taskItem.description}
+                    {taskItem.description? taskItem.description : "No Description"}
                 {/if}
             </div>
             <div class="mb-2">

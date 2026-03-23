@@ -94,7 +94,7 @@ public class TaskItemService : ITaskItemService
         ValidateTaskItemDueDate(taskItem.DueDate);
 
         // Set default descriptiom
-        if (taskItem.Description == "") taskItem.Description = "No Description";
+        //if (taskItem.Description == "") taskItem.Description = "No Description";
 
         // Add task item
         var newTask = new TaskItem()
