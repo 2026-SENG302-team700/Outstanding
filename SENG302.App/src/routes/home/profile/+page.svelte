@@ -42,6 +42,21 @@
             goto(resolve("/"));
         }
     }
+
+    async function logoutUser() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/user/logout`), {
+                method: "POST",
+                credentials: "include",
+            });
+            if (response.ok) {
+                response.headers.forEach((value, name) => {
+                    console.log(`${name}, ${value}`);
+                });
+                //goto("/");
+            }
+        } catch (err) {}
+    }
 </script>
 
 <div class="display: flex; flex-direction: row;">
@@ -51,9 +66,16 @@
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-        <ProfilePic pfpUrl={$user.pfpUrl} size="large" /> 
+        <ProfilePic pfpUrl={$user.pfpUrl} size="large" />
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
+        <button
+            type="button"
+            class="btn btn-outline-danger"
+            onclick={logoutUser}
+        >
+            Logout
+        </button>
     </div>
 </div>
 

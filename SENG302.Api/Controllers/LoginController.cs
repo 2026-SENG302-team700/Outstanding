@@ -5,6 +5,7 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace SENG302.Api.Controllers;
@@ -29,7 +30,7 @@ public class LoginController : ControllerBase
     /// <returns>a Task<ActionResult<User></returns>
     [HttpPost]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
-    {   
+    {
         userCredentials.Email = userCredentials.Email.ToLower();
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
@@ -114,6 +115,22 @@ public class LoginController : ControllerBase
                 message = "Invalid email or password",
                 hashStatus = false
             });
+        }
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<ActionResult> LogoutUser()
+    {
+        Console.WriteLine("Logging out");
+        try
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok();
+        }
+        catch
+        {
+            return NotFound("Failed");
         }
     }
 }
