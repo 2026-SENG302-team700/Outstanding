@@ -143,14 +143,14 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(`/api/register`, {
+            const response = await fetchWithCsrf(resolve(`/api/register`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email,
-                    displayName,
+                    email: email,
+                    displayName: displayName,
                     passwordString: password,
                     passwordConfirm: passwordConfirm,
                     country: selectedCountryCode,
@@ -181,9 +181,9 @@
                 }
                 return;
             }
-
-            addToast("Registration successful. Please log in.", "success");
-            goto(resolve(`/login`));
+            // set email in local storage for validation page
+            localStorage.setItem("email", email);
+            goto(resolve(`/register/verification`));
         } catch (err) {
             console.error(err);
             addToast(
