@@ -24,5 +24,5 @@ public class User
 
     public DateTimeOffset TimeCreated { get; set; }
 
-    public bool EmailVerified { get; set; } = true;
+    public bool EmailVerified { get; set; } = false;
 }
