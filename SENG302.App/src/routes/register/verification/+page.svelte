@@ -23,11 +23,16 @@
     let digit5 = $state("");
     let digit6 = $state("");
 
-    onMount(() => {
+    onMount(async () => {
         email = localStorage.getItem("email") ?? "";
-
+       
+        await getCountDownTime();
+        console.log("What is server time: "+serverTime);
+        countDownTimer();
         if (email) {
-            sendCode();
+            if (serverTime === initialSeconds) {
+                sendCode();
+            }
         } else {
             displayError("No email found. Please register again.", false);
         }
@@ -44,7 +49,7 @@
             if (remainingSeconds > 0) {
                 remainingSeconds -= 1;
                 timeRemainingText = formatTime(remainingSeconds);
-                if (remainingSeconds == initialSeconds - 10) {
+                if (!resendLinkVisible && remainingSeconds < initialSeconds - 10) {
                     resendLinkVisible = true;
                 }
             } else {
@@ -56,7 +61,6 @@
                 checkCode();
             }
         }, 1000);
-        console.log(remainingSeconds);
     }
 
     async function getCountDownTime() {
@@ -77,6 +81,7 @@
             );
 
             const data = await response.json();
+            console.log("What is data "+data);
             serverTime = data;
             if (!response.ok) {
                 // in case front end form checks were tampered with,
@@ -105,8 +110,9 @@
     }
 
     /**
-     * Takes an error message and displays it to the user while also making visible a 'resend code' button
-     * @param error
+     * Takes an error message and displays it to the user. Also determines if the 'resend code' button should be visible
+     * @param error - the error message to be displayed
+     * @param makeResendLinkVisible - a boolean indicating the button to resend the code should be visible or not
      */
     function displayError(error: string, makeResendLinkVisible: boolean) {
         if (!(resendLinkVisible == makeResendLinkVisible))
@@ -127,7 +133,8 @@
     }
 
     /**
-     * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating has done so
+     * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating if they have
+     * done so
      *
      */
     function inputValidation() {
@@ -166,9 +173,12 @@
      * Send the one time code to the users email and starts the timer count down
      */
     async function sendCode() {
-        console.log("hello!");
         try {
             clearInputFields();
+            
+            if (remainingSeconds < initialSeconds-10) {
+                displayError("", true);
+            }
 
             loading = true;
 
@@ -195,9 +205,6 @@
                 clearInterval(intervalId);
                 return;
             }
-            await getCountDownTime();
-            countDownTimer();
-            console.log("bye!");
         } catch (err) {
             displayError(err.message, true);
         }

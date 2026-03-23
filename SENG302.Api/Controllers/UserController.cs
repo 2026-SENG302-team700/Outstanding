@@ -56,18 +56,29 @@ public class UserController : ControllerBase
     }
 
     [HttpPost("countdown")]
-    public async Task<ActionResult<long>> GetUserVerificationCountdownByEmail([FromBody] string email)
+    public async Task<ActionResult<long>> GetUserVerificationCountdownByEmail([FromBody] NewOneTimeCodeRequest request)
     {
-        var user = await _userService.GetUserFromEmailAsync(email);
+        long timeElapsed;
+        
+        var user = await _userService.GetUserFromEmailAsync(request.Email);
         if (user == null) return NotFound();
+        
+        
         if (user.CodeGenerationTime == 0)
         {
-            user.CodeGenerationTime = 300;
+            timeElapsed = 0;
         }
-        if (_codeService.GetEpochTime() - user.CodeGenerationTime > 300)
+        else
+        {
+            timeElapsed = _codeService.GetEpochTime() - user.CodeGenerationTime;
+        }
+
+        Console.Write("\n\n" + "Time Elapsed: " + timeElapsed + "\n\n");
+        
+        if (timeElapsed > _codeService.TimeoutTimeSeconds)
             return Unauthorized("Code is no longer valid, account no longer exists.");
 
-        return Ok(user.CodeGenerationTime);
+        return Ok(_codeService.TimeoutTimeSeconds - timeElapsed);
     }
 
     /// <summary>

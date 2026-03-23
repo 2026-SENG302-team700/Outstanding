@@ -145,6 +145,7 @@ public class RegistrationController : ControllerBase
         
         // If the code has timed-out, delete the user object associated with the email
         bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
+        Console.Write("\n\n" + codeValid + "\n" + (codeEnteredTime - user.CodeGenerationTime) + "\n\n");
         if (!codeValid)
         {
             await _userService.DeleteUserByIdAsync((int)id);

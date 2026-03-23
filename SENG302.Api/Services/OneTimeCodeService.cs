@@ -7,6 +7,7 @@ namespace SENG302.Api.Services;
 
 public interface IOneTimeCodeService
 {
+    public int TimeoutTimeSeconds { get; }
     public string GenerateOneTimeCode();
     public long GetEpochTime();
     public bool CompareTimes(long startTime, long endTime);
@@ -19,17 +20,15 @@ public class OneTimeCodeService : IOneTimeCodeService
     private readonly TimeProvider _timeProvider;
 
     // Static variable representing the time limit for the code to be entered in
-    private static int _timeoutTimeSeconds = 300;
+    public int TimeoutTimeSeconds { get; } = 300;
     private static int _expectedCodeLength = 6;
 
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
-
-
     }
-
+    
     /// <summary>
     /// Generates a six digit one time code to be used
     /// </summary>
@@ -69,7 +68,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// </returns>
     public bool CompareTimes(long startTime, long endTime)
     {
-        return endTime - startTime < _timeoutTimeSeconds;
+        return endTime - startTime < TimeoutTimeSeconds;
     }
 
     /// <summary>
