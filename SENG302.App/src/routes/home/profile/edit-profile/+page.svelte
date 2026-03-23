@@ -8,6 +8,7 @@
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
+    import ProfilePic from "$lib/profilepic/profilepic.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -19,6 +20,8 @@
     let newPasswordConfirm = $state("");
     let verificationCode = $state("");
     let tempCode = "bob"; //TESTING PURPOSES ONLY
+    let files: FileList | null = $state(null);
+    let pfpInput: HTMLInputElement;
 
     let errors = $state({
         email: "",
@@ -147,7 +150,7 @@
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
-                user.set(updatedUser);
+                user.update(u => ({...u, displayName: updatedUser.displayName}));
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
@@ -165,6 +168,33 @@
             }
         } catch (err) {
             addToast((err as Error).message);
+        }
+    }
+    
+    async function updatePfp() {
+        if (!files || files.length === 0) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append("file", files[0]);
+
+            const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
+                method: "PUT",
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error("Failed to save profile picture.");
+            } else {
+                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const blob = await pfpResponse.blob();
+                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+            }
+        } catch (err) {
+            addToast((err as Error).message, "error");
         }
     }
 </script>
@@ -216,68 +246,6 @@
                 {/each}
             </select>
         </div>
-
-        <div class="mb-3">
-            {#if !passwordEdit && !editVerified} <!--access verification code "inputter"-->
-                <button
-                    type="reset"
-                    class="btn btn-warning"
-                    on:click={() => initiatePasswordUpdate()}
-                >
-                    Edit Password
-                </button>
-            {/if}
-            {#if passwordEdit && !editVerified} <!--input verification code-->
-                <label for="displayName" class="form-label"
-                    >PLACEHOLDER VERIFICATION CODE</label
-                >
-                <input
-                    type="text"
-                    class="form-control"
-                    class:is-invalid={errors.verification}
-                    bind:value={verificationCode}
-                    id="displayName"
-                />
-                <button
-                    type="reset"
-                    class="btn btn-warning"
-                    on:click={() => initiatePasswordUpdate()}
-                >
-                    Verify Code
-                </button>
-            {/if}
-            {#if passwordEdit && editVerified} <!--edit password-->
-                <label for="displayName" class="form-label"
-                    >Current Password</label
-                >
-                <input
-                    type="password"
-                    class="form-control"
-                    class:is-invalid={errors.password}
-                    bind:value={currentPassword}
-                    id="displayName"
-                />
-                <label for="displayName" class="form-label">New Password</label>
-                <input
-                    type="password"
-                    class="form-control"
-                    class:is-invalid={errors.password}
-                    bind:value={newPassword}
-                    id="displayName"
-                />
-                <label for="displayName" class="form-label"
-                    >Confirm New Password</label
-                >
-                <input
-                    type="password"
-                    class="form-control"
-                    class:is-invalid={errors.password}
-                    bind:value={newPasswordConfirm}
-                    id="displayName"
-                />
-            {/if}
-        </div>
-
         <button type="submit" class="btn btn-primary">Update</button>
         <button
             type="button"
@@ -287,4 +255,5 @@
             }}>Cancel</button
         >
     </form>
+    </div>
 </div>
