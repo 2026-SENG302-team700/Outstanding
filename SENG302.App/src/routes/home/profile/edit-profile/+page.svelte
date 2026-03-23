@@ -16,9 +16,14 @@
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
-    let verificationCode = $state("");
     let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
+    let resendTimer = $state(0);
+    let isSending = $state(false);
+    let currentModalStep = $state("verify");
+    let newPassword = $state("");
+    let confirmPassword = $state("");
+    let oldPassword = $state("");
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -27,7 +32,7 @@
     let digit5 = $state("");
     let digit6 = $state("");
 
-
+    let codeError = $state("");
     let errors = $state({
         email: "",
         displayName: "",
@@ -38,8 +43,26 @@
         authModal = new Modal(modalElement);
     });
 
+    /**
+     * Start a new timer for the resend button to ensure the user cant spam their email
+    */
+    function startResendCountdown() {
+        resendTimer = 30;
+        const interval = setInterval(() => {
+            resendTimer--;
+            if (resendTimer <= 0) clearInterval(interval);
+        }, 1000);
+    }
+
+    /**
+     * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
+    */
     async function requestPasswordChange() {
-        authModal.show();
+        if (resendTimer > 0 || isSending) return;
+        currentModalStep = "verify";
+        isSending = true;
+        authModal?.show();
+
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/generation`),
@@ -54,22 +77,19 @@
                 },
             );
 
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                // displayError(
-                //     "Server start time was not received. Internal Server error",
-                //     true,
-                // );
-                return;
+            if (response.ok) {
+                addToast("Verification code sent!", "success");
+                startResendCountdown();
+            } else {
+                const data = await response.json().catch(() => null);
+                codeError = data?.message || "Failed to send code.";
             }
 
         } catch (err) {
-            // displayError(err.message, true);
+            codeError = "Failed to send email: " + (err as Error).message;
+        } finally {
+            isSending = false;
         }
-
-        
-
     }
 
     /// <summary>
@@ -202,10 +222,18 @@
         }
     }
 
+    /**
+     * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
+    */
     async function checkCode() {
         try {
-            
+            codeError = "";
             let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
+
+            if (userCode.length < 6) {
+                codeError = "Please enter the full 6-digit code.";
+                return;
+            }
 
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/validation`),
@@ -221,19 +249,21 @@
                 },
             );
             
-            const data = await response.json().catch(() => null);
-
             if (!response.ok) {
-                //display error
+                const data = await response.json().catch(() => null);
+                codeError = data?.message || "Invalid or incorrect code.";                
+                digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
                 return;
             } else {
-                addToast("good", "success");
+                currentModalStep = "update";
             }
         } catch (err) {
-        addToast((err as Error).message, "error");
+        codeError = "Connection error. Please try again later.";
     }
-    } 
-    
+}
+    /**
+     * Method used to update the profile picture, confirm the conditions are right and then update
+    */
     async function updatePfp() {
         if (!files || files.length === 0) return;
         
@@ -353,31 +383,69 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Verify Your Identity</h5>
+                <h5 class="modal-title fw-bold">
+                    {currentModalStep === 'verify' ? 'Verify Your Identity' : 'Set New Password'}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <p class="text-secondary">
-                    We've sent a 6-digit verification code to <br>
-                    <span class="text-dark fw-bold">{email}</span>
-                </p>
-                
-                <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1}/>
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2}/>
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3}/>
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4}/>
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5}/>
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6}/>
-                </div>
+            <div class="modal-body">
+                {#if currentModalStep === 'verify'}
+                    <div class="text-centre">
+                        <p class="text-secondary">
+                            We've sent a 6-digit verification code to <br>
+                            <span class="text-dark fw-bold">{email}</span>
+                        </p>
+                        
+                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6}/>
+                        </div>
 
-                
-                <button class="btn btn-primary w-100 py-2 mb-2" on:click={checkCode}>
-                    Verify Code
-                </button>
-                <button class="btn btn-link btn-sm text-decoration-none" on:click={requestPasswordChange}>
-                    Resend Code
-                </button>
+                        {#if codeError}
+                            <div class="text-danger small mb-3 animate-fade-in">
+                                <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+                            </div>
+                        {/if}
+                        
+                        <button class="btn btn-primary w-100 py-2 mb-2" on:click={checkCode} disabled={isSending}>
+                            {isSending ? 'Sending...' : 'Verify Code'}
+                        </button>
+                    
+                        <button 
+                            class="btn btn-link btn-sm text-decoration-none" 
+                            on:click={requestPasswordChange}
+                            disabled={resendTimer > 0 || isSending}
+                        >
+                            {#if resendTimer > 0}
+                                Resend code in {resendTimer}s
+                            {:else if isSending}
+                                Sending...
+                            {:else}
+                                Resend Code
+                            {/if}
+                        </button>
+                    </div>
+                {:else}
+                    <form on:submit|preventDefault={() => console.log("Update logic goes here")}>
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
+                            <input type="password" class="form-control" id="oldPassword" bind:value={oldPassword} required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" bind:value={newPassword} required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" bind:value={confirmPassword} required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3">Update Password</button>
+                    </form>
+                {/if}
             </div>
         </div>
     </div>
