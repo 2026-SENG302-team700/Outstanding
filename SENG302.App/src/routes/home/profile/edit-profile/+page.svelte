@@ -157,15 +157,16 @@
     }
 
     async function sendToEditor() {
-        imageEditor.setImg()
+        if (!files || files.length === 0) return;
+        imageEditor.setImg(files[0]);
     }
 
-    async function updatePfp(image : File, xOffset : number, yOffset: number, zoom: number) {
-        //if (!files || files.length === 0) return;
+    async function updatePfp(imageData : any) {
+        console.log(imageData);
         
         try {
             const formData = new FormData();
-            formData.append("file", image);
+            formData.append("file", imageData.data);
 
             const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
                 method: "PUT",
@@ -197,6 +198,7 @@
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
                 data-bs-toggle="modal" data-bs-target="#pfpInputModal"
+                on:click={() => {imageEditor.reset();}}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
@@ -250,12 +252,12 @@
     </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal for pfp selection -->
 <div class="modal fade" id="pfpInputModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="pfpInputModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="pfpInputModalLabel">Modal title</h1>
+        <h1 class="modal-title fs-5" id="pfpInputModalLabel">Edit Profile Picture</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -281,12 +283,11 @@
 
         <ImageEditor
             bind:this={imageEditor}
-            onImageSubmit={(image : File) => updatePfp(image, 0, 0, 1.0)} inputImage=null
         />
       </div>
       <div class="modal-footer">
+        <button type="button" on:click={() => updatePfp(imageEditor.exportData())} class="btn btn-primary">Submit</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Understood</button>
       </div>
     </div>
   </div>

@@ -1,11 +1,17 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-
-    let { onImageSubmit, inputImage } = $props();
+    import { onDestroy, onMount } from "svelte";
 
     const profileSize = $state(300.0);
 
     let imageSrc = $state("");
+    let imageFile = $state();
+
+    type ModifiedImageData = {
+        zoom : number;
+        xOffset : number;
+        yOffset : number;
+        data : File;
+    }
 
     // svelte-ignore state_referenced_locally
     let zoom = $state(profileSize);
@@ -34,12 +40,14 @@
      * Insert an image into this ImageEditor object
      * Also calculates which side of the image is the long side,
      * and calculates the max size the image can be
-     * Note: this function is called in onMount if inputImage is set
-     * @param url the data url of the image
+     * @param file the image file
      */
-    export async function setImg(url: string) {
+    export async function setImg(file : File) {
+        reset();
         try {
-            imageSrc = url;
+
+            imageFile = file;
+            imageSrc = URL.createObjectURL(file);
             const dimensions = await getImgDimensions(imageSrc);
             width = dimensions.width;
             height = dimensions.height;
@@ -76,6 +84,15 @@
         } catch (error) {
             throw new Error(`Could not load image at ${url}, ${error}`);
         }
+    }
+
+    export async function reset() {
+        zoom = profileSize;
+        if (imageSrc) URL.revokeObjectURL(imageSrc);
+        imageSrc = '';
+        imageFile = null;
+        xOffset = 0;
+        yOffset = 0;
     }
 
     /**
@@ -135,33 +152,11 @@
         clampOffset();
     }
 
-    /**
-     * Takes the current position and zoom of the
-     * image and stamps it onto a CanvasRenderingContext2D
-     * @param ctx The CanvasRenderingContext2D of a canvas
-     */
-    async function stampImageOntoCTX(ctx: CanvasRenderingContext2D) {
-        const size = newWidth * (zoom / profileSize);
-
-        const scale = width / size;
-
-        const cropSize = profileSize * scale;
-
-        const x = (width / 2) - cropSize / 2 - xOffset * scale;
-        const y = (height / 2) - cropSize / 2 - yOffset * scale;
-
-        const img = new Image();
-        img.src = imageSrc;
-
-        await img.decode();
-        
-        ctx.drawImage(img, x, y, cropSize, cropSize, 0, 0, profileSize, profileSize);
+    export function exportData() : ModifiedImageData {
+        return {data : imageFile as File, xOffset : xOffset, yOffset : yOffset, zoom : zoom}
     }
 
     onMount(() => {
-        if (inputImage) {
-            setImg(inputImage);
-        }
         
         document.addEventListener("mouseup", () => {
             isMoving = false;
@@ -170,23 +165,12 @@
             imageMoveEvent(e);
         });
 
-        const canvas: HTMLCanvasElement = document.getElementById(
-            "editCanvas",
-        ) as HTMLCanvasElement;
-
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            document
-                .getElementById("submitButton")
-                ?.addEventListener("click", async (e) => {
-                    ctx.reset();
-                    await stampImageOntoCTX(ctx);
-                    const url = canvas.toDataURL('image/jpeg');
-                    onImageSubmit(url);
-                });
-        }
     });
+
+    onDestroy(() => {
+        if (imageSrc) URL.revokeObjectURL(imageSrc);
+    })
+
 </script>
 
 <div class="image-editor-content">
@@ -200,7 +184,7 @@
         <img
             draggable="false"
             src={imageSrc}
-            alt="New profile"
+            alt={imageSrc == '' ? "" : "New profile"}
             class="image-editor-image-editing"
             style={imageStyle}
         />
@@ -226,7 +210,6 @@
         width='{profileSize}'
         height='{profileSize}'
     ></canvas>
-    <button id="submitButton" class="btn btn-primary w-15">Submit</button>
 </div>
 
 <style>
