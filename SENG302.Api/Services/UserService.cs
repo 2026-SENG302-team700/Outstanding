@@ -35,6 +35,7 @@ public class UserVerificationResponse
     public User? user;
 }
 
+
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -70,13 +71,13 @@ public class UserService : IUserService
     /// Runs all display name validations and throws relavent exceptions
     /// </summary>
     /// <param name="displayName"></param>
-    /// <exception cref="InvalidLengthException"></exception>
+    /// <exception cref="InvalidDisplayNameLengthException"></exception>
     /// <exception cref="InvalidDisplayNameCharsException"></exception>
     public void ValidateDisplayName(string displayName)
     {
         if (DisplayNameLength(displayName))
         {
-            throw new InvalidLengthException("Display name must be between 3 and 64 characters");
+            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
         }
 
         if (!DisplayNameChars(displayName))
@@ -122,6 +123,7 @@ public class UserService : IUserService
             );
         }
     }
+
 
     /// <summary>
     /// Creates a new user object + hashes password

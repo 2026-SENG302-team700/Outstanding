@@ -23,6 +23,18 @@ public class InvalidLengthException : Exception
 }
 
 /// <summary>
+/// Exception to throw when the display name length is invalid.
+/// </summary>
+public class InvalidDisplayNameLengthException : Exception
+{
+    public InvalidDisplayNameLengthException() { }
+
+    public InvalidDisplayNameLengthException(string message) : base(message) { }
+
+    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
+}
+
+/// <summary>
 /// Exception to throw when the display name has invalid characters
 /// </summary>
 public class InvalidDisplayNameCharsException : Exception
