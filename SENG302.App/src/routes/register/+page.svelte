@@ -167,7 +167,7 @@
                 return;
             }
             // set email in local storage for validation page
-            localStorage.setItem("email", email)
+            localStorage.setItem("email", email);
             goto(resolve(`/register/verification`));
         } catch (err) {
             console.error(err);

@@ -19,6 +19,7 @@ public interface IUserService
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
+    Task<User?> GetUserFromEmailAsync(string email);
 }
 
 public enum UserVerificationResult
@@ -95,7 +96,7 @@ public class InvalidPasswordException : Exception
     public InvalidPasswordException(string message) : base(message) { }
 
     public InvalidPasswordException(string message, Exception inner) : base(message, inner) { }
-    
+
 }
 
 /// <summary>
@@ -429,6 +430,18 @@ public class UserService : IUserService
     }
 
     /// <summary>
+    /// Fetch a user from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    public async Task<User?> GetUserFromEmailAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return user;
+    }
+
+    /// <summary>
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="email">a string of the provided email</param>
@@ -502,9 +515,9 @@ public class UserService : IUserService
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
     /// <returns>The new user that has been saved in the database</returns>
-    public async Task<User?> UpdateUser(int userId, 
-        string newEmail, 
-        string newDisplayName, 
+    public async Task<User?> UpdateUser(int userId,
+        string newEmail,
+        string newDisplayName,
         string newCountry
         )
     {
@@ -516,11 +529,11 @@ public class UserService : IUserService
         if (user.Email != newEmail) ValidateEmail(context, newEmail);
         if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
         if (user.Country != newCountry) ValidateCountry(newCountry);
-        
+
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
-        
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
         return user;
@@ -529,18 +542,18 @@ public class UserService : IUserService
     public async Task<User?> SetUserProfilePicture(int userId, int fileId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null) return null;
-        
+
         user.ProfilePicture = fileId;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
         return user;
     }
-    
+
     /// <summary>
     /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
     /// </summary>
@@ -555,10 +568,10 @@ public class UserService : IUserService
     public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         int? id = await GetUserIdFromEmailAsync(email);
         if (id == null) return null;
-        
+
         User? user = await GetUserByIdAsync((int)id);
         if (user == null) return user;
 

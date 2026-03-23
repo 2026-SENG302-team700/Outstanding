@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using SENG302.Api.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,16 +17,16 @@ public class OneTimeCodeService : IOneTimeCodeService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-    
+
     // Static variable representing the time limit for the code to be entered in
     private static int _timeoutTimeSeconds = 300;
     private static int _expectedCodeLength = 6;
-    
+
     public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
-        
+
 
     }
 
@@ -55,10 +54,10 @@ public class OneTimeCodeService : IOneTimeCodeService
     public long GetEpochTime()
     {
         long epochTimeSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        
+
         return epochTimeSeconds;
     }
-    
+
     /// <summary>
     /// Compares the start and end time to see if it is under the time limit specified in timeoutTimeSeconds.
     /// </summary>
@@ -72,7 +71,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     {
         return endTime - startTime < _timeoutTimeSeconds;
     }
-    
+
     /// <summary>
     /// Compares the two codes passed in
     /// </summary>
@@ -83,7 +82,7 @@ public class OneTimeCodeService : IOneTimeCodeService
     /// </returns>
     public bool CompareCodes(string enteredCode, string originalCode)
     {
-        if (originalCode.Length != _expectedCodeLength  || enteredCode.Length != _expectedCodeLength) return false;
+        if (originalCode.Length != _expectedCodeLength || enteredCode.Length != _expectedCodeLength) return false;
         return enteredCode == originalCode;
     }
 }
