@@ -18,7 +18,7 @@ public class NewTaskItemRequest
     public required string Name { get; set; }
 
     [MaxLength(2048)]
-    public required string Description { get; set; } //constructor gives Description the value "No Description." if nothing was entered
+    public required string Description { get; set; }
 
     public required DateTime? DueDate { get; set; }
 

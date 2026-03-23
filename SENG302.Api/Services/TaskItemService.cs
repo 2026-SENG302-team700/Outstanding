@@ -1,8 +1,10 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using System.Globalization;
+
 namespace SENG302.Api.Services;
 
 public interface ITaskItemService
@@ -10,6 +12,7 @@ public interface ITaskItemService
     Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
     Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
     Task<TaskItem?> GetTaskItemAsync(int id);
+    Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates);
 }
 
 
@@ -94,6 +97,7 @@ public class TaskItemService : ITaskItemService
         ValidateTaskItemDueDate(taskItem.DueDate);
 
         // Set default descriptiom
+        // removed temp for now
         //if (taskItem.Description == "") taskItem.Description = "No Description";
 
         // Add task item
@@ -128,6 +132,45 @@ public class TaskItemService : ITaskItemService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.TaskId == id);
+        return taskItem;
+    }
+    
+    public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var taskItem = await context.TaskItems.FirstOrDefaultAsync(u => u.TaskListId == taskItemUpdates.taskId);
+        if (taskItem == null)
+        {
+            return null;
+        }
+        
+        if (taskItemUpdates.Name != null)
+        {
+            taskItemUpdates.Name = taskItemUpdates.Name.Trim();
+            ValidateTaskItemName(taskItemUpdates.Name);
+            taskItem.Name = taskItemUpdates.Name;
+        }
+
+        if (taskItemUpdates.Description != null)
+        {
+            ValidateTaskItemDescription(taskItemUpdates.Description);
+            taskItem.Description = taskItemUpdates.Description;
+        }
+
+        if (taskItemUpdates.DueDate != null)
+        {
+            taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
+            ValidateTaskItemDueDate(taskItemUpdates.DueDate);
+            taskItem.DueDate = taskItemUpdates.DueDate;
+        }
+
+        if (taskItemUpdates.CurrentStatus != null)
+        {
+            taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
+        }
+        
+        context.TaskItems.Update(taskItem);
+        await context.SaveChangesAsync();
         return taskItem;
     }
 

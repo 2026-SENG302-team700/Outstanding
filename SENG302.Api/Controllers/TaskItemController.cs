@@ -76,4 +76,17 @@ public class TaskItemController : ControllerBase
         }
     }
 
+    [HttpPut("item/{id:int}")]
+    public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
+    {
+        try
+        {
+            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates);
+            return Ok(taskItem);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 }
