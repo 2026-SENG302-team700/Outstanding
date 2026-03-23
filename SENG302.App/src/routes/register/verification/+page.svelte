@@ -7,7 +7,7 @@
     import { onMount } from 'svelte';
 
     let user = $state(null);
-    let email = $state(localStorage.getItem("email"));
+    let email = $state("");
     let initialSeconds = 300;
     let remainingSeconds = $state(initialSeconds);
     let intervalId;
@@ -26,7 +26,13 @@
     
 
     onMount(() => {
-        sendCode()
+        email = localStorage.getItem("email") ?? "";
+        
+        if (email) {
+            sendCode();
+        } else {
+            displayError("No email found. Please register again.", false);
+        }
     })
 
     /**
