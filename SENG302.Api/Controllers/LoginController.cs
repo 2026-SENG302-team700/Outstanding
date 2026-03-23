@@ -49,6 +49,14 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
+        else if (status == UserVerificationResult.AccountUnverified)
+        {
+            return BadRequest(new
+            {
+                login = false,
+                message = "Account is not validated yet, check your emails."
+            });
+        }
         else if (status == UserVerificationResult.MalformedEmail)
         {
             return BadRequest(new

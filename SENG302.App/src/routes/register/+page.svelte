@@ -40,6 +40,11 @@
             valid = false;
         }
 
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+            valid = false;
+        }
+
         // Check if passwords match
         if (password !== passwordConfirm && password && passwordConfirm) {
             errors.passwordConfirm = "Passwords do not match.";
@@ -64,10 +69,7 @@
             valid = false;
         }
 
-        if (displayName.trim() == '') {
-            errors.displayName = "Display name cannot be made entirely of spaces."
-            valid = false;
-        }
+        
 
         // Check for empty fields
         if (!email) {

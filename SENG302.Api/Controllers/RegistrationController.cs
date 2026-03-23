@@ -56,6 +56,12 @@ public class RegistrationController : ControllerBase
                 message = "Display name is required!"
             });
         }
+        if (user.DisplayName.Trim().Length < 3) {
+            return BadRequest(new
+            {
+                message = "Display name is not long enough!"
+            });
+        }
         if (string.IsNullOrWhiteSpace(user.Country)) {
             return BadRequest(new
             {

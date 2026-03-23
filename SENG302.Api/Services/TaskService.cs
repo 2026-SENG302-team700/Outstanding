@@ -18,7 +18,7 @@ public class TaskService : ITaskService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-
+    
     public TaskService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
@@ -191,7 +191,6 @@ public class TaskService : ITaskService
     public bool VerifyUserExists(DatabaseContext context, string userEmail)
     {
         return context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync() != null;
-
     }
 }
 
