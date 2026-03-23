@@ -17,7 +17,7 @@
     let editedName = $state(undefined);
     let editedDesc = $state(undefined);
     let editedDueDate = $state(undefined);
-    let editedStatus = $state(undefined);
+    let editedStatus = $state(undefined); // s
 
     onMount(() => {
         fetchTaskItem();
