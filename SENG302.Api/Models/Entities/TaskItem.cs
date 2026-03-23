@@ -29,5 +29,5 @@ public class TaskItem
     public required string Description { get; set; }
     public DateTime? DueDate { get; set; }
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
-    public DateTime creationTime { get; set; }
+    public DateTimeOffset creationTime { get; set; }
 }

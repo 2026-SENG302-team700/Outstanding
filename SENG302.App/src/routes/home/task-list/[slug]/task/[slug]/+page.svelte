@@ -64,6 +64,10 @@
      * Updates task in backend w/ frontend validation checks
      */
     async function updateTask() {
+        
+        editedTask.editedName = editedTask.editedName.trim();
+        editedTask.editedDesc = editedTask.editedDesc.trim();
+        
         const validationData = validateTaskInput(
             editedTask.editedName,
             editedTask.editedDesc,
@@ -142,7 +146,7 @@
                     type="button"
                     class="btn btn-secondary"
                     on:click={() => goto("../../..")}
-            >Back
+            >Cancel
             </button>  
         {:else}
             <button

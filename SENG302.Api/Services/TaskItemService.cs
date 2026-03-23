@@ -169,6 +169,7 @@ public class TaskItemService : ITaskItemService
         }
         
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
+        taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
         
         ValidateTaskItemName(taskItemUpdates.Name);
@@ -186,6 +187,5 @@ public class TaskItemService : ITaskItemService
         await context.SaveChangesAsync();
         return taskItem;
     }
-
 }
 
