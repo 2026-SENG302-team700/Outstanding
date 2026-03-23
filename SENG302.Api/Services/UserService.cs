@@ -15,8 +15,11 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
-    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry);
+    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
+    Task<User?> GetUserFromEmailAsync(string email);
 }
 
 public enum UserVerificationResult
@@ -35,6 +38,15 @@ public class UserVerificationResponse
     public User? user;
 }
 
+
+public class InvalidCodeException : Exception
+{
+    public InvalidCodeException() { }
+
+    public InvalidCodeException(string message) : base(message) { }
+
+    public InvalidCodeException(string message, Exception inner) : base(message, inner) { }
+}
 
 public class UserService : IUserService
 {
@@ -124,7 +136,6 @@ public class UserService : IUserService
         }
     }
 
-
     /// <summary>
     /// Creates a new user object + hashes password
     /// </summary>
@@ -190,7 +201,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameLength(string displayName)
     {
-        return ((displayName.Length < 3) || (displayName.Length > 64));
+        return (displayName.Length < 3) || (displayName.Length > 64);
     }
 
     /// <summary>
@@ -335,6 +346,18 @@ public class UserService : IUserService
     }
 
     /// <summary>
+    /// Fetch a user from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    public async Task<User?> GetUserFromEmailAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return user;
+    }
+
+    /// <summary>
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="email">a string of the provided email</param>
@@ -408,9 +431,9 @@ public class UserService : IUserService
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
     /// <returns>The new user that has been saved in the database</returns>
-    public async Task<User?> UpdateUser(int userId, 
-        string newEmail, 
-        string newDisplayName, 
+    public async Task<User?> UpdateUser(int userId,
+        string newEmail,
+        string newDisplayName,
         string newCountry
         )
     {
@@ -422,11 +445,11 @@ public class UserService : IUserService
         if (user.Email != newEmail) ValidateEmail(context, newEmail);
         if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
         if (user.Country != newCountry) ValidateCountry(newCountry);
-        
+
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
-        
+
         context.Users.Update(user);
         await context.SaveChangesAsync();
         return user;
@@ -435,15 +458,67 @@ public class UserService : IUserService
     public async Task<User?> SetUserProfilePicture(int userId, int fileId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null) return null;
-        
+
         user.ProfilePicture = fileId;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
+        return user;
+    }
+
+    /// <summary>
+    /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
+    /// </summary>
+    /// <param name="user"></param> The user object
+    /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
+    /// an empty string if the code is expired
+    /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
+    /// <param name="userVerified"></param> A boolean that notifies method whether the user has successfully verified their account or not
+    /// <returns>
+    /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
+    /// </returns>
+    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        int? id = await GetUserIdFromEmailAsync(email);
+        if (id == null) return null;
+
+        User? user = await GetUserByIdAsync((int)id);
+        if (user == null) return user;
+
+        user.OneTimeCode = oneTimeCode;
+        user.CodeGenerationTime = epochTime;
+
+        if (userVerified)
+        {
+            user.EmailVerified = true;
+        }
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    /// <summary>
+    /// Deletes the user based on the ID
+    /// </summary>
+    /// <param name="id"></param> User ID
+    /// <returns>A boolean representing if the user has been deleted properly</returns>
+    public async Task<User?> DeleteUserByIdAsync(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user != null)
+        {
+            context.Users.Remove(user);
+            await context.SaveChangesAsync();
+        }
         return user;
     }
 }

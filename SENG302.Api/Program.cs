@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 
-
 namespace SENG302.Api;
 
 public class Program
@@ -27,7 +26,7 @@ public class Program
             builder.Services.AddOpenApi();
         }
 
-        // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
+        // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
         // Add authorization service
@@ -188,6 +187,7 @@ public class Program
         services.AddScoped<IFileService, FileService>();
         services.AddScoped<ITaskListService, TaskListService>();
         services.AddScoped<ITaskItemService, TaskItemService>();
+        services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped
