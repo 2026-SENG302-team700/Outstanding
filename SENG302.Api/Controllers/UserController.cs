@@ -218,4 +218,26 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    [HttpPost("password/code/validation")]
+    public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
+    {        
+        if (string.IsNullOrWhiteSpace(validationRequest.Email))
+        {
+            return BadRequest(new { message = "Invalid email", });
+        }
+        int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
+        if (id == null) return NotFound( new {message = "Email not found"});
+        
+        User? user = await _userService.GetUserByIdAsync((int)id);
+        if (user == null) return NotFound( new {message = "User not found"});
+
+        // uncomment when u8 has been merged in
+        // bool correctCode = _oneTimeCodeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
+        // if (!correctCode) return BadRequest(new { message = "Invalid Code" });
+        bool correctCode = (validationRequest.Code == "123456");
+
+        return Ok();
+
+    }
+
 }

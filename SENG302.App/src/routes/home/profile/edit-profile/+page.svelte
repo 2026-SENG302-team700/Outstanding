@@ -20,6 +20,14 @@
     let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
 
+    let digit1 = $state("");
+    let digit2 = $state("");
+    let digit3 = $state("");
+    let digit4 = $state("");
+    let digit5 = $state("");
+    let digit6 = $state("");
+
+
     let errors = $state({
         email: "",
         displayName: "",
@@ -62,13 +70,6 @@
 
         
 
-    }
-
-    async function verifyCode() {
-        let success = false;
-        if (success) {
-            authModal.hide();
-        }
     }
 
     /// <summary>
@@ -176,6 +177,7 @@
                 }),
             });
 
+
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
@@ -199,6 +201,38 @@
             addToast((err as Error).message);
         }
     }
+
+    async function checkCode() {
+        try {
+            
+            let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
+
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/validation`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        Email: email,
+                        Code: userCode,
+                    }),
+                },
+            );
+            
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                //display error
+                return;
+            } else {
+                addToast("good", "success");
+            }
+        } catch (err) {
+        addToast((err as Error).message, "error");
+    }
+    } 
     
     async function updatePfp() {
         if (!files || files.length === 0) return;
@@ -329,16 +363,16 @@
                 </p>
                 
                 <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
-                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" />
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1}/>
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2}/>
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3}/>
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4}/>
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5}/>
+                    <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6}/>
                 </div>
 
                 
-                <button class="btn btn-primary w-100 py-2 mb-2" on:click={verifyCode}>
+                <button class="btn btn-primary w-100 py-2 mb-2" on:click={checkCode}>
                     Verify Code
                 </button>
                 <button class="btn btn-link btn-sm text-decoration-none" on:click={requestPasswordChange}>
