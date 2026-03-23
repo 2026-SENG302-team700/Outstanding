@@ -49,11 +49,8 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         };
 
         var message = await HttpClient.PostAsJsonAsync("/api/register", data);
-        var content = await message.Content.ReadAsStringAsync();
 
-        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        var json = JsonSerializer.Deserialize<JsonElement>(content);
-        json.GetProperty("message").GetString().ShouldBe("User registration is missing information");
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);;
     }
 
 

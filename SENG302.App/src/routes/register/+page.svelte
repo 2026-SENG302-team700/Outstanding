@@ -40,6 +40,11 @@
             valid = false;
         }
 
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+            valid = false;
+        }
+
         // Check if passwords match
         if (password !== passwordConfirm && password && passwordConfirm) {
             errors.passwordConfirm = "Passwords do not match.";
@@ -63,6 +68,8 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
+
+        
 
         // Check for empty fields
         if (!email) {
@@ -117,7 +124,12 @@
                 "Display name must be between 3 and 64 characters.";
             valid = false;
         }
-
+        
+        // clears password fields if the data is not valid
+        if (!valid) {
+            password = "";
+            passwordConfirm = "";
+        }
         return valid;
     }
     /**
@@ -146,10 +158,14 @@
             });
 
             const data = await response.json().catch(() => null);
+
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
+
+                password = "";
+                passwordConfirm = "";
 
                 switch (data.errorType) {
                     // check for duplicate email, throws regular error rather than "something went wrong"
