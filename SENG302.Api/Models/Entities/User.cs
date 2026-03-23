@@ -22,6 +22,11 @@ public class User
 
     public int ProfilePicture { get; set; }
 
+    [StringLength(6)]
+    public string OneTimeCode { get; set; } = String.Empty;
+
+    public long CodeGenerationTime { get; set; }
+
     public DateTimeOffset TimeCreated { get; set; }
 
     public bool EmailVerified { get; set; } = false;

@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using SENG302.Api.Models.Entities;
-
 namespace SENG302.Api.Models.Requests;
 
 public class PostUserRequest
