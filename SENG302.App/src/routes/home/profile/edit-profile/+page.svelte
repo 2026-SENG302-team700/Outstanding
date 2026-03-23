@@ -32,6 +32,36 @@
 
     async function requestPasswordChange() {
         authModal.show();
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/generation`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                    }),
+                },
+            );
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                // displayError(
+                //     "Server start time was not received. Internal Server error",
+                //     true,
+                // );
+                return;
+            }
+
+        } catch (err) {
+            // displayError(err.message, true);
+        }
+
+        
+
     }
 
     async function verifyCode() {

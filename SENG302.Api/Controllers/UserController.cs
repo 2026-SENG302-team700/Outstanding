@@ -19,11 +19,15 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
+    //private readonly IOneTimeCodeService _oneTimeCodeService;
+    private readonly IEmailService _emailService;
 
-    public UserController(IUserService userService, IFileService fileService)
+    public UserController(IUserService userService, IFileService fileService, IEmailService emailService)
     {
         _userService = userService;
         _fileService = fileService;
+        //_oneTimeCodeService = oneTimeCodeService;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -185,4 +189,33 @@ public class UserController : ControllerBase
         
         return File(fileBytes, customFile.MimeType);
     }
+
+    [HttpPut("password/code/generation")]
+    public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
+    {
+        if (string.IsNullOrWhiteSpace(codeRequest.Email))
+        {
+            return BadRequest(new { message = "User email is missing", });
+        }
+        
+        // uncomment when u8 branch is merged
+        //string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
+        string oneTimeCode = "123456";
+        if (oneTimeCode.Length != 6) return Problem();
+
+        // uncomment when u8 branch is merged
+        // User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+        // if (userUpdated == null) return Problem();
+        
+        // Create a dictionary of important values to send in the email, then call function to send email
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", "testname"},//userUpdated.DisplayName},
+            {"CODE", oneTimeCode}
+        };
+        await _emailService.SendEmailAsync(codeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+        
+        return Ok();
+    }
+
 }
