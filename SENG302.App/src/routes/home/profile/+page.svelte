@@ -45,7 +45,7 @@
 
     async function logoutUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user/logout`), {
+            const response = await fetchWithCsrf(resolve(`/api/logout`), {
                 method: "POST",
                 credentials: "include",
             });
@@ -53,7 +53,7 @@
                 response.headers.forEach((value, name) => {
                     console.log(`${name}, ${value}`);
                 });
-                //goto("/");
+                goto("/");
             }
         } catch (err) {}
     }

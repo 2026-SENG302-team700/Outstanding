@@ -12,7 +12,7 @@ namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
 [ApiController]
-[Route("api/login")]
+[Route("api")]
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -28,7 +28,7 @@ public class LoginController : ControllerBase
     /// </summary>
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
     /// <returns>a Task<ActionResult<User></returns>
-    [HttpPost]
+    [HttpPost("login")]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
         userCredentials.Email = userCredentials.Email.ToLower();
@@ -122,7 +122,6 @@ public class LoginController : ControllerBase
     [HttpPost("logout")]
     public async Task<ActionResult> LogoutUser()
     {
-        Console.WriteLine("Logging out");
         try
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
