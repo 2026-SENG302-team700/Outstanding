@@ -99,7 +99,7 @@ public class EmailServiceUnitTests
             ["MINUTES"] = "12"
         }; 
         
-        var invalidTemplate = (EmailTemplate)1;
+        var invalidTemplate = (EmailTemplate)1111;
         
         await Assert.ThrowsAsync<FileNotFoundException>(() => 
             _service.SendEmailAsync("JohnDoe@test.com", invalidTemplate, model));

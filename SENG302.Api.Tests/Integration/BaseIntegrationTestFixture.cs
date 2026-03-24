@@ -7,7 +7,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
+using NSubstitute;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Services;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -70,6 +72,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.RemoveAll<TimeProvider>();
                 // Replace it with our fake time provider, which keeps a consistent time throughout
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
+                services.AddSingleton<IEmailService>(Substitute.For<IEmailService>());
 
                 // Replace authentication with test auth
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });

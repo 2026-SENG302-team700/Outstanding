@@ -19,13 +19,15 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
+    private readonly IEmailService _emailService;
     private readonly IOneTimeCodeService _codeService;
 
-    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService)
+    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService, IEmailService emailService)
     {
         _userService = userService;
         _fileService = fileService;
         _codeService = codeService;
+        _emailService = emailService;
     }
 
     /// <summary>
@@ -55,6 +57,7 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    [AllowAnonymous]
     [HttpPost("countdown")]
     public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
     {
@@ -213,4 +216,72 @@ public class UserController : ControllerBase
 
         return File(fileBytes, customFile.MimeType);
     }
+
+    /// <summary>
+    /// API Controller method that handles a put request where a one time code is requested for a specific user email.
+    /// The method calls the one time code service to generate, store and then email the code to the user.
+    /// </summary>
+    /// <param name="codeRequest"></param> This request contains the users email which will be user to query the
+    /// database and store the one time code
+    /// <returns>
+    /// Returns an HTTP OK 200 request if everything succeeds and a Bad Request if the email field is empty
+    /// or an error occurs
+    /// </returns>
+    [AllowAnonymous]
+    [HttpPut("password/code/generation")]
+    public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
+    {
+        if (string.IsNullOrWhiteSpace(codeRequest.Email))
+        {
+            return BadRequest(new { message = "User email is missing", });
+        }
+        
+        string oneTimeCode = _codeService.GenerateOneTimeCode();
+        if (oneTimeCode.Length != 6) return Problem();
+
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
+        if (userUpdated == null) return Problem();
+        
+        // Create a dictionary of important values to send in the email, then call function to send email
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", userUpdated.DisplayName},
+            {"CODE", oneTimeCode}
+        };
+        await _emailService.SendEmailAsync(codeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+        
+        return Ok();
+    }
+    /// <summary>
+    /// Gets the user object from the database and compares the code the user has entered compared to the one generated
+    /// to verify them. Doesnt worry about the time as this was not included in the AC.
+    /// </summary>
+    /// <param name="validationRequest"></param> Validation Request contain the user email which is used for querying
+    /// the database and the code which the user entered on the frontend
+    /// <returns>
+    /// Returns an HTTP OK request if the codes match.
+    /// If not, then a Bad Request is returned. If an internal server error occurs, a Problem is returned and if
+    /// the User object is not found, an NotFound http error is returned. 
+    /// </returns>
+    [AllowAnonymous]
+    [HttpPost("password/code/validation")]
+    public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
+    {        
+        if (string.IsNullOrWhiteSpace(validationRequest.Email))
+        {
+            return BadRequest(new { message = "Invalid email", });
+        }
+        int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
+        if (id == null) return NotFound( new {message = "Email not found"});
+        
+        User? user = await _userService.GetUserByIdAsync((int)id);
+        if (user == null) return NotFound( new {message = "User not found"});
+
+        bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
+        if (!correctCode) return BadRequest(new { message = "Invalid Code" });
+
+        return Ok();
+
+    }
+
 }
