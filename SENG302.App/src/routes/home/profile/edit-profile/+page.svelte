@@ -37,6 +37,9 @@
     let errors = $state({
         email: "",
         displayName: "",
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: ""
     });
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
@@ -49,6 +52,17 @@
         retrieveUserData();
         authModal = new Modal(modalElement);
     });
+
+    /**
+     * Clears all currently set errors
+     */
+    function clearErrors() {
+        errors.email = "";
+        errors.displayName = "";
+        errors.oldPassword = "";
+        errors.newPassword = "";
+        errors.confirmPassword = "";
+    }
 
     /**
      * Start a new timer for the resend button to ensure the user cant spam their email
@@ -134,11 +148,7 @@
      * returns true if all fields are valid, false otherwise
      */
     function isValid() {
-        // Clear errors
-        errors = {
-            email: "",
-            displayName: "",
-        };
+        clearErrors()
 
         // Front end Validation
         let valid = true;
@@ -248,6 +258,31 @@
     }
 
     /**
+     * Validated the inputs to a change password request and sets the appropriate errors
+     * the new passwords must match and be of the correct form
+     * returns whether result is valid or not
+     */
+    function validateChangePasswordInputs() {
+        clearErrors()
+        var isValid = true;
+
+        // checks passwords match
+        if (newPassword !== confirmPassword) {
+            isValid = false;
+            errors.confirmPassword = "Passwords do not match"
+        }
+
+        // check password is valid
+        const passwordRegex = new RegExp(regexPatterns.user.password);
+        if (!passwordRegex.test(newPassword)) {
+            isValid = false;
+            errors.newPassword = "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters"
+        }
+
+        return isValid;
+    }
+    /**
      * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
     */
     async function checkCode() {
@@ -267,7 +302,7 @@
                     }),
                 },
             );
-            
+
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
                 codeError = data?.message || `Error ${response.status}: Invalid code.`;
@@ -278,9 +313,58 @@
                 currentModalStep = "update";
             }
         } catch (err) {
-        codeError = "Connection error. Please try again later.";
+            codeError = "Connection error. Please try again later.";
+        }
     }
-}
+
+        /**
+         * validates the input data and sends a request to the backend to update the users password
+         */
+        async function updatePassword() {
+            const valid = validateChangePasswordInputs();
+            if (!valid) return;
+
+            try {
+                const response = await fetchWithCsrf(resolve(`/api/user/password`),
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            oldPassword: oldPassword,
+                            newPassword: newPassword,
+                            newPasswordConfirm: confirmPassword
+                        })
+                    }
+                );
+                if (response.ok) {
+                    addToast("New password updated successfully")
+                    authModal.hide()
+                    goto(resolve("/home/profile"));
+                }
+                
+                const message = await response.text()
+                if (response.status === 400){
+                    switch (message) {
+                        case "Current password was incorrect":
+                            errors.oldPassword = "Current password was incorrect";
+                            break;
+                        case "Passwords do not match":
+                            errors.confirmPassword = "Password does not match";
+                            break;
+                        case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                            errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                            break;
+                    }
+                } else {
+                    addToast("Failed to update password ", response.status);
+                }
+            } catch (err) {
+                addToast("Failed to update password", err);
+            }
+        }
+            
     /**
      * Method used to update the profile picture, confirm the conditions are right and then update
     */
@@ -393,8 +477,7 @@
                     class="btn btn-secondary"
                     on:click={() => {
                 goto(resolve("/home/profile"));
-            }}>Cancel</button
-        >
+            }}>Cancel</button>
     </form>
     </div>
 </div>
@@ -446,18 +529,33 @@
                         </button>
                     </div>
                 {:else}
-                    <form on:submit|preventDefault={() => console.log("Update logic goes here")}>
+                    <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
                             <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
-                            <input type="password" class="form-control" id="oldPassword" bind:value={oldPassword} required />
+                            <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
+                            {#if errors.oldPassword}
+                                <div class="invalid-feedback">
+                                    {errors.oldPassword}
+                                </div>
+                            {/if}
                         </div>
                         <div class="mb-3">
                             <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
-                            <input type="password" class="form-control" id="newPassword" bind:value={newPassword} required />
+                            <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
+                            {#if errors.newPassword}
+                                <div class="invalid-feedback">
+                                    {errors.newPassword}
+                                </div>
+                            {/if}
                         </div>
                         <div class="mb-3">
                             <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirmPassword" bind:value={confirmPassword} required />
+                            <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
+                            {#if errors.confirmPassword}
+                                <div class="invalid-feedback">
+                                    {errors.confirmPassword}
+                                </div>
+                            {/if}
                         </div>
                         <button type="submit" class="btn btn-primary w-100 py-2 mt-3">Update Password</button>
                     </form>
