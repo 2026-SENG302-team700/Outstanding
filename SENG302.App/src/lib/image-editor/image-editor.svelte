@@ -145,12 +145,13 @@
     }
 
     export function exportData(): { data: PfpData; file: File } {
+        
         return {
             data: {
                 imageSource: URL.createObjectURL(imageFile as File),
-                offsetX: xOffset,
-                offsetY: yOffset,
-                zoom: zoom / profileSize,
+                offsetX: xOffset + (profileSize / 2 - 1) - (newWidth * (zoom / profileSize)) / 2,
+                offsetY: yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2,
+                zoom: zoom / Math.min(width, height),
             },
             file: imageFile as File,
         };

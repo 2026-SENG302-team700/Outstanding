@@ -22,6 +22,12 @@ public class User
 
     public int ProfilePicture { get; set; }
 
+    public float ProfilePictureOffsetX { get; set; }
+
+    public float ProfilePictureOffsetY { get; set; }
+    
+    public float ProfilePictureOffsetZoom { get; set;}
+
     public DateTimeOffset TimeCreated { get; set; }
 
     public bool EmailVerified { get; set; } = false;
