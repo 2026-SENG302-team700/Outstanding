@@ -51,6 +51,11 @@
             return;
         }
 
+        if (file.size > 5000000) {
+            addToast("Image too large, maximum file size is 5MB", "error");
+            return;
+        }
+
         reset();
         try {
             imageFile = file;

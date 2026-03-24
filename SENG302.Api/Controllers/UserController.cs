@@ -131,12 +131,17 @@ public class UserController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized();
+            return Unauthorized("Unauthorized");
+        }
+
+        if (file.Length > 5000000)
+        {
+            return BadRequest("Image too large, maximum file size is 5MB");
         }
 
         if (!MimeTypeSets.Images.Contains(file.ContentType))
         {
-            return BadRequest("Unsupported file type.");
+            return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp");
         }
 
         var userId = int.Parse(userIdString);
@@ -144,7 +149,7 @@ public class UserController : ControllerBase
 
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound("User not found");
         }
         
         var userPfpId = user.ProfilePicture;

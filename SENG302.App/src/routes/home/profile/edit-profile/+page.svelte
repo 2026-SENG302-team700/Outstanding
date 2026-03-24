@@ -179,7 +179,11 @@
             });
 
             if (!response.ok) {
-                throw new Error("Failed to save profile picture.");
+                if (response.status == 500) {
+                    throw new Error("Failed to upload picture");
+                } else {
+                    throw new Error(await response.text());
+                }
             } else {
                 user.update((u) => ({
                     ...u,
