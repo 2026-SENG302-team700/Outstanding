@@ -69,7 +69,7 @@ public class TaskListControllerTests : BaseIntegrationTestFixture
         var message = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-        message.ShouldContain("User with the provided email does not exist.");
+        message.ShouldContain("User with the provided id does not exist.");
     }
 
     [Fact]

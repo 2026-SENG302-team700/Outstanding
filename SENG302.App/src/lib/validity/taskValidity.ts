@@ -29,13 +29,13 @@ export function validateTaskInput(
     };
     
     // Check name and description length
-    if (name.length > 128 || name.length < 3) {
+    if (name.trim().length > 128 || name.trim().length < 3) {
         validityErrors.name =
             "Title is required and must be between 3 and 128 characters long";
         validityErrors.isValid = false;
     }
     
-    if (description.length > 2048) {
+    if (description.trim().length > 2048) {
         validityErrors.description = "Description must be 2048 characters or less";
         validityErrors.isValid = false;
     }

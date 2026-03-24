@@ -44,12 +44,12 @@ public class TaskListController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsForUser()
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrEmpty(userEmail))
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
 
-        var taskLists = await _taskListService.GetTaskListsByUserEmailAsync(userEmail);
+        var taskLists = await _taskListService.GetTaskListsByUserIdAsync(int.Parse(userIdString));
         return Ok(taskLists);
     }
 
@@ -65,10 +65,10 @@ public class TaskListController : ControllerBase
     {
         try
         {
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized();
-            await _taskListService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
+            await _taskListService.CreateNewTaskListAsync(taskListRequest.Name, int.Parse(userIdString));
             return Ok("Task list created successfully");
         }
         catch (ArgumentException e)
