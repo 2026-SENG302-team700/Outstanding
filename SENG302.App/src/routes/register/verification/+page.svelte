@@ -27,6 +27,7 @@
         email = localStorage.getItem("email") ?? "";
        
         await getCountDownTime();
+        console.log("Server time: " + serverTime);
         countDownTimer();
         if (email) {
             if (serverTime === initialSeconds) {
@@ -121,13 +122,32 @@
      * Clears input fields containing digits if code is resent
      */
     function clearInputFields() {
-        digit1 = "";
-        digit2 = "";
-        digit3 = "";
-        digit4 = "";
-        digit5 = "";
-        digit6 = "";
+        digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
     }
+
+    /**
+     * Handles the event that the user has entered a single digit of the code and send the spacebar to the next
+     * corresponding input field.
+     * @param e - the event that digit is entered into the input field
+     */
+    function handleInput(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (input.value && input.nextElementSibling) {
+            (input.nextElementSibling as HTMLInputElement).focus();
+        }
+    }
+
+    /**
+     * Handles the event a key is pressed. If the key is backspace and the previous input field is empty,
+     * it moves it back by one. 
+     * @param e - The event that an button is pressed
+     */
+    function handleKeyDown(e: KeyboardEvent) {
+        const input = e.target as HTMLInputElement;
+        if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
+            (input.previousElementSibling as HTMLInputElement).focus();
+        }
+    }    
 
     /**
      * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating if they have
@@ -302,36 +322,47 @@
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit1}
+                        on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit2}
+                        on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit3}
+                        on:input={handleInput}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit4}
+                        on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit5}
+                        on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit6}
+                        on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                 </div>
                 {#key buttonDisabled}
