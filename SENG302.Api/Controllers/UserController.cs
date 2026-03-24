@@ -147,9 +147,13 @@ public class UserController : ControllerBase
 
     /// <summary>
     /// Takes an image from a Form and if valid, sends to file service for saving.
+    /// Deletes the old profile picture from the file system if there is one.
     /// </summary>
     /// <param name="file">The file received from the API endpoint, should be an image</param>
-    /// <returns>Returns an OK statement with nothing</returns>
+    /// <param name="x">The offset of the image on the x axis</param>
+    /// <param name="y">The offset of the image on the y axis</param>
+    /// <param name="zoom">The amount the image is zoomed in</param>
+    /// <returns>Whether the profile picture upload succeeded</returns>
     [HttpPut("pfp")]
     public async Task<ActionResult<CustomFile>> UploadProfilePicture(
         [FromForm] IFormFile file,

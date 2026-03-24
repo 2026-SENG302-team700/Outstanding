@@ -17,7 +17,6 @@
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
     let imageEditor: ImageEditor;
-    let popupModal: HTMLDivElement;
 
     let errors = $state({
         email: "",
@@ -160,11 +159,19 @@
         }
     }
 
+    /**
+     * Sends an image to the image editor
+     */
     async function sendToEditor() {
         if (!files || files.length === 0) return;
         imageEditor.setImg(files[0]);
     }
 
+    /**
+     * Updates the profile picture on the back end
+     * @param imageData the x, y and zoom of the new profile picture
+     * @param imageFile the file to upload
+     */
     async function updatePfp(imageData: PfpData, imageFile: File) {
         try {
             const formData = new FormData();
@@ -273,7 +280,6 @@
     tabindex="-1"
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
-    bind:this={popupModal}
 >
     <div class="modal-dialog">
         <div class="modal-content">
