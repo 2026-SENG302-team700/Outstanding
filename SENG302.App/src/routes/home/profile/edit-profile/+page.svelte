@@ -251,11 +251,9 @@
      * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
     */
     async function checkCode() {
+        if (userCode.length < 6) return;
         try {
             codeError = "";
-
-            if (userCode.length < 6) return;
-
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/validation`),
                 {
@@ -272,9 +270,10 @@
             
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
-                codeError = data?.message || "Invalid or incorrect code.";                
+                codeError = data?.message || `Error ${response.status}: Invalid code.`;
                 digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
-                return;
+                const firstInput = document.querySelector('#code-input input') as HTMLInputElement;
+                firstInput?.focus();
             } else {
                 currentModalStep = "update";
             }
@@ -418,12 +417,12 @@
                         </p>
                         
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1} oninput={handleInput} onkeydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2} oninput={handleInput} onkeydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3} oninput={handleInput} onkeydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4} oninput={handleInput} onkeydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5} oninput={handleInput} onkeydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6} on:input={handleInput} on:keydown={handleKeyDown}/>
                         </div>
 
                         {#if codeError}
@@ -431,10 +430,6 @@
                                 <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
                             </div>
                         {/if}
-                        
-                        <button class="btn btn-primary w-100 py-2 mb-2" on:click={checkCode} disabled={isSending}>
-                            {isSending ? 'Sending...' : 'Verify Code'}
-                        </button>
                     
                         <button 
                             class="btn btn-link btn-sm text-decoration-none" 

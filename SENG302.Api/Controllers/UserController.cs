@@ -57,6 +57,7 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    [AllowAnonymous]
     [HttpPost("countdown")]
     public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
     {
@@ -226,6 +227,7 @@ public class UserController : ControllerBase
     /// Returns an HTTP OK 200 request if everything succeeds and a Bad Request if the email field is empty
     /// or an error occurs
     /// </returns>
+    [AllowAnonymous]
     [HttpPut("password/code/generation")]
     public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
     {
@@ -261,6 +263,7 @@ public class UserController : ControllerBase
     /// If not, then a Bad Request is returned. If an internal server error occurs, a Problem is returned and if
     /// the User object is not found, an NotFound http error is returned. 
     /// </returns>
+    [AllowAnonymous]
     [HttpPost("password/code/validation")]
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {        
