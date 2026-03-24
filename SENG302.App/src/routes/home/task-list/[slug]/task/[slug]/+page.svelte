@@ -259,7 +259,7 @@
             </div>
             <div class="mb-2">
                 <strong>Created At:</strong>
-                {formatDate(taskItem.creationTime)}
+                {formatDate(taskItem.creationTime, true)}
             </div>
         </div>
     {/if}
