@@ -1,8 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute.ReceivedExtensions;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
@@ -103,7 +101,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
-                "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan-ABCDEFGHIJKL", // Should throw exception
+                "Vladimir gggggggg llllll ccccccccc bbbbbbbb nnnnnn mmmm tttttttttt abcdefghijkl", // Should throw exception
                 "12345678Ab$",
                 "12345678Ab$", 
                 "RO"

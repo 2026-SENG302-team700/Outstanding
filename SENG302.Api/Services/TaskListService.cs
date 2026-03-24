@@ -4,22 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 namespace SENG302.Api.Services;
 
-public interface ITaskService
+public interface ITaskListService
 {
     Task<TaskList> CreateNewTaskListAsync(string name, string userEmail);
     Task<TaskList> GetTaskListByIdAsync(int id);
     Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
-    Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
-    bool VerifyUserExists(DatabaseContext context, string userEmail);
-    Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
 }
 
-public class TaskService : ITaskService
+public class TaskListService : ITaskListService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-    
-    public TaskService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+
+    public TaskListService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
@@ -117,80 +114,6 @@ public class TaskService : ITaskService
         }
 
         return taskList;
-    }
-
-    /// <summary>
-    /// Adds a new task to the task list given owned by the given user. All parameters
-    /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
-    /// The name of the task must be between 3 and 128 characters, and the description
-    /// can be up to 2048 characters.
-    /// dueDate must be in the future, and currentStatus will be automatically set to
-    /// ToDo if not present.
-    /// </summary>
-    /// <param name="user"></param>
-    /// <param name="taskListId"></param>
-    /// <param name="name"></param>
-    /// <param name="dueDate"></param>
-    /// <param name="currentStatus"></param>
-    /// <param name="description"></param>
-    /// <returns>the newly created TaskItem</returns>
-    public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-
-        var list = await GetTaskListByIdAsync(taskItem.TaskListId, context);
-        DateTime today = DateTime.Now;
-        if (taskItem.DueDate < today && taskItem.DueDate.Date.ToString("dd/MM/yyyy") != "01/01/0001")
-        {
-            throw new ArgumentException("Invalid due date, date must be in the future");
-        }
-
-        context.TaskLists.Where(u => u.Id == list.Id)
-                         .ExecuteUpdate(b => b.SetProperty(u => u.NextId, list.NextId += 1));
-        await context.SaveChangesAsync();
-
-        if (taskItem.Description == "")
-        {
-            taskItem.Description = "No Description";
-        }
-        var newTask = new TaskItem()
-        {
-            TaskListId = taskItem.TaskListId,
-            TaskId = list.NextId,
-            Name = taskItem.Name,
-            Description = taskItem.Description,
-            CurrentStatus = taskItem.CurrentStatus,
-            DueDate = taskItem.DueDate
-        };
-        context.Set<TaskItem>().Add(newTask);
-        await context.SaveChangesAsync();
-        return newTask;
-    }
-
-    /// <summary>
-    /// Gets all task items from the given list.
-    /// </summary>
-    /// <param name="taskListId"></param>
-    /// <returns>a list of all tasks found. Empty if no tasks exist.</returns>
-    public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId)
-    {
-        await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
-
-        return taskItems;
-    }
-
-    /// <summary>
-    /// Given this method is given a valid database context, query the context
-    /// to verify if the given email is registered to a user in the db.
-    /// The email is used as the user's primary key, and is therefore, unique.
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="userEmail"></param>
-    /// <returns>true if email exists, false otherwise</returns>
-    public bool VerifyUserExists(DatabaseContext context, string userEmail)
-    {
-        return context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync() != null;
     }
 }
 
