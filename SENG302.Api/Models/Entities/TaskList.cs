@@ -13,7 +13,7 @@ public class TaskList
     [MaxLength(128)]
     public string Name { get; set; } = string.Empty;
 
-    public string UserEmail { get; set; } = string.Empty; // Foreign key to the User that owns this task list
+    public int UserId { get; set; } // Foreign key to the User that owns this task list
 
     public int NextId { get; set; } = 0; // When a task is created, it'll be assigned this Id and this variable will be incremented
 
