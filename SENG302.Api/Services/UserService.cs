@@ -524,27 +524,34 @@ public class UserService : IUserService
     }
 
     /// <summary>
-    /// Validates and performs the request to update the users password
+    /// Checks the password hash and returns a verification result
     /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="oldPassword"></param>
-    /// <param name="newPassword"></param>
-    /// <param name="newPasswordConfirm"></param>
+    /// <param name="user">The user you are checking the password for</param>
+    /// <param name="password">the password you are checking matches the user</param>
+    /// <returns>The verification result</returns>
+    public PasswordVerificationResult VerifyPassword(User user, string password)
+    {
+        PasswordHasher<User> passwordHasher = new();
+        return passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
+    }
+    
+    /// <summary>
+    /// Performs all validation for the update password request
+    /// </summary>
+    /// <param name="user">The users whose password is being updated</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
     /// <returns></returns>
-    /// <exception cref="UnauthorizedAccessException"></exception>
     /// <exception cref="MismatchedPasswordException"></exception>
     /// <exception cref="InvalidPasswordException"></exception>
-    public async Task<bool> UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    /// <exception cref="ArgumentException"></exception>
+    public bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword,
+        string newPasswordConfirm)
     {
-        // Get user from Id
-        User? user = await GetUserByIdAsync(userId);
-        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
-        
-        // Validate old password
-        PasswordHasher<User> passwordHasher = new();
-        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, oldPassword);
-        if (!(verificationResult == PasswordVerificationResult.Success ||
-              verificationResult == PasswordVerificationResult.SuccessRehashNeeded))
+        // Validate old password is the users correct password
+        var result = VerifyPassword(user, oldPassword);
+        if (!(result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded))
         {
             throw new MismatchedPasswordException("Current password was incorrect");
         }
@@ -564,12 +571,33 @@ public class UserService : IUserService
         }
         
         // Validate new password not the same as old password
-        if (newPassword == oldPassword)
+        if (PasswordMatching(newPassword, oldPassword))
         {
             throw new ArgumentException("New password can't be the same as old password");
         }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates and performs the request to update the users password
+    /// </summary>
+    /// <param name="userId">The users id</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task<bool> UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserByIdAsync(userId);
+        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        // validate inputs
+        if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return false;
         
         // Perform update
+        PasswordHasher<User> passwordHasher = new();
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
         user.PasswordKey = passwordKey;
         await using var context = await _dbContextFactory.CreateDbContextAsync();
