@@ -123,10 +123,20 @@ public class RegistrationController : ControllerBase
         
         string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
         long timerStartTime = _oneTimeCodeService.GetEpochTime();
-
-        if (oneTimeCode.Length != 6) return Problem();
-
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+        
+        User? userUpdated;
+        Console.Write("\n\n" + codeRequest + "\n\n");
+        if (codeRequest.ResendingCode)
+        {
+            User? user = await _userService.GetUserFromEmailAsync(codeRequest.Email);
+            if (user == null) return Problem();
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, user.CodeGenerationTime, false);
+        }
+        else
+        {
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+        }
+        
         if (userUpdated == null) return Problem();
         
         // Create a dictionary of important values to send in the email, then call function to send email
@@ -162,27 +172,30 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest(new { message = "Invalid email", });
         }
-        int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
-        if (id == null) return NotFound( new {message = "Email not found"});
-        
-        User? user = await _userService.GetUserByIdAsync((int)id);
+
+        User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return NotFound( new {message = "User not found"});
+
+        CodeVerificationResult codeVerificationResult =
+            _oneTimeCodeService.VerfiyCode(user, codeEnteredTime, validationRequest.Code);
         
-        // If the code has timed-out, delete the user object associated with the email
-        bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
-        Console.Write("\n\n" + codeValid + "\n" + (codeEnteredTime - user.CodeGenerationTime) + "\n\n");
-        if (!codeValid)
+        Console.Write("\n\n" + codeVerificationResult + "\n" + (codeEnteredTime - user.CodeGenerationTime) + "\n\n");
+        if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
-            await _userService.DeleteUserByIdAsync((int)id);
+            await _userService.DeleteUserByIdAsync(user.Id);
             return BadRequest(new { message = "Code is no longer valid, account no longer exists" });
         }
 
-        bool correctCode = _oneTimeCodeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
-        if (!correctCode) return BadRequest(new { message = "Invalid Code" });
-        
-        
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
-        if (userUpdated == null) return Problem();
+        if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
+        {
+            return BadRequest(new { message = "Invalid Code" });
+        }
+
+        if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
+        {
+            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            if (userUpdated == null) return Problem();
+        }
         
         return Ok();
     }

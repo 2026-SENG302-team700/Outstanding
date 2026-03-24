@@ -271,10 +271,8 @@ public class UserController : ControllerBase
         {
             return BadRequest(new { message = "Invalid email", });
         }
-        int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
-        if (id == null) return NotFound( new {message = "Email not found"});
         
-        User? user = await _userService.GetUserByIdAsync((int)id);
+        User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return NotFound( new {message = "User not found"});
 
         bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);

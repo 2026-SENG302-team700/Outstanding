@@ -15,6 +15,7 @@
     let resendLinkVisible = $state(false);
     let loading = $state(false);
     let buttonDisabled = $state(false);
+    let codeHasBeenSent = $state(false)
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -196,8 +197,20 @@
             if (remainingSeconds < initialSeconds-10) {
                 displayError("", true);
             }
-
             loading = true;
+            
+            let jsonBody;
+            if (codeHasBeenSent) {
+                jsonBody = JSON.stringify({
+                    email: email,
+                    ResendingCode: true,
+                })
+            } else {
+                jsonBody = JSON.stringify({
+                    email: email,
+                    ResendingCode: false,
+                })
+            }
 
             const response = await fetchWithCsrf(
                 resolve(`/api/register/code/generation`),
@@ -206,9 +219,7 @@
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({
-                        email: email,
-                    }),
+                    body: jsonBody,
                 },
             );
 
@@ -222,6 +233,7 @@
                 clearInterval(intervalId);
                 return;
             }
+            codeHasBeenSent = true;
         } catch (err) {
             displayError(err.message, true);
         }
