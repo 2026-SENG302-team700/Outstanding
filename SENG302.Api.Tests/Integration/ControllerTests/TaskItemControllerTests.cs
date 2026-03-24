@@ -22,6 +22,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         // Add user to DB
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -31,7 +32,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             Id = 1,
             Name = "test tasklist",
-            UserEmail = "test@example.com"
+            UserId = 1
         });
         await context.SaveChangesAsync();
 
@@ -60,6 +61,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         // Add user to DB
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -69,7 +71,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             Id = 1,
             Name = "test tasklist",
-            UserEmail = "test@example.com"
+            UserId = 1
         });
         await context.SaveChangesAsync();
 
@@ -93,6 +95,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         // Add user to DB
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -102,7 +105,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             Id = 1,
             Name = "test tasklist",
-            UserEmail = "test@example.com"
+            UserId = 1
         });
         await context.SaveChangesAsync();
 
@@ -129,6 +132,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         // Add user to DB
         context.Users.Add(new User
         {
+            Id = 1,
             Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
@@ -138,7 +142,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             Id = 1,
             Name = "test tasklist",
-            UserEmail = "test@example.com"
+            UserId = 1
         });
         await context.SaveChangesAsync();
 
@@ -158,6 +162,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
     {
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { 
+            Id = 1,
             Email = "vlad@nistor.email", 
             DisplayName = "Vlad Nistor", 
             PasswordKey = "password", 
@@ -166,7 +171,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             Id = 1, 
             Name = "tasklist", 
-            UserEmail = "vlad@nistor.email"
+            UserId = 1
         });                            
         context.TaskItems.Add(new TaskItem { 
             TaskId = 1, 
@@ -202,6 +207,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
     { 
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { 
+            Id = 1,
             Email = "vlad@nistor.email", 
             DisplayName = "Vlad Nistor", 
             PasswordKey = "password", 
@@ -211,7 +217,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         { 
             Id = 1, 
             Name = "tasklist", 
-            UserEmail = "vlad@nistor.email"
+            UserId = 1
         });
         
         context.TaskItems.Add(new TaskItem { 
@@ -242,6 +248,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
     { 
         await using var context = DbContextFactory.CreateDbContext();
         context.Users.Add(new User { 
+            Id = 1,
             Email = "vlad@nistor.email", 
             DisplayName = "Vlad Nistor", 
             PasswordKey = "password", 
@@ -251,7 +258,8 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         { 
             Id = 1, 
             Name = "tasklist", 
-            UserEmail = "vlad@nistor.email"
+            UserId = 1
+            
         });
         
         context.TaskItems.Add(new TaskItem { 
