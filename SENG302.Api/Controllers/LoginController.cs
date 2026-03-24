@@ -119,7 +119,7 @@ public class LoginController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("logout")]
+    [HttpDelete("logout")]
     public async Task<ActionResult> LogoutUser()
     {
         try
@@ -127,9 +127,9 @@ public class LoginController : ControllerBase
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok();
         }
-        catch
+        catch (Exception e)
         {
-            return NotFound("Failed");
+            return StatusCode(500, e.Message);
         }
     }
 }

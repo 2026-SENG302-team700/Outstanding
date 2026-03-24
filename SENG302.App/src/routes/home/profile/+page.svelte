@@ -5,6 +5,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import { user } from "$lib/stores/user";
 
@@ -46,16 +47,20 @@
     async function logoutUser() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/logout`), {
-                method: "POST",
+                method: "DELETE",
                 credentials: "include",
             });
-            if (response.ok) {
-                response.headers.forEach((value, name) => {
-                    console.log(`${name}, ${value}`);
-                });
+            
+            if (response.status === 500) {
+                addToast("Failed to logout. Refresh Webpage", "error")
+                return;
+            }
+            else {
                 goto("/");
             }
-        } catch (err) {}
+        } catch (err) {
+            addToast(err.message, "error");
+        }
     }
 </script>
 

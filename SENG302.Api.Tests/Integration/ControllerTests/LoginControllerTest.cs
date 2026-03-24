@@ -224,4 +224,12 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         json.GetProperty("login").GetBoolean().ShouldBe(false);
         json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
     }
+    
+    [Fact]
+    public async Task LogoutUser_ValidInformation_ReturnOk()
+    {
+        var response = await HttpClient.DeleteAsync("/api/logout");
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
 }
