@@ -100,50 +100,75 @@
             No tasks yet. Create your first task above!
         </div>
     {:else}
-        <div
-            class="table-responsive"
-            style="max-height: 300px; overflow: scroll;"
-        >
-            <table class="table table-hover">
-                <thead style="position: sticky; top: 0;">
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Due Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each tasks as task}
-                        <tr
-                            on:click={() =>
-                                goto(
-                                    `/home/task-list/${params.slug}/task/${task.taskId}`,
-                                )}
-                            style="cursor: pointer; white-space: pre;"
-                        >
-                            <td class="text-truncate" style="max-width: 200px;"
-                                >{task.name}</td
-                            >
-                            <td class="text-truncate" style="max-width: 200px;"
-                                >{task.description? task.description : "No Description"}</td
-                            >
-                            {#if task.currentStatus === 0}
-                                <td>{"TODO"}</td>
-                            {:else if task.currentStatus === 1}
-                                <td>{"In Progress"}</td>
-                            {:else}
-                                <td>{"Done"}</td>
-                            {/if}
-                            {#if task.dueDate === null}
-                                <td>No Due Date</td>
-                            {:else}
-                                <td>{formatDate(task.dueDate)}</td>
-                            {/if}
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+        <div class="mb-3">
+            {#each tasks as task}
+                <div
+                        class="task-card"
+                        tabindex="0"
+                        role="button"
+                        on:click={() =>
+                            goto(`/home/task-list/${params.slug}/task/${task.taskId}`)
+                        }
+                        on:keydown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                goto(`/home/task-list/${params.slug}/task/${task.taskId}`);
+                            }
+                        }}
+                >
+                    <div>
+                        <span class="fw-bold">Title: </span>
+                        <span>{task.name}</span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Description: </span>
+                        <span>
+                    {task.description ? task.description : "No Description"}
+                </span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Status: </span>
+                        <span>
+                    {#if task.currentStatus === 0}
+                        TODO
+                    {:else if task.currentStatus === 1}
+                        In Progress
+                    {:else}
+                        Done
+                    {/if}
+                </span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Due Date:  </span>
+                        <span>
+                    {task.dueDate === null
+                        ? "No Due Date"
+                        : formatDate(task.dueDate)}
+                </span>
+                    </div>
+                </div>
+            {/each}
         </div>
     {/if}
 </div>
+
+<style>
+    .task-card {
+        border: 1px solid #00F;
+        margin-bottom: 8px;
+    }
+    
+    .task-card[role="button"] {
+        cursor: pointer;
+        outline: none;
+        border-radius: 6px;
+        padding: 5px;
+    }
+
+    .task-card[role="button"]:focus-visible {
+        box-shadow: 0 0 0 3px #4a90e2;
+        background-color: #f0f6ff;
+    }
+</style>
