@@ -20,6 +20,7 @@ public interface IUserService
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
     Task<User?> GetUserFromEmailAsync(string email);
+    Task<bool> UpdatePasswordAsync(int userId, string oldEmail, string newEmail, string newEmailConfirm);
 }
 
 public enum UserVerificationResult
@@ -520,5 +521,54 @@ public class UserService : IUserService
             await context.SaveChangesAsync();
         }
         return user;
+    }
+
+    /// <summary>
+    /// Validates and performs the request to update the users password
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="oldPassword"></param>
+    /// <param name="newPassword"></param>
+    /// <param name="newPasswordConfirm"></param>
+    /// <returns></returns>
+    /// <exception cref="UnauthorizedAccessException"></exception>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public async Task<bool> UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserByIdAsync(userId);
+        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        // Validate old password
+        PasswordHasher<User> passwordHasher = new();
+        PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, oldPassword);
+        if (!(verificationResult == PasswordVerificationResult.Success ||
+              verificationResult == PasswordVerificationResult.SuccessRehashNeeded))
+        {
+            throw new MismatchedPasswordException("Current password was incorrect");
+        }
+        
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+        
+        // Perform update
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return true;
     }
 }

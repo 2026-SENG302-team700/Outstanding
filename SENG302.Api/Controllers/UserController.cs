@@ -213,4 +213,34 @@ public class UserController : ControllerBase
 
         return File(fileBytes, customFile.MimeType);
     }
+    
+    /// <summary>
+    /// Sends a request to update the users email
+    /// </summary>
+    /// <param name="updatePasswordRequest"></param>
+    /// <returns>response to frontend based on status of request</returns>
+    [HttpPut("password")]
+    public async Task<ActionResult> updatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized();
+            }
+            
+            var success = await _userService.UpdatePasswordAsync(
+                int.Parse(userIdString),
+                updatePasswordRequest.OldPassword,
+                updatePasswordRequest.NewPassword,
+                updatePasswordRequest.NewPasswordConfirm);
+
+            return Ok();
+        }
+        catch
+        {
+            return BadRequest();
+        }
+    }
 }
