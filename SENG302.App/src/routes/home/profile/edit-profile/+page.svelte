@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { Modal } from 'bootstrap';
+    import type { Modal } from 'bootstrap';
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -24,7 +24,6 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let oldPassword = $state("");
-
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
@@ -48,9 +47,15 @@
         }
     });
 
-    onMount(() => {
+    onMount(async() => {
         retrieveUserData();
-        authModal = new Modal(modalElement);
+
+        const { Modal : BootstrapModal } = await import('bootstrap');
+        
+        if (modalElement){
+            authModal = new BootstrapModal(modalElement);
+        }
+        
     });
 
     /**
