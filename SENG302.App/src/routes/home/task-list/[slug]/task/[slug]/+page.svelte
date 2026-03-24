@@ -3,8 +3,8 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
-    import { validateTaskInput } from '$lib/validity/taskValidity';
-    import { formatDate } from "$lib/datepicker/formatDate"
+    import { validateTaskInput } from "$lib/validity/taskValidity";
+    import { formatDate } from "$lib/datepicker/formatDate";
 
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
@@ -13,15 +13,15 @@
     let error = $state("");
     let taskItem = $state(null);
     let { params } = $props();
-    
+
     // edit mode variables
     let editMode = $state(false); // is in view mode or edit mode
     let editedTask = $state({
         editedName: undefined,
         editedDesc: undefined,
         editedDueDate: undefined,
-        editedStatus: undefined
-    })
+        editedStatus: undefined,
+    });
     let errors = $state({
         name: "",
         description: "",
@@ -64,15 +64,19 @@
      * Updates task in backend w/ frontend validation checks
      */
     async function updateTask() {
-        
         editedTask.editedName = editedTask.editedName.trim();
         editedTask.editedDesc = editedTask.editedDesc.trim();
-        
+
+        editedTask.editedDueDate = new Date(editedTask.editedDueDate);
+        if (editedTask.editedDueDate.getFullYear() !== 1) {
+            editedTask.editedDueDate.setHours(23, 59, 59, 999);
+        }
+
         const validationData = validateTaskInput(
             editedTask.editedName,
             editedTask.editedDesc,
             editedTask.editedDueDate,
-            editedTask.editedStatus
+            editedTask.editedStatus,
         );
 
         if (!validationData.isValid) {
@@ -88,7 +92,7 @@
             error = "";
 
             const taskId = taskItem.taskId;
-            
+
             const response = await fetchWithCsrf(
                 resolve(`/api/taskItem/item/${params.slug}` as any),
                 {
@@ -103,8 +107,8 @@
                         description: editedTask.editedDesc,
                         dueDate: editedTask.editedDueDate || null,
                         currentStatus: editedTask.editedStatus,
-                    })
-                }
+                    }),
+                },
             );
 
             const data = await response.json();
@@ -117,7 +121,7 @@
             error = `Failed to update task: ${err.message}`;
         } finally {
             loading = false;
-            goto("..")
+            goto("..");
         }
     }
 
@@ -130,7 +134,7 @@
         } else {
             editedTask.editedStatus = taskItem.currentStatus;
             editedTask.editedDueDate = taskItem.dueDate
-                ? taskItem.dueDate.split('T')[0]
+                ? taskItem.dueDate.split("T")[0]
                 : "";
             editedTask.editedName = taskItem.name;
             editedTask.editedDesc = taskItem.description;
@@ -140,41 +144,37 @@
 </script>
 
 <div class="container">
-    <div class="mb-3 card-body d-flex justify-content-between align-items-center">
+    <div
+        class="mb-3 card-body d-flex justify-content-between align-items-center"
+    >
         {#if editMode}
             <button
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={() => goto("../../..")}
-            >Cancel
-            </button>  
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto("../../..")}
+                >Cancel
+            </button>
         {:else}
             <button
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={() => goto("..")}
-            >Back
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto("..")}
+                >Back
             </button>
         {/if}
-        
-        <button
-            type="button"
-            class="btn btn-primary"
-            on:click={toggleEditMode}
-        >
+
+        <button type="button" class="btn btn-primary" on:click={toggleEditMode}>
             {#if editMode}
                 Update
-            {:else }
+            {:else}
                 <i class="bi bi-pencil-square"></i>
             {/if}
         </button>
-
     </div>
     {#if loading || taskItem === null}
         <div class="text-center text-muted py-4">Loading task...</div>
     {:else}
-        <div style="display: flex; flex-direction: column;"
-            class="mb-4">
+        <div style="display: flex; flex-direction: column;" class="mb-4">
             {#if editMode}
                 <strong>Title:</strong>
                 <input
@@ -199,7 +199,7 @@
                     <input
                         type="text"
                         class="form-control"
-                        class:is-invalid="{errors.description}"
+                        class:is-invalid={errors.description}
                         placeholder="Description"
                         bind:value={editedTask.editedDesc}
                         disabled={loading}
@@ -211,23 +211,26 @@
                     {/if}
                 {:else}
                     <strong>Description:</strong>
-                    {taskItem.description? taskItem.description : "No Description"}
+                    {taskItem.description
+                        ? taskItem.description
+                        : "No Description"}
                 {/if}
             </div>
             <div class="mb-2">
                 <strong>Due Date:</strong>
                 {#if editMode}
                     <DatePicker
-                            bind:value={editedTask.editedDueDate}
-                            error={errors.dueDate}
-                            disabled={loading} />
+                        bind:value={editedTask.editedDueDate}
+                        error={errors.dueDate}
+                        disabled={loading}
+                    />
                     {#if errors.dueDate}
                         <div class="invalid-feedback d-block">
                             {errors.dueDate}
                         </div>
                     {/if}
                 {:else if taskItem.dueDate === null}
-                        No Due Date
+                    No Due Date
                 {:else}
                     {formatDate(taskItem.dueDate)}
                 {/if}
@@ -236,9 +239,7 @@
                 {#if editMode}
                     <div>
                         <strong>Status:</strong>
-                        <StatusDropdown 
-                            bind:value={editedTask.editedStatus}
-                        />
+                        <StatusDropdown bind:value={editedTask.editedStatus} />
                     </div>
                 {:else}
                     <strong>Status:</strong>
@@ -250,11 +251,10 @@
                         Done
                     {/if}
                 {/if}
-
             </div>
             <div class="mb-2">
                 <strong>Created At:</strong>
-                {formatDate(taskItem.creationTime)}
+                {formatDate(taskItem.creationTime, true)}
             </div>
         </div>
     {/if}
