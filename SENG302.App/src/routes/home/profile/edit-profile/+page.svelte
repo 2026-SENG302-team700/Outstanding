@@ -17,6 +17,7 @@
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
     let imageEditor: ImageEditor;
+    let popupModal: HTMLDivElement;
 
     let errors = $state({
         email: "",
@@ -268,6 +269,7 @@
     tabindex="-1"
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
+    bind:this={popupModal}
 >
     <div class="modal-dialog">
         <div class="modal-content">
@@ -309,14 +311,18 @@
                     type="button"
                     on:click={() => {
                         const data = imageEditor.exportData();
-                        updatePfp(data.data, data.file);
+                        if (data) {
+                            updatePfp(data.data, data.file);
+                        } else {
+                            addToast("No file selected!", "error");
+                        }
                     }}
-                    class="btn btn-primary">Submit</button
+                    class="btn btn-primary" data-bs-dismiss="modal">Submit</button
                 >
                 <button
                     type="button"
                     class="btn btn-secondary"
-                    data-bs-dismiss="modal">Close</button
+                    data-bs-dismiss="modal">Cancel</button
                 >
             </div>
         </div>

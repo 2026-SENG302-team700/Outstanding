@@ -7,15 +7,8 @@
         "xl" : 300.0
     }
 
-    function getScalar() {
-        // 300 is here because it is the profileSize in imageEditor
-        // All of the profile picture manipulations are relative to that size
-        return (sizeValues[size] / 300.0);
-    }
-
 </script>
 
-<!--  -->
 <div class="">
     {#if pfpData}
         <div 
@@ -28,8 +21,8 @@
                 alt="profile"
                 src={pfpData.imageSource}
                 style="transform-origin: top left;
-                        scale:{pfpData.zoom * getScalar()};
-                        translate: {pfpData.offsetX * getScalar()}px {pfpData.offsetY * getScalar()}px"
+                        scale:{pfpData.zoom * sizeValues[size]};
+                        translate: {pfpData.offsetX * sizeValues[size]}px {pfpData.offsetY * sizeValues[size]}px"
             />
         </div>
     {:else}

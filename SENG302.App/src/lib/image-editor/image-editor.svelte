@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { addToast } from "$lib/toast/toast";
     import { onDestroy, onMount } from "svelte";
 
-    const profileSize = $state(300.0);
+    const profileSize = $state(250.0);
 
     let imageSrc = $state("");
     let imageFile = $state();
@@ -29,6 +30,14 @@
             ${yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
     );
 
+    const mimeTypes = [
+        "image/webp",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/svg+xml"
+    ]
+
     /**
      * Insert an image into this ImageEditor object
      * Also calculates which side of the image is the long side,
@@ -36,10 +45,17 @@
      * @param file the image file
      */
     export async function setImg(file: File) {
+
+        if (!(mimeTypes.includes(file.type))) {
+            addToast("Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp", "error");
+            return;
+        }
+
         reset();
         try {
             imageFile = file;
             imageSrc = URL.createObjectURL(file);
+
             const dimensions = await getImgDimensions(imageSrc);
             width = dimensions.width;
             height = dimensions.height;
@@ -78,6 +94,9 @@
         }
     }
 
+    /**
+     * Reset the image and all properties
+     */
     export async function reset() {
         zoom = profileSize;
         if (imageSrc) URL.revokeObjectURL(imageSrc);
@@ -144,14 +163,22 @@
         clampOffset();
     }
 
-    export function exportData(): { data: PfpData; file: File } {
-        
+    /**
+     * Translate the data into a more general format, one that the backend can understand
+     */
+    export function exportData(): { data: PfpData; file: File } | null {
+
+        if (imageFile == null) {
+            return null;
+        }
+
         return {
             data: {
+                // Create a new object url because we don't want it to get dereferenced
                 imageSource: URL.createObjectURL(imageFile as File),
-                offsetX: xOffset + (profileSize / 2 - 1) - (newWidth * (zoom / profileSize)) / 2,
-                offsetY: yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2,
-                zoom: zoom / Math.min(width, height),
+                offsetX: (xOffset + (profileSize / 2 - 1) - (newWidth * (zoom / profileSize)) / 2) / profileSize,
+                offsetY: (yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2) / profileSize,
+                zoom: (zoom / Math.min(width, height)) / profileSize,
             },
             file: imageFile as File,
         };
@@ -188,7 +215,7 @@
         />
     </div>
 
-    <label for="zoom-range" class="form-label">Zoom</label>
+    <div style="height: 15px;"></div>
     <input
         type="range"
         class="form-range"
@@ -201,19 +228,14 @@
         }}
         value={zoom}
     />
-    <canvas
-        id="editCanvas"
-        class="image-editor-image-parent"
-        style="height: {profileSize}px; width: {profileSize}px; display: none;"
-        width={profileSize}
-        height={profileSize}
-    ></canvas>
+    
 </div>
 
 <style>
     .image-editor-content {
         display: flex;
         flex-direction: column;
+        align-items: center;
     }
 
     .image-editor-image-editing {
