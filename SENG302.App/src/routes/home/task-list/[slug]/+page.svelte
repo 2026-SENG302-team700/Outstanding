@@ -3,7 +3,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
-    import { formatDate } from "$lib/datepicker/formatDate"
+    import { formatDate } from "$lib/datepicker/formatDate";
 
     let loading = $state(false);
     let listName = $state();
@@ -74,8 +74,6 @@
             loading = false;
         }
     }
-
-
 </script>
 
 <div class="container">
@@ -103,17 +101,20 @@
         <div class="mb-3">
             {#each tasks as task}
                 <div
-                        class="task-card"
-                        tabindex="0"
-                        role="button"
-                        on:click={() =>
-                            goto(`/home/task-list/${params.slug}/task/${task.taskId}`)
+                    class="task-card"
+                    tabindex="0"
+                    role="button"
+                    on:click={() =>
+                        goto(
+                            `/home/task-list/${params.slug}/task/${task.taskId}`,
+                        )}
+                    on:keydown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            goto(
+                                `/home/task-list/${params.slug}/task/${task.taskId}`,
+                            );
                         }
-                        on:keydown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                                goto(`/home/task-list/${params.slug}/task/${task.taskId}`);
-                            }
-                        }}
+                    }}
                 >
                     <div>
                         <span class="fw-bold">Title: </span>
@@ -123,30 +124,32 @@
                     <div>
                         <span class="fw-bold">Description: </span>
                         <span>
-                    {task.description ? task.description : "No Description"}
-                </span>
+                            {task.description
+                                ? task.description
+                                : "No Description"}
+                        </span>
                     </div>
 
                     <div>
                         <span class="fw-bold">Status: </span>
                         <span>
-                    {#if task.currentStatus === 0}
-                        TODO
-                    {:else if task.currentStatus === 1}
-                        In Progress
-                    {:else}
-                        Done
-                    {/if}
-                </span>
+                            {#if task.currentStatus === 0}
+                                TODO
+                            {:else if task.currentStatus === 1}
+                                In Progress
+                            {:else}
+                                Done
+                            {/if}
+                        </span>
                     </div>
 
                     <div>
-                        <span class="fw-bold">Due Date:  </span>
+                        <span class="fw-bold">Due Date: </span>
                         <span>
-                    {task.dueDate === null
-                        ? "No Due Date"
-                        : formatDate(task.dueDate)}
-                </span>
+                            {task.dueDate === null
+                                ? "No Due Date"
+                                : formatDate(task.dueDate)}
+                        </span>
                     </div>
                 </div>
             {/each}
@@ -156,10 +159,11 @@
 
 <style>
     .task-card {
-        border: 1px solid #00F;
+        border: 1px solid lightgrey;
+        box-shadow: 0px 0px 5px lightgrey;
         margin-bottom: 8px;
     }
-    
+
     .task-card[role="button"] {
         cursor: pointer;
         outline: none;
