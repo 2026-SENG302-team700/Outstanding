@@ -35,7 +35,7 @@ public class TaskItemService : ITaskItemService
     /// <exception cref="InvalidLengthException"></exception>
     public void ValidateTaskItemName(string name)
     {
-        if (name.Length < 3 || name.Length > 128)
+        if (name.Trim().Length < 3 || name.Trim().Length > 128)
         {
             throw new InvalidLengthException("Title is required and must be between 3 and 128 characters long");
         }
@@ -48,7 +48,7 @@ public class TaskItemService : ITaskItemService
     /// <exception cref="InvalidLengthException"></exception>
     public void ValidateTaskItemDescription(string description)
     {
-        if (description.Length > 2048)
+        if (description.Trim().Length > 2048)
         {
             throw new InvalidLengthException("Description must be 2048 characters or less");
         }
@@ -105,6 +105,7 @@ public class TaskItemService : ITaskItemService
 
         // Clean request
         taskItem.Name = taskItem.Name.Trim();
+        taskItem.Description = taskItem.Description.Trim();
         taskItem.DueDate = taskItem.DueDate == DateTime.MinValue ? null : taskItem.DueDate;
 
         // Validation
