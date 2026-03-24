@@ -1,7 +1,7 @@
 <script lang="ts">
     // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
-    import { Modal } from 'bootstrap';
+    import type { Modal } from 'bootstrap';
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -24,14 +24,13 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let oldPassword = $state("");
-    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
-
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
+    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
 
     let codeError = $state("");
     let errors = $state({
@@ -45,9 +44,15 @@
         }
     });
 
-    onMount(() => {
+    onMount(async() => {
         retrieveUserData();
-        authModal = new Modal(modalElement);
+
+        const { Modal : BootstrapModal } = await import('bootstrap');
+        
+        if (modalElement){
+            authModal = new BootstrapModal(modalElement);
+        }
+        
     });
 
     /**
