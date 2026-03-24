@@ -32,10 +32,16 @@
      * issues with the query, and reloads the page once the the query has been excepted.
      */
     async function createTask() {
+        const dueDate = new Date(taskDue);
+        
+        if (dueDate.getFullYear() !== 1) {
+            dueDate.setHours(23, 59, 59, 999);
+        }
+        
         const validationData = validateTaskInput(
             name,
             description,
-            taskDue,
+            dueDate,
             taskStatus
         );
         
@@ -60,7 +66,7 @@
                         taskListId: params.slug,
                         name: name.trim(),
                         description: description.trim(),
-                        DueDate: taskDue,
+                        DueDate: dueDate,
                         currentStatus: taskStatus,
                     }),
                     credentials: "include",
@@ -176,7 +182,7 @@
                 bind:value={taskStatus}
             />
             {#if error}
-                <div class="text-danger mt-1">{error}</div>
+                <div class="text-danger mt-1">{errors.taskStatus}</div>
             {/if}
         </div>
 
