@@ -13,11 +13,11 @@ namespace SENG302.Api.Controllers;
 [Route("api/taskList")]
 public class TaskListController : ControllerBase
 {
-    private readonly ITaskListService _taskListService;
+    private readonly ITaskService _taskService;
 
-    public TaskListController(ITaskListService taskListService)
+    public TaskListController(ITaskService taskService)
     {
-        _taskListService = taskListService;
+        _taskService = taskService;
     }
 
     /// <summary>
@@ -28,7 +28,7 @@ public class TaskListController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskList>> getTaskList(int id)
     {
-        var taskList = await _taskListService.GetTaskListByIdAsync(id);
+        var taskList = await _taskService.GetTaskListByIdAsync(id);
         if (taskList == null)
         {
             return NotFound();
@@ -49,7 +49,7 @@ public class TaskListController : ControllerBase
             return Unauthorized();
 
 
-        var taskLists = await _taskListService.GetTaskListsByUserEmailAsync(userEmail);
+        var taskLists = await _taskService.GetTaskListsByUserEmailAsync(userEmail);
         return Ok(taskLists);
     }
 
@@ -66,9 +66,9 @@ public class TaskListController : ControllerBase
         try
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
-                return Unauthorized();
-            await _taskListService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
+            if (string.IsNullOrEmpty(userEmail)) 
+                return Unauthorized();               
+            await _taskService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
             return Ok("Task list created successfully");
         }
         catch (ArgumentException e)

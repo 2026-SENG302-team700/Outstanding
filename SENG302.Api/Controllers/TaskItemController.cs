@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
+using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -11,11 +12,11 @@ namespace SENG302.Api.Controllers;
 [Route("api/taskItem")]
 public class TaskItemController : ControllerBase
 {
-    private readonly ITaskItemService _taskItemService;
+    private readonly ITaskService _taskService;
 
-    public TaskItemController(ITaskItemService taskItemService)
+    public TaskItemController(ITaskService taskService)
     {
-        _taskItemService = taskItemService;
+        _taskService = taskService;
     }
 
 
@@ -32,10 +33,10 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest("List not provided");
         }
-        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId);
+        var taskList = await _taskService.GetTaskItemsByListAsync(listId);
         return Ok(taskList);
     }
-
+    
     /// <summary>
     /// Given a task item request object, create a new task item and add it to the db
     /// Fails if: the task name is too short (characters) or long 128 (characters),
@@ -45,57 +46,45 @@ public class TaskItemController : ControllerBase
     /// <param name="taskItem"></param>
     /// <returns>The list of tasks</returns>
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItemRequest)
+    public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItem)
     {
         try
         {
-            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
-            return Ok(response);
-        }
-        catch (InvalidLengthException e)
-        {
-            return BadRequest(e.Message);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
-    }
+            if (string.IsNullOrEmpty(taskItem.Name) || taskItem.Name.Length < 3 || taskItem.Name.Length > 128)
+            {
+                return BadRequest("Title is required and must be between 3 and 128 characters long");
+            }
+            if (taskItem.Description.Length > 2048)
+            {
+                return BadRequest("Description name cannot be more than 2048 characters long.");
+            }
+            
+            if (taskItem.TaskListId == -1 || await _taskService.GetTaskListByIdAsync(taskItem.TaskListId) == null) // -1 is assigned to taskListId if nothing was provided
+            {
+                return BadRequest("Every task needs a list! Create one first.");
+            }
+            if (taskItem.CurrentStatus != CurrentTaskStatus.Done && 
+                taskItem.CurrentStatus != CurrentTaskStatus.InProgress && 
+                taskItem.CurrentStatus != CurrentTaskStatus.Todo) {
+                return BadRequest("Not a valid status!");
+            }
 
-    [HttpGet("item/{id:int}")]
-    public async Task<ActionResult<TaskItem>> GetTaskItem(int id)
-    {
-        try
-        {
-            var response = await _taskItemService.GetTaskItemAsync(id);
-            return Ok(response);
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var taskList = await _taskService.GetTaskListByIdAsync(taskItem.TaskListId);
+            if (taskList.UserEmail == userEmail) {
+                await _taskService.CreateNewTaskItemAsync(taskItem);
+                return Ok("Task created successfully");
+            }
+            else if (taskList.UserEmail != userEmail) {
+                return Unauthorized("You are not authorised to add tasks to that list!");
+            }
+            else {
+                return BadRequest("List does not exist.");
+            }
         }
-        catch (Exception e)
+        catch (ArgumentException e)
         {
-            return BadRequest(e.Message);
-        }
-    }
-
-    /// <summary>
-    /// Given a request to update a task, it will send a request to update that task
-    /// to the TaskItem Service
-    /// </summary>
-    /// <param name="taskItemUpdates">updated values for a task item</param>
-    /// <returns>
-    /// The updated task item if ok
-    /// A Bad Request if an error occured within (likely validation fail).
-    /// </returns>
-    [HttpPut("item/{id:int}")]
-    public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
-    {
-        try
-        {
-            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates);
-            return Ok(taskItem);
-        }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
+            return BadRequest(e);
         }
     }
 }

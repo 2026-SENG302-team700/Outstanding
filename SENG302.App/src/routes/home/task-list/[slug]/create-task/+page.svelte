@@ -4,16 +4,13 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
     import { addToast } from "$lib/toast/toast";
-    import { validateTaskInput } from "$lib/validity/taskValidity"
-    import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = $state(new Date("0001-01-01"));
+    let taskDue = new Date("0001-01-01"); //used to represent no date
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -28,26 +25,49 @@
     });
 
     /**
+     * enforces form formatting is correct in the front end, for speed.
+     */
+    function validateInputs(): boolean {
+        let valid = true;
+        // Reset errors
+        errors = {
+            name: "",
+            description: "",
+            dueDate: "",
+            taskStatus: "",
+        };
+
+        // Check if name and description length
+        if (name.length > 128 || name.length < 3) {
+            errors.name =
+                "Title is required and must be between 3 and 128 characters long";
+            valid = false;
+        }
+        if (description.length > 2048) {
+            errors.description = "Description must be 2048 characters or less";
+            valid = false;
+        }
+        // Check date validity
+        let taskDueDate = new Date(taskDue).getTime();
+        let date = new Date().getTime();
+        let nullDate = new Date("0001-01-01").getTime();
+        if (date > taskDueDate && taskDueDate != nullDate) {
+            errors.dueDate = "Invalid due date, date must be in the future";
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    /**
      * queries the backend with the information for creating a task. Throws errors if the backend finds
      * issues with the query, and reloads the page once the the query has been excepted.
      */
     async function createTask() {
-        const validationData = validateTaskInput(
-            name,
-            description,
-            taskDue,
-            taskStatus
-        );
-        
-        if (!validationData.isValid) {
-            errors.name = validationData.name;
-            errors.description = validationData.description;
-            errors.dueDate = validationData.dueDate;
-            errors.taskStatus = validationData.taskStatus;
-            return;
-        }
-        
+        if (!validateInputs()) return;
+
         try {
+            console.log(taskDue);
             loading = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/taskItem` as any),
@@ -67,15 +87,13 @@
                 },
             );
 
+            const data = await response.json().catch(() => null);
+
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-
-                addToast(
-                    (await response.text()) || "An error occured.",
-                    "error",
-                );
+                addToast(data?.message || "An error occured.", "error");
                 return;
             }
 
@@ -143,7 +161,7 @@
                 type="text"
                 class="form-control"
                 class:is-invalid={errors.name}
-                placeholder="Title *"
+                placeholder="Name *"
                 bind:value={name}
                 disabled={loading}
             />
@@ -159,7 +177,7 @@
                 type="text"
                 class="form-control"
                 class:is-invalid={errors.description}
-                placeholder="Description"
+                placeholder="Description (Optional)"
                 bind:value={description}
                 disabled={loading}
             />
@@ -170,31 +188,68 @@
             {/if}
         </div>
 
-        <div class="mb-3 d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Status:</label>
-            <StatusDropdown
-                bind:value={taskStatus}
-            />
+        <div class="mb-3">
+            <div class="dropdown">
+                <button
+                    type="button"
+                    class="btn dropdown-toggle btn-primary"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                >
+                    {#if taskStatus == 1}
+                        Doing
+                    {/if}
+                    {#if taskStatus == 2}
+                        Done
+                    {/if}
+                    {#if taskStatus == 0}
+                        Todo
+                    {/if}
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 0)}>Todo</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 1)}>Doing</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            class="dropdown-item"
+                            on:click={() => (taskStatus = 2)}>Done</a
+                        >
+                    </li>
+                </ul>
+            </div>
             {#if error}
                 <div class="text-danger mt-1">{error}</div>
             {/if}
         </div>
 
         <div class="mb-3">
-            <div class="d-flex align-items-center gap-2">
-                <label class="form-label mb-0">Due Date:</label>
-                <DatePicker
-                        bind:value={taskDue}
-                        error={errors.dueDate}
-                        disabled={loading} />
+            <div class="row">
+                <p class="due-text">Due Date</p>
+                <input
+                    type="date"
+                    class="form-control"
+                    class:is-invalid={errors.dueDate}
+                    placeholder="Due Date"
+                    bind:value={taskDue}
+                    disabled={loading}
+                />
+                {#if errors.dueDate}
+                    <div class="invalid-feedback">
+                        {errors.dueDate}
+                    </div>
+                {/if}
             </div>
-            {#if errors.dueDate}
-                <div class="invalid-feedback d-block">
-                    {errors.dueDate}
-                </div>
-            {/if}
         </div>
-        
         <div>
             <button
                 type="submit"

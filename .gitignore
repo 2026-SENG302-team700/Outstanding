@@ -32,6 +32,3 @@ UserUploads/
 
 # local environment variables
 SENG302.Api/appsettings.Local.json
-
-# User Uploads File
-/UserUploads
