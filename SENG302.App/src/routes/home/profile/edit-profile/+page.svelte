@@ -24,7 +24,6 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let oldPassword = $state("");
-    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -32,6 +31,7 @@
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
+    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -399,6 +399,14 @@
                     </select>
                 </div>
             </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => {
+                    goto(resolve("/home/profile"));
+                }}>Cancel</button
+            >
             <div class="mt-5 mb-4">
                 <h5 class="text-muted mb-2">Account Security</h5>
                 <hr class="mt-0" style="opacity: 0.15;">
@@ -408,47 +416,7 @@
                         Update Password
                     </button>
                 </div>
-            <div class="mb-3">
-                <label for="displayName" class="form-label">Display Name</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    bind:value={displayName}
-                    id="displayName"
-                />
-            </div>
-            <div class="mb-3">
-                <label for="userEmail" class="form-label">Email</label>
-                <input
-                    type="email"
-                    class="form-control"
-                    id="userEmail"
-                    bind:value={email}
-                />
-            </div>
-            <div class="mb-3">
-                <label for="country" class="form-label">Country</label>
-                <select
-                    class="form-control"
-                    class:country-select={!country}
-                    bind:value={country}
-                    id="country"
-                >
-                    {#each countries as country}
-                        <option value={country.code}>
-                            {country.name}
-                        </option>
-                    {/each}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => {
-                    goto(resolve("/home/profile"));
-                }}>Cancel</button
-            >
+            
         </form>
     </div>
 </div>
