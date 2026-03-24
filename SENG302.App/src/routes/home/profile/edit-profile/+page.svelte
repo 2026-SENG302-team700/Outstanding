@@ -24,6 +24,7 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let oldPassword = $state("");
+    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -36,6 +37,12 @@
     let errors = $state({
         email: "",
         displayName: "",
+    });
+    // automatically trigger the checkCode when the length reaches 6
+    $effect(() => {
+        if (userCode.length === 6) {
+            checkCode();
+        }
     });
 
     onMount(() => {
@@ -175,6 +182,24 @@
 
         return valid;
     }
+    /// <summary>
+    /// Automatically refocus on the next input box
+    /// </summary>
+    function handleInput(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (input.value && input.nextElementSibling) {
+            (input.nextElementSibling as HTMLInputElement).focus();
+        }
+    }
+    /// <summary>
+    /// Move the focus back one box when backspace is clicked and the input box is empty
+    /// </summary>
+    function handleKeyDown(e: KeyboardEvent) {
+    const input = e.target as HTMLInputElement;
+    if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
+        (input.previousElementSibling as HTMLInputElement).focus();
+    }
+}
 
     /// <summary>
     /// Updates the users information with the provided information
@@ -228,12 +253,8 @@
     async function checkCode() {
         try {
             codeError = "";
-            let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
 
-            if (userCode.length < 6) {
-                codeError = "Please enter the full 6-digit code.";
-                return;
-            }
+            if (userCode.length < 6) return;
 
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/validation`),
@@ -397,12 +418,12 @@
                         </p>
                         
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5} oninput={handleInput} onkeydown={handleKeyDown}/>
+                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6} oninput={handleInput} onkeydown={handleKeyDown}/>
                         </div>
 
                         {#if codeError}
