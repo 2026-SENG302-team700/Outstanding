@@ -68,6 +68,11 @@
         editedTask.editedName = editedTask.editedName.trim();
         editedTask.editedDesc = editedTask.editedDesc.trim();
         
+        editedTask.editedDueDate = new Date(editedTask.editedDueDate);
+        if (editedTask.editedDueDate.getFullYear() !== 1) {
+            editedTask.editedDueDate.setHours(23, 59, 59, 999);
+        }
+        
         const validationData = validateTaskInput(
             editedTask.editedName,
             editedTask.editedDesc,
