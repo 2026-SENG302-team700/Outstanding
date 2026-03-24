@@ -298,7 +298,7 @@ public class UserController : ControllerBase
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdString))
             {
-                return Unauthorized(new {message = "Unable to find user from cookie"});
+                return Unauthorized(new { message = "Unable to find user from cookie" });
             }
 
             var success = await _userService.UpdatePasswordAsync(
@@ -311,15 +311,19 @@ public class UserController : ControllerBase
         }
         catch (UnauthorizedAccessException e)
         {
-            return Unauthorized(new {message = e.Message});
+            return Unauthorized(new { message = e.Message });
         }
         catch (MismatchedPasswordException e)
         {
-            return BadRequest(new {message = e.Message});
+            return BadRequest(new { message = e.Message });
         }
         catch (InvalidPasswordException e)
         {
-            return  BadRequest(new {message = e.Message});
+            return BadRequest(new { message = e.Message });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
         }
         catch (Exception)
         {

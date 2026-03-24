@@ -563,6 +563,12 @@ public class UserService : IUserService
             );
         }
         
+        // Validate new password not the same as old password
+        if (newPassword == oldPassword)
+        {
+            throw new ArgumentException("New password can't be the same as old password");
+        }
+        
         // Perform update
         var passwordKey = passwordHasher.HashPassword(user, newPassword);
         user.PasswordKey = passwordKey;

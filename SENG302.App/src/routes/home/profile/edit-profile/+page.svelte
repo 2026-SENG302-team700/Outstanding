@@ -349,9 +349,9 @@
                     goto(resolve("/home/profile"));
                 }
                 
-                const message = await response.text()
+                const data = await response.json().catch(() => null);
                 if (response.status === 400){
-                    switch (message) {
+                    switch (data.message) {
                         case "Current password was incorrect":
                             errors.oldPassword = "Current password was incorrect";
                             break;
@@ -361,12 +361,15 @@
                         case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
                             errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
                             break;
+                        case "New password can't be the same as old password":
+                            errors.newPassword = "New password can't be the same as old password";
+                            break;
                     }
                 } else {
-                    addToast("Failed to update password ", response.status);
+                    addToast("Failed to update password ");
                 }
             } catch (err) {
-                addToast("Failed to update password", err);
+                addToast("Failed to update password");
             }
         }
             
