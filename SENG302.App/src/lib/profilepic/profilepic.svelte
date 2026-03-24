@@ -1,36 +1,43 @@
 <script lang="ts">
-    export let pfpUrl: string | null = null;
-    export let size: 'small' | 'large' = 'small';
+    export let pfpData: PfpData | null = null;
+    export let size: "small" | "large" | "xl" = "small";
+    const sizeValues = {
+        "small" : 40.0,
+        "large" : 150.0,
+        "xl" : 300.0
+    }
+
 </script>
 
 <div class="">
-    {#if pfpUrl}
-        <img
-                class="profile-image {size}"
-                src={pfpUrl}
-        />
+    {#if pfpData}
+        <div 
+            class="profile-image-parent"
+            style="
+                width: {sizeValues[size]}px;
+                height: {sizeValues[size]}px;"
+            >
+            <img
+                alt="profile"
+                src={pfpData.imageSource}
+                style="transform-origin: top left;
+                        scale:{pfpData.zoom * sizeValues[size]};
+                        translate: {pfpData.offsetX * sizeValues[size]}px {pfpData.offsetY * sizeValues[size]}px"
+            />
+        </div>
     {:else}
         <i class="bi bi-person-circle icon {size}" />
     {/if}
 
     <style>
-        .profile-image {
-            object-fit: cover;
+
+        .profile-image-parent {
             border-radius: 50%;
             aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border: 1px solid black;
         }
-        .profile-image.small {
-            width: 100%;
-            height: 100%;
-        }
-        .profile-image.large {
-            width: 150px;
-            height: 150px;
-        }
-        .profile-image.xl {
-            width: 300px;
-            height: 300px;
-        }
+
         .icon.small {
             font-size: 40px;
             line-height: 1;
@@ -45,5 +52,4 @@
             line-height: 1;
         }
     </style>
-
 </div>

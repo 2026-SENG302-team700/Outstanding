@@ -6,7 +6,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.HttpResults;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers;
@@ -62,11 +61,11 @@ public class UserController : ControllerBase
     public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
     {
         long timeElapsed;
-        
+
         var user = await _userService.GetUserFromEmailAsync(request.Email);
         if (user == null) return NotFound();
-        
-        
+
+
         if (user.CodeGenerationTime == 0)
         {
             timeElapsed = 0;
@@ -77,7 +76,7 @@ public class UserController : ControllerBase
         }
 
         Console.Write("\n\n" + "Time Elapsed: " + timeElapsed + "\n\n");
-        
+
         if (timeElapsed > _codeService.TimeoutTimeSeconds)
             return Unauthorized("Code is no longer valid, account no longer exists.");
 
@@ -103,7 +102,7 @@ public class UserController : ControllerBase
             var userId = int.Parse(userIdString);
             var oldUser = await _userService.GetUserByIdAsync(userId);
             updateUserRequest.Email = updateUserRequest.Email.ToLower();
-            
+
             var user = await _userService.UpdateUser(
                     userId,
                     updateUserRequest.Email,
@@ -150,21 +149,34 @@ public class UserController : ControllerBase
 
     /// <summary>
     /// Takes an image from a Form and if valid, sends to file service for saving.
+    /// Deletes the old profile picture from the file system if there is one.
     /// </summary>
     /// <param name="file">The file received from the API endpoint, should be an image</param>
-    /// <returns>Returns an OK statement with nothing</returns>
+    /// <param name="x">The offset of the image on the x axis</param>
+    /// <param name="y">The offset of the image on the y axis</param>
+    /// <param name="zoom">The amount the image is zoomed in</param>
+    /// <returns>Whether the profile picture upload succeeded</returns>
     [HttpPut("pfp")]
-    public async Task<ActionResult<CustomFile>> UploadProfilePicture([FromForm] IFormFile file)
+    public async Task<ActionResult<CustomFile>> UploadProfilePicture(
+        [FromForm] IFormFile file,
+        [FromForm] string x,
+        [FromForm] string y,
+        [FromForm] string zoom)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized();
+            return Unauthorized("You do not have authorisation to change this profile picture!");
+        }
+
+        if (file.Length > 5000000)
+        {
+            return BadRequest("Image too large, maximum file size is 5MB");
         }
 
         if (!MimeTypeSets.Images.Contains(file.ContentType))
         {
-            return BadRequest("Unsupported file type.");
+            return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp");
         }
 
         var userId = int.Parse(userIdString);
@@ -172,10 +184,14 @@ public class UserController : ControllerBase
 
         if (user == null)
         {
-            return NotFound("User not found.");
+            return NotFound("User not found");
         }
 
         var userPfpId = user.ProfilePicture;
+
+        float offsetX = float.Parse(x);
+        float offsetY = float.Parse(y);
+        float pfpZoom = float.Parse(zoom);
 
         if (userPfpId != 0)
         {
@@ -186,7 +202,7 @@ public class UserController : ControllerBase
 
         var customFile = await _fileService.SaveFileAsync(file, userId);
         var customFileId = customFile.Id;
-        await _userService.SetUserProfilePicture(userId, customFileId);
+        await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
 
@@ -213,6 +229,10 @@ public class UserController : ControllerBase
 
         var customFile = await _fileService.GetFileByIdAsync(user.ProfilePicture);
         var fileBytes = await _fileService.GetFileContentAsync(customFile.FileKey);
+
+        Response.Headers.Append("profile-offset-x", user.ProfilePictureOffsetX.ToString());
+        Response.Headers.Append("profile-offset-y", user.ProfilePictureOffsetY.ToString());
+        Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
 
         return File(fileBytes, customFile.MimeType);
     }
