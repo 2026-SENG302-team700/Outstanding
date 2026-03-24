@@ -184,8 +184,9 @@ public class Program
         // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<ITaskService, TaskService>();
         services.AddScoped<IFileService, FileService>();
+        services.AddScoped<ITaskListService, TaskListService>();
+        services.AddScoped<ITaskItemService, TaskItemService>();
         services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
