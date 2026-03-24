@@ -76,7 +76,7 @@
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-        <ProfilePic pfpUrl={$user.pfpUrl} size="large" />
+        <ProfilePic pfpData={$user.pfpData} size="large" /> 
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
         <button

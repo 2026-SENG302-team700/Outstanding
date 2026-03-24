@@ -1,7 +1,6 @@
 <script lang="ts">
-    // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
-    import { Modal } from 'bootstrap';
+    import type { Modal } from 'bootstrap';
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -10,6 +9,7 @@
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    import ImageEditor from "$lib/image-editor/image-editor.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -24,16 +24,18 @@
     let newPassword = $state("");
     let confirmPassword = $state("");
     let oldPassword = $state("");
-    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
-
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
+    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
 
     let codeError = $state("");
+    let imageEditor: ImageEditor;
+
+    
     let errors = $state({
         email: "",
         displayName: "",
@@ -45,9 +47,15 @@
         }
     });
 
-    onMount(() => {
+    onMount(async() => {
         retrieveUserData();
-        authModal = new Modal(modalElement);
+
+        const { Modal : BootstrapModal } = await import('bootstrap');
+        
+        if (modalElement){
+            authModal = new BootstrapModal(modalElement);
+        }
+        
     });
 
     /**
@@ -226,7 +234,10 @@
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
-                user.update(u => ({...u, displayName: updatedUser.displayName}));
+                user.update((u) => ({
+                    ...u,
+                    displayName: updatedUser.displayName,
+                }));
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
@@ -284,27 +295,48 @@
     /**
      * Method used to update the profile picture, confirm the conditions are right and then update
     */
-    async function updatePfp() {
+
+
+    /**
+     * Sends an image to the image editor
+     */
+    async function sendToEditor() {
         if (!files || files.length === 0) return;
-        
+        imageEditor.setImg(files[0]);
+    }
+
+    /**
+     * Updates the profile picture on the back end
+     * @param imageData the x, y and zoom of the new profile picture
+     * @param imageFile the file to upload
+     */
+    async function updatePfp(imageData: PfpData, imageFile: File) {
         try {
             const formData = new FormData();
-            formData.append("file", files[0]);
+            formData.append("file", imageFile);
+            formData.append("x", imageData.offsetX.toString());
+            formData.append("y", imageData.offsetY.toString());
+            formData.append("zoom", imageData.zoom.toString());
 
-            const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
-                method: "PUT",
-                body: formData
-            });
-            
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/pfp` as any),
+                {
+                    method: "PUT",
+                    body: formData,
+                },
+            );
+
             if (!response.ok) {
-                throw new Error("Failed to save profile picture.");
+                if (response.status == 500) {
+                    throw new Error("Failed to upload picture");
+                } else {
+                    throw new Error(await response.text());
+                }
             } else {
-                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
-                    method: "GET",
-                    credentials: "include",
-                });
-                const blob = await pfpResponse.blob();
-                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+                user.update((u) => ({
+                    ...u,
+                    pfpData: imageData,
+                }));
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -313,31 +345,26 @@
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
-    <div class="d-flex flex-column align-items-center m-3">
+    <div
+        class="d-flex flex-column align-items-center justify-content-center m-3"
+    >
         <div class="position-relative d-inline-block">
-            <ProfilePic pfpUrl={$user.pfpUrl} size="xl" />
+            <ProfilePic pfpData={$user.pfpData} size="xl" />
 
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                on:click={() => pfpInput.click()}
+                data-bs-toggle="modal"
+                data-bs-target="#pfpInputModal"
+                on:click={() => {
+                    imageEditor.reset();
+                }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
-
-            <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:change={updatePfp}
-            />            
         </div>
     </div>
-    
+
     <div class="flex-grow-1 m-3">
         <form on:submit|preventDefault={updateUser}>
             <div class="mb-4">
@@ -377,6 +404,14 @@
                     </select>
                 </div>
             </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => {
+                    goto(resolve("/home/profile"));
+                }}>Cancel</button
+            >
             <div class="mt-5 mb-4">
                 <h5 class="text-muted mb-2">Account Security</h5>
                 <hr class="mt-0" style="opacity: 0.15;">
@@ -386,16 +421,8 @@
                         Update Password
                     </button>
                 </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={() => {
-                goto(resolve("/home/profile"));
-            }}>Cancel</button
-        >
-    </form>
+            
+        </form>
     </div>
 </div>
 
@@ -466,3 +493,73 @@
         </div>
     </div>
 </div>
+
+<!-- Modal for pfp selection -->
+<div
+    class="modal fade"
+    id="pfpInputModal"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    aria-labelledby="pfpInputModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="pfpInputModalLabel">
+                    Edit Profile Picture
+                </h1>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    on:click={() => pfpInput.click()}
+                >
+                    Choose Image
+                </button>
+
+                <input
+                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                    bind:files
+                    bind:this={pfpInput}
+                    id="pfp"
+                    name="pfp"
+                    type="file"
+                    class="d-none"
+                    on:change={sendToEditor}
+                />
+
+                <ImageEditor bind:this={imageEditor} />
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    on:click={() => {
+                        const data = imageEditor.exportData();
+                        if (data) {
+                            updatePfp(data.data, data.file);
+                        } else {
+                            addToast("No file selected!", "error");
+                        }
+                    }}
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal">Submit</button
+                >
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button
+                >
+            </div>
+        </div>
+    </div>
+</div>
+

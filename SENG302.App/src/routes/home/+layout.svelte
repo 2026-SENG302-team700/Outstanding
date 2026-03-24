@@ -36,7 +36,12 @@
                     credentials: "include",
                 });
                 const blob = await pfpResponse.blob();
-                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+                user.update(u => ({...u, pfpData: {
+                    imageSource : URL.createObjectURL(blob),
+                    offsetX : parseFloat(pfpResponse.headers.get("profile-offset-x") ?? "0"),
+                    offsetY : parseFloat(pfpResponse.headers.get("profile-offset-y") ?? "0"),
+                    zoom : parseFloat(pfpResponse.headers.get("profile-offset-zoom") ?? "1")
+                }}));
             }
         } catch (err) {
             goto(resolve("/"));
@@ -67,7 +72,7 @@
             <div class="profile-button" onclick={
             () => goto(resolve("/home/profile"))
             }>
-                <ProfilePic pfpUrl={$user.pfpUrl} size="small" />
+                <ProfilePic pfpData={$user.pfpData} size="small" />
             </div>
         </div>
     </div>
