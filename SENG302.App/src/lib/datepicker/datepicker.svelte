@@ -1,23 +1,30 @@
 <script lang="ts">
-    let { value = $bindable(new Date("0001-01-01")), error = "", disabled = false }: {
-        value: Date,
-        error?: string,
-        disabled?: boolean
+    let {
+        value = $bindable(new Date("0001-01-01")),
+        error = "",
+        disabled = false,
+        date = $bindable(),
+    }: {
+        value: Date;
+        error?: string;
+        disabled?: boolean;
+        date?: HTMLInputElement;
     } = $props();
 </script>
 
 <div class="d-flex align-items-center gap-2">
     <input
-            type="date"
-            class="form-control w-auto"
-            class:is-invalid={error}
-            bind:value
-            {disabled}
+        type="date"
+        class="form-control w-auto"
+        class:is-invalid={error}
+        bind:value
+        bind:this={date}
+        {disabled}
     />
     <button
-            type="button"
-            class="btn btn-outline-secondary btn-sm"
-            {disabled}
-            onclick={() => value = ""}
-    >Clear</button>
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        {disabled}
+        onclick={() => (value = "")}>Clear</button
+    >
 </div>

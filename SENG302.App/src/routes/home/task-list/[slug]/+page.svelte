@@ -3,7 +3,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
-    import { formatDate } from "$lib/datepicker/formatDate"
+    import { formatDate } from "$lib/datepicker/formatDate";
 
     let loading = $state(false);
     let listName = $state();
@@ -74,8 +74,6 @@
             loading = false;
         }
     }
-
-
 </script>
 
 <div class="container">
@@ -90,7 +88,7 @@
             class="btn btn-primary"
             on:click={() =>
                 goto(resolve(`/home/task-list/${params.slug}/create-task`))}
-            >+ Create Task
+            >+ Add Task
         </button>
     </div>
     {#if loading && tasks.length === 0}
@@ -100,50 +98,81 @@
             No tasks yet. Create your first task above!
         </div>
     {:else}
-        <div
-            class="table-responsive"
-            style="max-height: 300px; overflow: scroll;"
-        >
-            <table class="table table-hover">
-                <thead style="position: sticky; top: 0;">
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Status</th>
-                        <th>Due Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each tasks as task}
-                        <tr
-                            on:click={() =>
-                                goto(
-                                    `/home/task-list/${params.slug}/task/${task.taskId}`,
-                                )}
-                            style="cursor: pointer; white-space: pre;"
-                        >
-                            <td class="text-truncate" style="max-width: 200px;"
-                                >{task.name}</td
-                            >
-                            <td class="text-truncate" style="max-width: 200px;"
-                                >{task.description? task.description : "No Description"}</td
-                            >
+        <div class="mb-3">
+            {#each tasks as task}
+                <div
+                    class="task-card"
+                    tabindex="0"
+                    role="button"
+                    on:click={() =>
+                        goto(
+                            `/home/task-list/${params.slug}/task/${task.taskId}`,
+                        )}
+                    on:keydown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            goto(
+                                `/home/task-list/${params.slug}/task/${task.taskId}`,
+                            );
+                        }
+                    }}
+                >
+                    <div>
+                        <span class="fw-bold">Title: </span>
+                        <span>{task.name}</span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Description: </span>
+                        <span>
+                            {task.description
+                                ? task.description
+                                : "No Description"}
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Status: </span>
+                        <span>
                             {#if task.currentStatus === 0}
-                                <td>{"TODO"}</td>
+                                TODO
                             {:else if task.currentStatus === 1}
-                                <td>{"In Progress"}</td>
+                                In Progress
                             {:else}
-                                <td>{"Done"}</td>
+                                Done
                             {/if}
-                            {#if task.dueDate === null}
-                                <td>No Due Date</td>
-                            {:else}
-                                <td>{formatDate(task.dueDate)}</td>
-                            {/if}
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+                        </span>
+                    </div>
+
+                    <div>
+                        <span class="fw-bold">Due Date: </span>
+                        <span>
+                            {task.dueDate === null
+                                ? "No Due Date"
+                                : formatDate(task.dueDate)}
+                        </span>
+                    </div>
+                </div>
+            {/each}
         </div>
     {/if}
 </div>
+
+<style>
+    .task-card {
+        border: 1px solid lightgrey;
+        box-shadow: 0px 0px 5px lightgrey;
+        margin-bottom: 8px;
+    }
+
+    .task-card[role="button"] {
+        cursor: pointer;
+        outline: none;
+        border-radius: 6px;
+        padding: 5px;
+    }
+
+    .task-card[role="button"]:focus-visible {
+        box-shadow: 0 0 0 3px #4a90e2;
+        background-color: #f0f6ff;
+    }
+</style>

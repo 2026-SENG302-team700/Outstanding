@@ -46,7 +46,7 @@ public class TaskItemServiceTests
     [Theory]
     [InlineData("Hi")] // short 2 chars
     [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // 129 chars
-    public void validateName_InValidName_ThrowError(string name)
+    public void ValidateName_InValidName_ThrowError(string name)
     {
         Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemName(name));
     }
