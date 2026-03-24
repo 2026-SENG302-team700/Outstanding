@@ -296,7 +296,11 @@ public class UserController : ControllerBase
         try
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString))
+            var userDisplayName = User.FindFirstValue(ClaimTypes.Name);
+            var userEmail =  User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(userIdString) ||  
+                string.IsNullOrEmpty(userDisplayName) || 
+                string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { message = "Unable to find user from cookie" });
             }
@@ -306,7 +310,13 @@ public class UserController : ControllerBase
                 updatePasswordRequest.OldPassword,
                 updatePasswordRequest.NewPassword,
                 updatePasswordRequest.NewPasswordConfirm);
-
+            
+            // Create a dictionary of important values to send in the email, then call function to send email
+            var emailDictionary = new Dictionary<string, string>
+            {
+                {"DISPLAY_NAME", userDisplayName}
+            };
+            await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
             return Ok();
         }
         catch (UnauthorizedAccessException e)
