@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -117,6 +118,39 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         json.GetProperty("message").GetString().ShouldBe("JJ Devy");
     }
 
+    [Fact]
+    public async Task LoginUser_DifferentEmailCasing_ReturnLoginSuccess()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "jdev@dev.com",
+            DisplayName = "JJ Devy",
+            Country = "AU",
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "c00lPasSw0rdont@ME");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var login = new
+        {
+            Email = "JDev@deV.cOm",
+            PasswordString = "c00lPasSw0rdont@ME",
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/login", login);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var content = await response.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(true);
+        json.GetProperty("message").GetString().ShouldBe("JJ Devy");
+    }
+
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep.gmail.com", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "2016swag", "NZ")]
@@ -189,5 +223,13 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(false);
         json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
+    }
+    
+    [Fact]
+    public async Task LogoutUser_ValidInformation_ReturnOk()
+    {
+        var response = await HttpClient.DeleteAsync("/api/logout");
+        
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }

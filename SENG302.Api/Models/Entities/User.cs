@@ -28,6 +28,11 @@ public class User
     
     public float ProfilePictureZoom { get; set;} = 1;
 
+    [StringLength(6)]
+    public string OneTimeCode { get; set; } = String.Empty;
+
+    public long CodeGenerationTime { get; set; }
+
     public DateTimeOffset TimeCreated { get; set; }
 
     public bool EmailVerified { get; set; } = false;

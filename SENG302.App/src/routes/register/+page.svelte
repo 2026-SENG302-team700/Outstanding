@@ -6,7 +6,6 @@
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
-    let user = $state(null);
     let email = $state("");
     let displayName = $state("");
     let selectedCountryCode = $state("");
@@ -41,6 +40,11 @@
             valid = false;
         }
 
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+            valid = false;
+        }
+
         // Check if passwords match
         if (password !== passwordConfirm && password && passwordConfirm) {
             errors.passwordConfirm = "Passwords do not match.";
@@ -64,6 +68,8 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
+
+        
 
         // Check for empty fields
         if (!email) {
@@ -118,7 +124,12 @@
                 "Display name must be between 3 and 64 characters.";
             valid = false;
         }
-
+        
+        // clears password fields if the data is not valid
+        if (!valid) {
+            password = "";
+            passwordConfirm = "";
+        }
         return valid;
     }
     /**
@@ -132,25 +143,29 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(`/api/register`, {
+            const response = await fetchWithCsrf(resolve(`/api/register`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email,
-                    displayName,
+                    email: email,
+                    displayName: displayName,
                     passwordString: password,
-                    passwordConfirm: password,
+                    passwordConfirm: passwordConfirm,
                     country: selectedCountryCode,
                 }),
             });
 
             const data = await response.json().catch(() => null);
+
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
+
+                password = "";
+                passwordConfirm = "";
 
                 switch (data.errorType) {
                     // check for duplicate email, throws regular error rather than "something went wrong"
@@ -166,9 +181,9 @@
                 }
                 return;
             }
-
-            addToast("Registration successful. Please log in.", "success");
-            goto(resolve(`/login`));
+            // set email in local storage for validation page
+            localStorage.setItem("email", email);
+            goto(resolve(`/register/verification`));
         } catch (err) {
             console.error(err);
             addToast(

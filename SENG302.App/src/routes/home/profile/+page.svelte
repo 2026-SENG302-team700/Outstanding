@@ -5,6 +5,7 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import { user } from "$lib/stores/user";
 
@@ -42,6 +43,30 @@
             goto(resolve("/"));
         }
     }
+
+    /**
+     * Sends a request to delete the session token to the backend
+     * Will always return user to landing page UNLESS an internal server error occurs
+     * (meaning the session token MAY NOT be deleted)
+     */
+    async function logoutUser() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/logout`), {
+                method: "DELETE",
+                credentials: "include",
+            });
+            
+            if (response.status === 500) {
+                addToast("Failed to logout. Refresh Webpage", "error")
+                return;
+            }
+            else {
+                goto("/");
+            }
+        } catch (err) {
+            addToast(err.message, "error");
+        }
+    }
 </script>
 
 <div class="display: flex; flex-direction: row;">
@@ -54,6 +79,13 @@
         <ProfilePic pfpData={$user.pfpData} size="large" /> 
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
+        <button
+            type="button"
+            class="btn btn-outline-danger"
+            onclick={logoutUser}
+        >
+            Logout
+        </button>
     </div>
 </div>
 

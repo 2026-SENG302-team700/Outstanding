@@ -19,11 +19,13 @@ public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly IFileService _fileService;
+    private readonly IOneTimeCodeService _codeService;
 
-    public UserController(IUserService userService, IFileService fileService)
+    public UserController(IUserService userService, IFileService fileService, IOneTimeCodeService codeService)
     {
         _userService = userService;
         _fileService = fileService;
+        _codeService = codeService;
     }
 
     /// <summary>
@@ -53,6 +55,32 @@ public class UserController : ControllerBase
         return Ok(user);
     }
 
+    [HttpPost("countdown")]
+    public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
+    {
+        long timeElapsed;
+        
+        var user = await _userService.GetUserFromEmailAsync(request.Email);
+        if (user == null) return NotFound();
+        
+        
+        if (user.CodeGenerationTime == 0)
+        {
+            timeElapsed = 0;
+        }
+        else
+        {
+            timeElapsed = _codeService.GetEpochTime() - user.CodeGenerationTime;
+        }
+
+        Console.Write("\n\n" + "Time Elapsed: " + timeElapsed + "\n\n");
+        
+        if (timeElapsed > _codeService.TimeoutTimeSeconds)
+            return Unauthorized("Code is no longer valid, account no longer exists.");
+
+        return Ok(_codeService.TimeoutTimeSeconds - timeElapsed);
+    }
+
     /// <summary>
     /// Updates the users information
     /// </summary>
@@ -71,13 +99,14 @@ public class UserController : ControllerBase
         {
             var userId = int.Parse(userIdString);
             var oldUser = await _userService.GetUserByIdAsync(userId);
+            updateUserRequest.Email = updateUserRequest.Email.ToLower();
             
             var user = await _userService.UpdateUser(
-                    userId, 
-                    updateUserRequest.Email, 
-                    updateUserRequest.DisplayName, 
+                    userId,
+                    updateUserRequest.Email,
+                    updateUserRequest.DisplayName,
                     updateUserRequest.Country);
-            
+
             if (user == null)
             {
                 throw new Exception("Couldn't find user");
@@ -151,7 +180,7 @@ public class UserController : ControllerBase
         {
             return NotFound("User not found");
         }
-        
+
         var userPfpId = user.ProfilePicture;
 
         float offsetX = float.Parse(x);
@@ -164,7 +193,7 @@ public class UserController : ControllerBase
             await _fileService.DeleteFileAsync(oldPfpFile.FileKey);
             await _userService.SetUserProfilePicture(userId, 0);
         }
-        
+
         var customFile = await _fileService.SaveFileAsync(file, userId);
         var customFileId = customFile.Id;
         await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);

@@ -1,8 +1,6 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute.ReceivedExtensions;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
 using Shouldly;
@@ -103,7 +101,7 @@ public class UserServiceTest : BaseIntegrationTestFixture
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
-                "Vladimir Gheorghe Lucian Constantine Butnariu-Nistor-Morar-Tugurlan-ABCDEFGHIJKL", // Should throw exception
+                "Vladimir gggggggg llllll ccccccccc bbbbbbbb nnnnnn mmmm tttttttttt abcdefghijkl", // Should throw exception
                 "12345678Ab$",
                 "12345678Ab$", 
                 "RO"
@@ -203,4 +201,61 @@ public class UserServiceTest : BaseIntegrationTestFixture
             );
         });
     }
+    
+    [Theory]
+    [InlineData("345678", 123456789, true)]
+    public async Task UpdateExistingUserCode_Success_ReturnsUpdatedUser(String code, long timeCreated, bool userVerified)
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        string email = "testUser@gmail.com";
+        
+        context.Users.Add(new User
+        {
+            Email = email,
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        
+        await context.SaveChangesAsync();
+        
+        int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
+
+        // Use the TaskService function to create a new task list with the name and user email
+        User? user = await ServiceUnderTest.UpdateUserOneTimeCode(email, code, timeCreated, userVerified);
+
+        user.OneTimeCode.ShouldBe(code);
+        user.CodeGenerationTime.ShouldBe(timeCreated);
+        user.EmailVerified.ShouldBe(userVerified);
+    }
+    
+    [Fact]
+    public async Task DeleteUser_Success_ReturnsDeletedUser()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+
+        string email = "testUser@gmail.com";
+        
+        context.Users.Add(new User
+        {
+            Email = email,
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        
+        await context.SaveChangesAsync();
+        
+        int? id = await ServiceUnderTest.GetUserIdFromEmailAsync(email);
+        // Use the TaskService function to create a new task list with the name and user email
+        User? user = await ServiceUnderTest.DeleteUserByIdAsync((int)id);
+
+        user.Id.ShouldBe((int)id);
+        user.Email.ShouldBe(email);
+        
+        context.Users.ShouldBeEmpty();
+    }
+    
+    
 }

@@ -5,13 +5,14 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
 [ApiController]
-[Route("api/login")]
+[Route("api")]
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -27,9 +28,10 @@ public class LoginController : ControllerBase
     /// </summary>
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
     /// <returns>a Task<ActionResult<User></returns>
-    [HttpPost]
+    [HttpPost("login")]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
+        userCredentials.Email = userCredentials.Email.ToLower();
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
             userCredentials.Email,
@@ -113,6 +115,28 @@ public class LoginController : ControllerBase
                 message = "Invalid email or password",
                 hashStatus = false
             });
+        }
+    }
+
+    /// <summary>
+    /// Removes a cookie from a browser when called upon.
+    /// </summary>
+    /// <returns>
+    /// OK: in all cases if signoutasync fails or not (shouldn't throw exception unless something terribly goes wrong)
+    /// Internal Server Error 500: if SignOutAsync throws an error (if this occurs, SignOutAsync may be deprecated)
+    /// </returns>
+    [Authorize]
+    [HttpDelete("logout")]
+    public async Task<ActionResult> LogoutUser()
+    {
+        try
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, e.Message);
         }
     }
 }

@@ -5,20 +5,17 @@ using System.Diagnostics.CodeAnalysis;
 namespace SENG302.Api.Models.Entities;
 
 /// <summary>
-/// Represents a task that a user can create.
-/// TaskId is a variable set by the constructor when it's created, 
-/// and should not be set after the case, so therefore it does not 
-/// have a setter (and therefore, it cannot be set as required).
+/// Represents updates to a pre-existing task.
+/// TaskId needs to be present, everything else optional.
 /// </summary>
-public class NewTaskItemRequest
+public class UpdateTaskItemRequest
 {
-    public required int TaskListId { get; set; }
+    public required int taskId { get; set; }
 
     [MaxLength(128)]
     public required string Name { get; set; }
 
-    [MaxLength(2048)]
-    public required string Description { get; set; }
+    [MaxLength(2048)] public string Description { get; set; } = string.Empty;
 
     public required DateTime? DueDate { get; set; }
 
