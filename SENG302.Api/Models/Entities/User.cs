@@ -22,11 +22,11 @@ public class User
 
     public int ProfilePicture { get; set; }
 
-    public float ProfilePictureOffsetX { get; set; }
+    public float ProfilePictureOffsetX { get; set; } = 0;
 
-    public float ProfilePictureOffsetY { get; set; }
+    public float ProfilePictureOffsetY { get; set; } = 0;
     
-    public float ProfilePictureOffsetZoom { get; set;}
+    public float ProfilePictureZoom { get; set;} = 1;
 
     public DateTimeOffset TimeCreated { get; set; }
 

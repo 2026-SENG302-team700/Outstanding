@@ -38,9 +38,9 @@
                 const blob = await pfpResponse.blob();
                 user.update(u => ({...u, pfpData: {
                     imageSource : URL.createObjectURL(blob),
-                    offsetX : 0,
-                    offsetY : 0,
-                    zoom : 1
+                    offsetX : parseFloat(pfpResponse.headers.get("profile-offset-x") ?? "0"),
+                    offsetY : parseFloat(pfpResponse.headers.get("profile-offset-y") ?? "0"),
+                    zoom : parseFloat(pfpResponse.headers.get("profile-offset-zoom") ?? "1")
                 }}));
             }
         } catch (err) {

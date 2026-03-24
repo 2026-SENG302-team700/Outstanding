@@ -168,6 +168,9 @@
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
+            formData.append("x", imageData.offsetX.toString());
+            formData.append("y", imageData.offsetY.toString());
+            formData.append("zoom", imageData.zoom.toString());
 
             const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
                 method: "PUT",
@@ -177,14 +180,6 @@
             if (!response.ok) {
                 throw new Error("Failed to save profile picture.");
             } else {
-                const pfpResponse = await fetchWithCsrf(
-                    resolve("/api/user/pfp"),
-                    {
-                        method: "GET",
-                        credentials: "include",
-                    },
-                );
-                const blob = await pfpResponse.blob();
                 user.update((u) => ({
                     ...u,
                     pfpData: imageData,

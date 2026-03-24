@@ -122,7 +122,11 @@ public class UserController : ControllerBase
     /// <param name="file">The file received from the API endpoint, should be an image</param>
     /// <returns>Returns an OK statement with nothing</returns>
     [HttpPut("pfp")]
-    public async Task<ActionResult<CustomFile>> UploadProfilePicture([FromForm] IFormFile file)
+    public async Task<ActionResult<CustomFile>> UploadProfilePicture(
+        [FromForm] IFormFile file,
+        [FromForm] string x,
+        [FromForm] string y,
+        [FromForm] string zoom)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
@@ -145,6 +149,10 @@ public class UserController : ControllerBase
         
         var userPfpId = user.ProfilePicture;
 
+        float offsetX = float.Parse(x);
+        float offsetY = float.Parse(y);
+        float pfpZoom = float.Parse(zoom);
+
         if (userPfpId != 0)
         {
             var oldPfpFile = await _fileService.GetFileByIdAsync(userPfpId);
@@ -154,7 +162,7 @@ public class UserController : ControllerBase
         
         var customFile = await _fileService.SaveFileAsync(file, userId);
         var customFileId = customFile.Id;
-        await _userService.SetUserProfilePicture(userId, customFileId);
+        await _userService.SetUserProfilePicture(userId, customFileId, offsetX, offsetY, pfpZoom);
         return Ok();
     }
 
@@ -182,6 +190,10 @@ public class UserController : ControllerBase
         var customFile = await _fileService.GetFileByIdAsync(user.ProfilePicture);
         var fileBytes = await _fileService.GetFileContentAsync(customFile.FileKey);
         
+        Response.Headers.Append("profile-offset-x", user.ProfilePictureOffsetX.ToString());
+        Response.Headers.Append("profile-offset-y", user.ProfilePictureOffsetY.ToString());
+        Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
+
         return File(fileBytes, customFile.MimeType);
     }
 }
