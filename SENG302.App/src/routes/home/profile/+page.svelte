@@ -44,6 +44,11 @@
         }
     }
 
+    /**
+     * Sends a request to delete the session token to the backend
+     * Will always return user to landing page UNLESS an internal server error occurs
+     * (meaning the session token MAY NOT be deleted)
+     */
     async function logoutUser() {
         try {
             const response = await fetchWithCsrf(resolve(`/api/logout`), {

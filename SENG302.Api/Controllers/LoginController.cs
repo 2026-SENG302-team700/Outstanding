@@ -118,6 +118,13 @@ public class LoginController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Removes a cookie from a browser when called upon.
+    /// </summary>
+    /// <returns>
+    /// OK: in all cases if signoutasync fails or not (shouldn't throw exception unless something terribly goes wrong)
+    /// Internal Server Error 500: if SignOutAsync throws an error (if this occurs, SignOutAsync may be deprecated)
+    /// </returns>
     [Authorize]
     [HttpDelete("logout")]
     public async Task<ActionResult> LogoutUser()
