@@ -35,8 +35,8 @@
         "image/jpeg",
         "image/png",
         "image/gif",
-        "image/svg+xml"
-    ]
+        "image/svg+xml",
+    ];
 
     /**
      * Insert an image into this ImageEditor object
@@ -45,9 +45,11 @@
      * @param file the image file
      */
     export async function setImg(file: File) {
-
-        if (!(mimeTypes.includes(file.type))) {
-            addToast("Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp", "error");
+        if (!mimeTypes.includes(file.type)) {
+            addToast(
+                "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
+                "error",
+            );
             return;
         }
 
@@ -100,7 +102,7 @@
     }
 
     /**
-     * Reset the image and all properties
+     * Reset the image to null and zeroes out all properties
      */
     export async function reset() {
         zoom = profileSize;
@@ -172,7 +174,6 @@
      * Translate the data into a more general format, one that the backend can understand
      */
     export function exportData(): { data: PfpData; file: File } | null {
-
         if (imageFile == null) {
             return null;
         }
@@ -181,9 +182,17 @@
             data: {
                 // Create a new object url because we don't want it to get dereferenced
                 imageSource: URL.createObjectURL(imageFile as File),
-                offsetX: (xOffset + (profileSize / 2 - 1) - (newWidth * (zoom / profileSize)) / 2) / profileSize,
-                offsetY: (yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2) / profileSize,
-                zoom: (zoom / Math.min(width, height)) / profileSize,
+                offsetX:
+                    (xOffset +
+                        (profileSize / 2 - 1) -
+                        (newWidth * (zoom / profileSize)) / 2) /
+                    profileSize,
+                offsetY:
+                    (yOffset +
+                        (profileSize / 2 - 1) -
+                        (newHeight * (zoom / profileSize)) / 2) /
+                    profileSize,
+                zoom: zoom / Math.min(width, height) / profileSize,
             },
             file: imageFile as File,
         };
@@ -233,7 +242,6 @@
         }}
         value={zoom}
     />
-    
 </div>
 
 <style>

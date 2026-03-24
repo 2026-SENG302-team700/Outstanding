@@ -1,5 +1,4 @@
 <script lang="ts">
-    // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
@@ -180,10 +179,13 @@
             formData.append("y", imageData.offsetY.toString());
             formData.append("zoom", imageData.zoom.toString());
 
-            const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
-                method: "PUT",
-                body: formData,
-            });
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/pfp` as any),
+                {
+                    method: "PUT",
+                    body: formData,
+                },
+            );
 
             if (!response.ok) {
                 if (response.status == 500) {
@@ -327,7 +329,8 @@
                             addToast("No file selected!", "error");
                         }
                     }}
-                    class="btn btn-primary" data-bs-dismiss="modal">Submit</button
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal">Submit</button
                 >
                 <button
                     type="button"

@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace SENG302.Api.Models.Entities;
@@ -16,7 +15,7 @@ public class User
     [MaxLength(64)]
     public required string DisplayName { get; set; }
 
-    public string PasswordKey { get; set; } = String.Empty;
+    public string PasswordKey { get; set; } = string.Empty;
 
     public required string Country { get; set; }
 
@@ -25,11 +24,11 @@ public class User
     public float ProfilePictureOffsetX { get; set; } = 0;
 
     public float ProfilePictureOffsetY { get; set; } = 0;
-    
-    public float ProfilePictureZoom { get; set;} = 1;
+
+    public float ProfilePictureZoom { get; set; } = 1;
 
     [StringLength(6)]
-    public string OneTimeCode { get; set; } = String.Empty;
+    public string OneTimeCode { get; set; } = string.Empty;
 
     public long CodeGenerationTime { get; set; }
 

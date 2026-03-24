@@ -6,7 +6,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.HttpResults;
 using SENG302.Api.Constants;
 using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers;
@@ -59,11 +58,11 @@ public class UserController : ControllerBase
     public async Task<ActionResult<long>> GetUserVerificationCountdown([FromBody] NewOneTimeCodeRequest request)
     {
         long timeElapsed;
-        
+
         var user = await _userService.GetUserFromEmailAsync(request.Email);
         if (user == null) return NotFound();
-        
-        
+
+
         if (user.CodeGenerationTime == 0)
         {
             timeElapsed = 0;
@@ -74,7 +73,7 @@ public class UserController : ControllerBase
         }
 
         Console.Write("\n\n" + "Time Elapsed: " + timeElapsed + "\n\n");
-        
+
         if (timeElapsed > _codeService.TimeoutTimeSeconds)
             return Unauthorized("Code is no longer valid, account no longer exists.");
 
@@ -100,7 +99,7 @@ public class UserController : ControllerBase
             var userId = int.Parse(userIdString);
             var oldUser = await _userService.GetUserByIdAsync(userId);
             updateUserRequest.Email = updateUserRequest.Email.ToLower();
-            
+
             var user = await _userService.UpdateUser(
                     userId,
                     updateUserRequest.Email,
@@ -164,7 +163,7 @@ public class UserController : ControllerBase
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString))
         {
-            return Unauthorized("Unauthorized");
+            return Unauthorized("You do not have authorisation to change this profile picture!");
         }
 
         if (file.Length > 5000000)
@@ -227,7 +226,7 @@ public class UserController : ControllerBase
 
         var customFile = await _fileService.GetFileByIdAsync(user.ProfilePicture);
         var fileBytes = await _fileService.GetFileContentAsync(customFile.FileKey);
-        
+
         Response.Headers.Append("profile-offset-x", user.ProfilePictureOffsetX.ToString());
         Response.Headers.Append("profile-offset-y", user.ProfilePictureOffsetY.ToString());
         Response.Headers.Append("profile-offset-zoom", user.ProfilePictureZoom.ToString());
