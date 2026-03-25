@@ -6,6 +6,10 @@ namespace SENG302.Api.Resources.Helpers;
 
 public static class CreateExampleUsersHelper
 {
+    /// <summary>
+    /// Makes some pre-made examples of users
+    /// </summary>
+    /// <param name="db">The database context</param>
     public static async Task CreateExamples(DatabaseContext db)
     {
         await CreateExample_Admin(db);
@@ -13,6 +17,10 @@ public static class CreateExampleUsersHelper
         await CreateExample_Jane(db);
     }
 
+    /// <summary>
+    /// Creates a blank admin account
+    /// </summary>
+    /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_Admin(DatabaseContext dbContext)
     {
         // Add admin user
@@ -32,6 +40,12 @@ public static class CreateExampleUsersHelper
         }
     }
 
+    /// <summary>
+    /// Creates a user John Whitaker, john@example.com
+    /// He has 20 task lists with a varying amount of tasks in each
+    /// Some tasks have a long description
+    /// </summary>
+    /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_John(DatabaseContext dbContext)
     {
         if (!dbContext.Users.Any(u => u.Email.ToLower() == "john@example.com"))
@@ -79,9 +93,13 @@ public static class CreateExampleUsersHelper
         }
     }
 
+
+    /// <summary>
+    /// Adds a blank user Jane Watson, jane@example.com to the database
+    /// </summary>
+    /// <param name="dbContext">The database context</param>
     private static async Task CreateExample_Jane(DatabaseContext dbContext)
     {
-        // Add admin user
         if (!dbContext.Users.Any(u => u.Email.ToLower() == "jane@example.com"))
         {
             var user = new User
