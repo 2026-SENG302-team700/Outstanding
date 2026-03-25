@@ -46,7 +46,6 @@ public class RegistrationController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
-        user.Email = user.Email.ToLower();
         if (string.IsNullOrWhiteSpace(user.Email))
         {
             return BadRequest(new
