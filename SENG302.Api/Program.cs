@@ -5,6 +5,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Resources.Helpers;
 
 namespace SENG302.Api;
 
@@ -154,29 +155,14 @@ public class Program
         app.Run();
     }
 
-    protected static void InitializeDatabase(IServiceProvider serviceProvider)
+    protected static async Task InitializeDatabase(IServiceProvider serviceProvider)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        // dbContext.Database.EnsureDeleted();
         dbContext.Database.EnsureCreated();
 
-        // Add admin user
-        if (!dbContext.Users.Any(u => u.Email == "admin@outstanding.com"))
-        {
-            var user = new User
-            {
-                DisplayName = "admin",
-                Email = "admin@outstanding.com",
-                Country = "NZ",
-                EmailVerified = true
-            };
-            var hasher = new PasswordHasher<User>();
-            user.PasswordKey = hasher.HashPassword(user, "Team700!");
-            dbContext.Users.Add(user);
-            dbContext.SaveChanges();
-        }
+        await CreateExampleUsersHelper.CreateExamples(dbContext);
     }
 
     protected static void RegisterServices(IServiceCollection services)
