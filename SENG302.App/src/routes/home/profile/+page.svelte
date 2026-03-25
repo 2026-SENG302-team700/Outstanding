@@ -23,6 +23,7 @@
         }
     });
 
+    /// shows the logout popup
     function showModal() {
         logoutModal?.show();
     }
