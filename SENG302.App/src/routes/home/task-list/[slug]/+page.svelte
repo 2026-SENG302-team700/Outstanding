@@ -74,10 +74,23 @@
             loading = false;
         }
     }
+
+    /**
+     * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
+     * @param text the description to shorten
+     * @param length length of description to cut down too
+     */
+    function shortenDesc(text: string | null, length: number) {
+        if (!text) return "No Description";
+        if (text.length <= length) return text;
+        return text.slice(0, length) + "...";
+    }
 </script>
 
 <div class="container">
-    <div style="display: flex; flex-direction: row; ">
+    <div style="display: flex; flex-direction: task.description
+                                ? task.description
+                                : "No Description"row; ">
         <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
             {listName}
         </h1>
@@ -124,9 +137,7 @@
                     <div>
                         <span class="fw-bold">Description: </span>
                         <span>
-                            {task.description
-                                ? task.description
-                                : "No Description"}
+                            {shortenDesc(task.description, 50)}
                         </span>
                     </div>
 
