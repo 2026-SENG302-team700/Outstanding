@@ -31,6 +31,7 @@
     let digit5 = $state("");
     let digit6 = $state("");
     let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
+    let updatingPassword = $state(false)
 
     let codeError = $state("");
     let errors = $state({
@@ -270,11 +271,26 @@
     function validateChangePasswordInputs() {
         clearErrors()
         var isValid = true;
-
+        
+        // Check not empty
+        if (!oldPassword) {
+            errors.oldPassword = "field is required";
+            isValid = false;
+        }
+        if (!newPassword) {
+            errors.newPassword = "field is required";
+            isValid = false;
+        }
+        if (!confirmPassword) {
+            errors.confirmPassword = "field is required";
+            isValid = false;
+        }
+        
         // checks passwords match
         if (newPassword !== confirmPassword) {
             isValid = false;
             errors.confirmPassword = "Passwords do not match"
+            confirmPassword = "";
         }
 
         // check password is valid
@@ -283,8 +299,10 @@
             isValid = false;
             errors.newPassword = "Password must be at least 8 characters long including at least one of each " +
                 "uppercase, lowercase, numbers and special characters"
+            newPassword = "";
+            confirmPassword = "";
         }
-
+        
         return isValid;
     }
     /**
@@ -328,7 +346,8 @@
         async function updatePassword() {
             const valid = validateChangePasswordInputs();
             if (!valid) return;
-
+            
+            updatingPassword = true;
             try {
                 const response = await fetchWithCsrf(resolve(`/api/user/password`),
                     {
@@ -347,6 +366,7 @@
                     addToast("New password updated successfully")
                     authModal.hide()
                     goto(resolve("/home/profile"));
+                    return;
                 }
                 
                 const data = await response.json().catch(() => null);
@@ -354,15 +374,21 @@
                     switch (data.message) {
                         case "Current password was incorrect":
                             errors.oldPassword = "Current password was incorrect";
+                            oldPassword = "";
                             break;
                         case "Passwords do not match":
                             errors.confirmPassword = "Password does not match";
+                            confirmPassword = "";
                             break;
                         case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
                             errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                            newPassword = "";
+                            confirmPassword = "";
                             break;
                         case "New password can't be the same as old password":
                             errors.newPassword = "New password can't be the same as old password";
+                            newPassword = "";
+                            confirmPassword = "";
                             break;
                     }
                 } else {
@@ -370,6 +396,8 @@
                 }
             } catch (err) {
                 addToast("Failed to update password");
+            } finally {
+                updatingPassword = false;
             }
         }
             
@@ -565,7 +593,7 @@
                                 </div>
                             {/if}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3">Update Password</button>
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
                     </form>
                 {/if}
             </div>
