@@ -61,11 +61,11 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="bg-white text-dark mt-2">
+        <div class="overflow-y-auto bg-white text-dark mt-2" style="max-height: 400px;">
             <span class="fs-5 p-2 mb-2"><b>Name</b></span>
             {#each taskLists as taskList}
                     <div
-                            class="square mb-1 border-bottom p-2 task-item-box"
+                            class="border-bottom task-item-box p-2"
                             tabindex="0"
                             role="button"
                             on:click={() => 
