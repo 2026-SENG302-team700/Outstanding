@@ -713,7 +713,7 @@
                         class="btn btn-secondary w-100 py-2 mt-3"
                         data-bs-dismiss="modal"
                         aria-label="Close"
-                >cancel</button>
+                >Cancel</button>
             </div>
         </div>
     </div>
