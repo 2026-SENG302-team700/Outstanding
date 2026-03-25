@@ -88,9 +88,7 @@
 </script>
 
 <div class="container">
-    <div style="display: flex; flex-direction: task.description
-                                ? task.description
-                                : "No Description"row; ">
+    <div style="display: flex; flex-direction: row; ">
         <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
             {listName}
         </h1>
