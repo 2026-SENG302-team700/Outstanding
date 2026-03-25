@@ -102,4 +102,30 @@ public class UserControllerUnitTests : BaseUnitTestFixture
 
         result.Result.ShouldBeOfType<UnauthorizedObjectResult>();
     }
+
+    [Fact]
+    public async Task UploadProfilePicture_ValidImage_ReplacesOldAndReturnsOk()
+    {
+        SetupUserContext("10");
+        var mockfile = Substitute.For<IFormFile>();
+        mockfile.ContentType.Returns("image/png");
+
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
+        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old.png", MimeType = "image/png" };
+        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new.png", MimeType = "image/png" };
+
+        _mockUserService.GetUserByIdAsync(10).Returns(mockUser);
+        _mockFileService.GetFileByIdAsync(50).Returns(oldFile);
+        _mockFileService.GetFileByIdAsync(101).Returns(newFile);
+        _mockFileService.SaveFileAsync(mockfile, 10).Returns(newFile);
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "0");
+        result.Result.ShouldBeOfType<OkResult>();
+
+        await _mockFileService.Received(1).DeleteFileAsync("old-key");
+        await _mockUserService.Received(1).SetUserProfilePicture(10, 0, 0, 0, 1);
+
+        await _mockUserService.Received(1).SetUserProfilePicture(10, 101, 0, 0, 0);
+    }
+
 }
