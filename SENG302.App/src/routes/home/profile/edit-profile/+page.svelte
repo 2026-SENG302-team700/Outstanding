@@ -383,8 +383,8 @@
                 const data = await response.json().catch(() => null);
                 if (response.status === 400){
                     switch (data.message) {
-                        case "Current password was incorrect":
-                            errors.oldPassword = "Current password was incorrect";
+                        case "Old password does not match password on file":
+                            errors.oldPassword = "Old password does not match password on file";
                             oldPassword = "";
                             break;
                         case "Passwords do not match":

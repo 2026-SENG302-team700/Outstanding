@@ -581,7 +581,7 @@ public class UserService : IUserService
         var result = VerifyPassword(user, oldPassword);
         if (!(result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded))
         {
-            throw new MismatchedPasswordException("Current password was incorrect");
+            throw new MismatchedPasswordException("Old password does not match password on file");
         }
         
         // Validate new passwords match
