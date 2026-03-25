@@ -35,9 +35,7 @@ public class OneTimeCodeServiceUnitTest : BaseUnitTestFixture
         Assert.False(OneTimeCodeServiceUnderTest.CompareTimes(1774126459, 1774126760));
         Assert.False(OneTimeCodeServiceUnderTest.CompareTimes(1774126459, 1774126759));
     }
-
-
-
+    
 
     [Fact]
     public void CompareCodes_SameCodes_ExpectTrue()
@@ -66,4 +64,6 @@ public class OneTimeCodeServiceUnitTest : BaseUnitTestFixture
         string code = OneTimeCodeServiceUnderTest.GenerateOneTimeCode();
         Assert.True(code.Length == 6);
     }
+
+    
 }

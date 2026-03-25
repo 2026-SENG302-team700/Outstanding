@@ -30,7 +30,7 @@ public class RegistrationController : ControllerBase
         if (user == null)
         {
             return NotFound();
-        } 
+        }
         return Ok();
     }
 
@@ -47,37 +47,44 @@ public class RegistrationController : ControllerBase
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
         user.Email = user.Email.ToLower();
-        if (string.IsNullOrWhiteSpace(user.Email)) {
+        if (string.IsNullOrWhiteSpace(user.Email))
+        {
             return BadRequest(new
             {
                 message = "Email is required!"
             });
-        };
-        if (string.IsNullOrWhiteSpace(user.DisplayName)) {
+        }
+        ;
+        if (string.IsNullOrWhiteSpace(user.DisplayName))
+        {
             return BadRequest(new
             {
                 message = "Display name is required!"
             });
         }
-        if (user.DisplayName.Trim().Length < 3) {
+        if (user.DisplayName.Trim().Length < 3)
+        {
             return BadRequest(new
             {
                 message = "Display name is not long enough!"
             });
         }
-        if (string.IsNullOrWhiteSpace(user.Country)) {
+        if (string.IsNullOrWhiteSpace(user.Country))
+        {
             return BadRequest(new
             {
                 message = "Country is required!"
             });
-        } 
-        if (string.IsNullOrWhiteSpace(user.PasswordString)) {
+        }
+        if (string.IsNullOrWhiteSpace(user.PasswordString))
+        {
             return BadRequest(new
             {
                 message = "A password is required!"
             });
         }
-        if (string.IsNullOrWhiteSpace(user.PasswordConfirm)) {
+        if (string.IsNullOrWhiteSpace(user.PasswordConfirm))
+        {
             return BadRequest(new
             {
                 message = "Passwords do not match"
@@ -102,7 +109,7 @@ public class RegistrationController : ControllerBase
             message = "Registration successful. Please log in."
         });
     }
-    
+
     /// <summary>
     /// API Controller method that handles a put request where a one time code and the epoch time (seconds since 1st Jan 1970) is
     /// generated and stored in the User 
@@ -120,15 +127,25 @@ public class RegistrationController : ControllerBase
         {
             return BadRequest(new { message = "User email is missing", });
         }
-        
+
         string oneTimeCode = _oneTimeCodeService.GenerateOneTimeCode();
         long timerStartTime = _oneTimeCodeService.GetEpochTime();
 
-        if (oneTimeCode.Length != 6) return Problem();
+        User? userUpdated;
 
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+        if (codeRequest.ResendingCode)
+        {
+            User? user = await _userService.GetUserFromEmailAsync(codeRequest.Email);
+            if (user == null) return Problem();
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, user.CodeGenerationTime, false);
+        }
+        else
+        {
+            userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, timerStartTime, false);
+        }
+
         if (userUpdated == null) return Problem();
-        
+
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
         {
@@ -137,10 +154,10 @@ public class RegistrationController : ControllerBase
             {"MINUTES", "5"}
         };
         await _emailService.SendEmailAsync(userUpdated.Email, EmailTemplate.VerifyEmailCode, emailDictionary);
-        
+
         return Ok();
     }
-    
+
     /// <summary>
     /// Gets the user object from the database and compares the code the user has entered compared to the one generated
     /// to verify them. Also compares the time created and the time currently to see if it is under the time limit.
@@ -157,38 +174,41 @@ public class RegistrationController : ControllerBase
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
         long codeEnteredTime = _oneTimeCodeService.GetEpochTime();
-        
+
         if (string.IsNullOrWhiteSpace(validationRequest.Email))
         {
             return BadRequest(new { message = "Invalid email", });
         }
-        int? id = await _userService.GetUserIdFromEmailAsync(validationRequest.Email);
-        if (id == null) return NotFound( new {message = "Email not found"});
-        
-        User? user = await _userService.GetUserByIdAsync((int)id);
-        if (user == null) return NotFound( new {message = "User not found"});
-        
-        // If the code has timed-out, delete the user object associated with the email
-        bool codeValid = _oneTimeCodeService.CompareTimes(user.CodeGenerationTime, codeEnteredTime);
-        Console.Write("\n\n" + codeValid + "\n" + (codeEnteredTime - user.CodeGenerationTime) + "\n\n");
-        if (!codeValid)
+
+        User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
+        if (user == null) return NotFound(new { message = "User not found" });
+
+        CodeVerificationResult codeVerificationResult =
+            _oneTimeCodeService.VerfiyCode(user, codeEnteredTime, validationRequest.Code);
+
+
+        if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
-            await _userService.DeleteUserByIdAsync((int)id);
+            await _userService.DeleteUserByIdAsync(user.Id);
             return BadRequest(new { message = "Code is no longer valid, account no longer exists" });
         }
 
-        bool correctCode = _oneTimeCodeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
-        if (!correctCode) return BadRequest(new { message = "Invalid Code" });
-        
-        
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
-        if (userUpdated == null) return Problem();
-        
+        if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
+        {
+            return BadRequest(new { message = "Invalid Code" });
+        }
+
+        if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
+        {
+            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            if (userUpdated == null) return Problem();
+        }
+
         return Ok();
     }
-   
+
 }
 
-    
+
 
 

@@ -206,6 +206,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
             DisplayName = "test",
             Country = "NZ",
             EmailVerified = false,
+            CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20,
             TimeCreated = DateTime.UtcNow
         };
         user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
@@ -223,6 +224,39 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         var json = JsonSerializer.Deserialize<JsonElement>(content);
         json.GetProperty("login").GetBoolean().ShouldBe(false);
         json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
+    }
+    
+    
+    [Fact]
+    public async Task LoginUser_UnverifiedEmailTimedOut_Unauthorized()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "test",
+            Country = "NZ",
+            EmailVerified = false,
+            CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/login", new
+        {
+            Email = "test@example.com",
+            PasswordString = "Team700!"
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var content = await message.Content.ReadAsStringAsync();
+        var json = JsonSerializer.Deserialize<JsonElement>(content);
+        json.GetProperty("login").GetBoolean().ShouldBe(false);
+        json.GetProperty("message").GetString().ShouldBe("Invalid email or password");
     }
     
     [Fact]

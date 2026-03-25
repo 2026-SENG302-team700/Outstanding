@@ -390,11 +390,24 @@ public class UserService : IUserService
 
         if (!user.EmailVerified)
         {
-            return new UserVerificationResponse
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - user.CodeGenerationTime < 300)
             {
-                userVerificationResult = UserVerificationResult.AccountUnverified,
-                user = user
-            };
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.AccountUnverified,
+                    user = user
+                };
+            }
+            else
+            {
+                await DeleteUserByIdAsync(user.Id);
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.DoesNotExist,
+                    user = user
+                };
+            }
+           
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);

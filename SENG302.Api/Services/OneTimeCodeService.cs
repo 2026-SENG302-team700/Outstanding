@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using SENG302.Api.DataAccess;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Entities;
 
 
 namespace SENG302.Api.Services;
@@ -12,6 +13,13 @@ public interface IOneTimeCodeService
     public long GetEpochTime();
     public bool CompareTimes(long startTime, long endTime);
     public bool CompareCodes(string enteredCode, string originalCode);
+    public CodeVerificationResult VerfiyCode(User user, long completionTime, string enteredCode);
+}
+
+public enum CodeVerificationResult{
+    CodeExpired,
+    CodeIncorrect,
+    CodeSuccessful
 }
 
 public class OneTimeCodeService : IOneTimeCodeService
@@ -83,5 +91,28 @@ public class OneTimeCodeService : IOneTimeCodeService
     {
         if (originalCode.Length != _expectedCodeLength || enteredCode.Length != _expectedCodeLength) return false;
         return enteredCode == originalCode;
+    }
+
+    /// <summary>
+    /// Calls the function to compare times and entered code and returns an enum indicating the
+    /// result of the code verification based on the result of the helper functions
+    /// </summary>
+    /// <param name="user"></param> User contains CodeGenerationTime and OneTimeCode from when the code was originally created
+    /// <param name="completionTime"></param> Completion time is user completed time
+    /// <param name="enteredCode"></param> Users entered code
+    /// <returns></returns>
+    public CodeVerificationResult VerfiyCode(User user, long completionTime, string enteredCode)
+    {
+        if (!CompareTimes(user.CodeGenerationTime, completionTime))
+        {
+            return CodeVerificationResult.CodeExpired;
+        }
+
+        if (!CompareCodes(enteredCode, user.OneTimeCode))
+        {
+            return CodeVerificationResult.CodeIncorrect;
+        }
+
+        return CodeVerificationResult.CodeSuccessful;
     }
 }
