@@ -491,20 +491,35 @@
                         >Display Name</label
                     >
                     <input
-                        type="text"
-                        class="form-control"
-                        bind:value={displayName}
-                        id="displayName"
+                            type="text"
+                            class="form-control"
+                            class:is-invalid={errors.displayName}
+                            bind:value={displayName}
+                            placeholder="Display Name *"
+                            id="displayName"
                     />
+                    {#if errors.displayName}
+                    <div class="invalid-feedback">
+                        {errors.displayName}
+                    </div>
+                    {/if}
                 </div>
                 <div class="mb-3">
                     <label for="userEmail" class="form-label">Email</label>
                     <input
-                        type="email"
-                        class="form-control"
-                        id="userEmail"
-                        bind:value={email}
+                            type="text"
+                            class="form-control"
+                            class:is-invalid={errors.email}
+                            id="userEmail"
+                            placeholder="Email *"
+                            bind:value={email}
+                            
                     />
+                    {#if errors.email}
+                        <div class="invalid-feedback">
+                            {errors.email}
+                        </div>
+                    {/if}
                 </div>
                 <div class="mb-3">
                     <label for="country" class="form-label">Country</label>

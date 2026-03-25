@@ -61,25 +61,24 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="table-responsive" style="max-height: 300px; overflow: scroll;">
-            <table class="table table-hover">
-                <thead style="position: sticky; top: 0;">
-                    <tr>
-                        <th>Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each taskLists as taskList}
-                        <tr
-                            on:click={() =>
+        <div class="overflow-y-auto bg-white text-dark mt-2" style="max-height: 400px;">
+            <span class="fs-5 p-2 mb-2"><b>Name</b></span>
+            {#each taskLists as taskList}
+                    <div
+                            class="border-bottom task-item-box p-2"
+                            tabindex="0"
+                            role="button"
+                            on:click={() => 
                                 goto(`/home/task-list/${taskList.id}`)}
-                            style="cursor: pointer; white-space: pre;"
-                        >
-                            <td>{taskList.name}</td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+                            on:keydown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    goto(`/home/task-list/${taskList.id}`);
+                                }
+                            }}
+                    >
+                        <span class="fs-5">{taskList.name}</span>
+                    </div>
+                {/each}
         </div>
     {/if}
 </div>
@@ -88,4 +87,14 @@
     .cursor-pointer {
         cursor: pointer;
     }
+    
+    .task-item-box {
+        background-color: transparent;
+        transition: background-color 0.2s ease;
+    }
+    
+    .task-item-box:hover {
+        background-color: #f8f8f8;
+    }
+    
 </style>
