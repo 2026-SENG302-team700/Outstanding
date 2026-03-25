@@ -75,8 +75,6 @@ public class UserController : ControllerBase
             timeElapsed = _codeService.GetEpochTime() - user.CodeGenerationTime;
         }
 
-        Console.Write("\n\n" + "Time Elapsed: " + timeElapsed + "\n\n");
-
         if (timeElapsed > _codeService.TimeoutTimeSeconds)
             return Unauthorized("Code is no longer valid, account no longer exists.");
 
@@ -255,13 +253,13 @@ public class UserController : ControllerBase
         {
             return BadRequest(new { message = "User email is missing", });
         }
-        
+
         string oneTimeCode = _codeService.GenerateOneTimeCode();
         if (oneTimeCode.Length != 6) return Problem();
 
         User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
         if (userUpdated == null) return Problem();
-        
+
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
         {
@@ -269,7 +267,7 @@ public class UserController : ControllerBase
             {"CODE", oneTimeCode}
         };
         await _emailService.SendEmailAsync(codeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
-        
+
         return Ok();
     }
     /// <summary>
@@ -286,14 +284,14 @@ public class UserController : ControllerBase
     [AllowAnonymous]
     [HttpPost("password/code/validation")]
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
-    {        
+    {
         if (string.IsNullOrWhiteSpace(validationRequest.Email))
         {
             return BadRequest(new { message = "Invalid email", });
         }
-        
+
         User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
-        if (user == null) return NotFound( new {message = "User not found"});
+        if (user == null) return NotFound(new { message = "User not found" });
 
         bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
         if (!correctCode) return BadRequest(new { message = "Invalid Code" });
