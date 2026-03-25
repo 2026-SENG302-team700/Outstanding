@@ -317,7 +317,7 @@ public class UserService : IUserService
     /// </returns>
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
-        return context.Users.Where((t) => t.Email == email).Count() > 0;
+        return context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Count() > 0;
     }
 
     /// <summary>
@@ -341,7 +341,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         return user?.Id;
     }
 
@@ -353,7 +353,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         return user;
     }
 
@@ -378,7 +378,7 @@ public class UserService : IUserService
             };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         if (user == null)
         {
             return new UserVerificationResponse
@@ -407,7 +407,7 @@ public class UserService : IUserService
                     user = user
                 };
             }
-           
+
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
