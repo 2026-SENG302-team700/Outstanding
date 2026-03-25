@@ -10,6 +10,7 @@ namespace SENG302.Api.Services;
 
 public interface IUserService
 {
+    bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword, string newPasswordConfirm);
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(int id);
