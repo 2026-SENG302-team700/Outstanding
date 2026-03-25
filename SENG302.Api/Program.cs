@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
+using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-
+using Microsoft.AspNetCore.Identity;
+using SENG302.Api.Resources.Helpers;
 
 namespace SENG302.Api;
 
@@ -26,7 +27,7 @@ public class Program
             builder.Services.AddOpenApi();
         }
 
-        // Add services to the container. Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
+        // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
         builder.Services.AddControllersWithViews();
 
         // Add authorization service
@@ -86,6 +87,14 @@ public class Program
             });
         }
 
+        // add the custom environment file
+        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+
+        // bind it in email service
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
+
         var app = builder.Build();
 
         // Make sure we use forwarded headers in production so our api works behind reverse proxy (nginx) with https
@@ -122,10 +131,10 @@ public class Program
         // Tell app to use authentication and authorization middleware
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
         app.UseAntiforgery();
 
-        // CSRF token endpoint
+        // CSRF token endpoint`
         app.MapGet("/api/csrf-token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext context) =>
         {
             var tokens = antiforgery.GetAndStoreTokens(context);
@@ -146,13 +155,14 @@ public class Program
         app.Run();
     }
 
-    protected static void InitializeDatabase(IServiceProvider serviceProvider)
+    protected static async Task InitializeDatabase(IServiceProvider serviceProvider)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        // dbContext.Database.EnsureDeleted();
         dbContext.Database.EnsureCreated();
+
+        await CreateExampleUsersHelper.CreateExamples(dbContext);
     }
 
     protected static void RegisterServices(IServiceCollection services)
@@ -160,7 +170,10 @@ public class Program
         // Register a TimeProvider so we don't need to rely on DateTime.Now, and can mock the time in automated tests
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IFileService, FileService>();
+        services.AddScoped<ITaskListService, TaskListService>();
+        services.AddScoped<ITaskItemService, TaskItemService>();
+        services.AddScoped<IOneTimeCodeService, OneTimeCodeService>();
 
         // Make sure you know the differences between AddSingleton, AddScoped, and AddTransient.
         // (If in doubt, you probably just want AddScoped

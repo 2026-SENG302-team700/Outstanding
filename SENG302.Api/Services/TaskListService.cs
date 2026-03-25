@@ -1,25 +1,22 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
-
 namespace SENG302.Api.Services;
 
-public interface ITaskService
+public interface ITaskListService
 {
-    Task<TaskList> CreateNewTaskListAsync(string name, string userEmail);
+    Task<TaskList> CreateNewTaskListAsync(string name, int userId);
     Task<TaskList> GetTaskListByIdAsync(int id);
-    Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail);
-
+    Task<IEnumerable<TaskList>> GetTaskListsByUserIdAsync(int userId);
 }
 
-public class TaskService : ITaskService
+public class TaskListService : ITaskListService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
 
-    public TaskService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    public TaskListService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
@@ -28,29 +25,32 @@ public class TaskService : ITaskService
     /// <summary>
     /// Gets all task lists associated with a user's email.
     /// </summary>
-    /// <param name="userEmail"></param>
+    /// <param name="userId"></param>
     /// <returns></returns>
-    public async Task<IEnumerable<TaskList>> GetTaskListsByUserEmailAsync(string userEmail)
+    public async Task<IEnumerable<TaskList>> GetTaskListsByUserIdAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var taskLists = await context.Set<TaskList>().Where(t => t.UserEmail == userEmail).ToListAsync();
+        var taskLists = await context.Set<TaskList>().Where(t => t.UserId == userId).ToListAsync();
 
         return taskLists;
     }
 
     /// <summary>
-    /// Creates a new task list for a user with the given email and name. Validates the 
-    /// name and user email before creating the task list.
+    /// Creates a new task list for a user with the given id and name. Validates the 
+    /// name and user id before creating the task list.
     /// </summary>
     /// <param name="name"></param>
-    /// <param name="userEmail"></param>
+    /// <param name="userId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<TaskList> CreateNewTaskListAsync(string name, string userEmail)
+    public async Task<TaskList> CreateNewTaskListAsync(string name, int userId)
     {
         // Get a database context
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        // Remove trailing whitespace
+        name = name.Trim();
 
         // Validate name length
         if (string.IsNullOrEmpty(name) || name.Length < 3 || name.Length > 128)
@@ -58,23 +58,23 @@ public class TaskService : ITaskService
             throw new ArgumentException("List name is required and must be between 3 and 128 characters long");
         }
         // Validate name characters (only allow letters, numbers, spaces, hyphens, and apostrophes)
-        if (!Regex.IsMatch(name, @"^[\p{L}0-9\s'-]+$"))
+        if (!ValidationPatterns.TaskListName.IsMatch(name))
         {
             throw new ArgumentException("List name cannot contain characters other than letters, spaces, hyphens, apostrophes, or numbers");
         }
 
+        var user = await context.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();
         // Validate user email exists in db
-        var user = await context.Users.Where(u => u.Email == userEmail).FirstOrDefaultAsync();
         if (user == null)
         {
-            throw new ArgumentException("User with the provided email does not exist.");
+            throw new ArgumentException("User with the provided id does not exist.");
         }
 
         // Create the new task list
         var newTaskList = new TaskList()
         {
             Name = name,
-            UserEmail = userEmail
+            UserId = userId
         };
         context.Set<TaskList>().Add(newTaskList);
         await context.SaveChangesAsync();
@@ -93,9 +93,27 @@ public class TaskService : ITaskService
         var taskList = await context.Set<TaskList>().Where(t => t.Id == id).FirstOrDefaultAsync();
         if (taskList == null)
         {
+            return null;
+        }
+
+        return taskList;
+    }
+
+    /// <summary>
+    /// Gets a task list by its ID. Returns null if no task list with the given ID exists.
+    /// Also takes a DatabaseContext so the list that it returns can be modified.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public async Task<TaskList> GetTaskListByIdAsync(int id, DatabaseContext context)
+    {
+        var taskList = await context.Set<TaskList>().Where(t => t.Id == id).FirstOrDefaultAsync();
+        if (taskList == null)
+        {
             throw new ArgumentException("Task list with the provided ID does not exist.");
         }
 
         return taskList;
     }
 }
+

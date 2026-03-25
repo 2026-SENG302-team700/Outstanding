@@ -1,20 +1,17 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { Book } from "$lib/types";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
+    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
 
-    let user = $state(null);
     let email = $state("");
     let displayName = $state("");
     let selectedCountryCode = $state("");
     let password = $state("");
     let passwordConfirm = $state("");
     let loading = $state(false);
-    let error = $state("");
     let errors = $state({
         email: "",
         displayName: "",
@@ -35,26 +32,22 @@
         };
 
         // Check email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (!emailRegex.test(email) && email) {
             (errors.email =
                 "Invalid email address. Email must be in the format ‘jane@doe.nz’"),
                 "error";
             valid = false;
         }
 
-        // Check if passwords match
-        if (password !== passwordConfirm) {
-            errors.passwordConfirm = "Passwords do not match.";
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
             valid = false;
         }
 
-        // Check password validity
-        const passwordRegex =
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            errors.password =
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+        // Check if passwords match
+        if (password !== passwordConfirm && password && passwordConfirm) {
+            errors.passwordConfirm = "Passwords do not match.";
             valid = false;
         }
 
@@ -66,12 +59,17 @@
         }
 
         // Check display name validity
-        const displayNameRegex = /^[\p{L}0-9\s'-]+$/u;
+        const displayNameRegex = new RegExp(
+            regexPatterns.user.displayName.pattern,
+            regexPatterns.user.displayName.flags,
+        );
         if (!displayNameRegex.test(displayName)) {
             errors.displayName =
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
+
+        
 
         // Check for empty fields
         if (!email) {
@@ -99,6 +97,39 @@
             valid = false;
         }
 
+        // Check if passwords match
+        if (password !== passwordConfirm && password && passwordConfirm) {
+            // actual error stuff
+            errors.passwordConfirm = "Passwords do not match.";
+            valid = false;
+        }
+
+        // Check password validity
+        const passwordRegex = new RegExp(regexPatterns.user.password);
+        if (!passwordRegex.test(password) && password) {
+            // actual error stuff
+            errors.password =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+            password = "";
+            passwordConfirm = "";
+            valid = false;
+        }
+
+        // Check display name length
+        if (
+            (displayName.length < 3 || displayName.length > 64) &&
+            displayName
+        ) {
+            errors.displayName =
+                "Display name must be between 3 and 64 characters.";
+            valid = false;
+        }
+        
+        // clears password fields if the data is not valid
+        if (!valid) {
+            password = "";
+            passwordConfirm = "";
+        }
         return valid;
     }
     /**
@@ -118,36 +149,43 @@
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    email,
-                    displayName,
+                    email: email,
+                    displayName: displayName,
                     passwordString: password,
-                    passwordConfirm: password,
-                    country: selectedCountryCode
+                    passwordConfirm: passwordConfirm,
+                    country: selectedCountryCode,
                 }),
             });
 
             const data = await response.json().catch(() => null);
 
-            console.log(data);
-
             if (!response.ok) {
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-                addToast(data?.message || "An error occured.", "error");
+
+                password = "";
+                passwordConfirm = "";
+
+                switch (data.errorType) {
+                    // check for duplicate email, throws regular error rather than "something went wrong"
+                    case "DuplicateEmailException":
+                        email = "";
+                        errors.email =
+                            data?.message ||
+                            "This email address is already in use by another account.";
+                        break;
+                    default:
+                        addToast(data?.message || "An error occured.", "error");
+                        break;
+                }
                 return;
             }
-
-            localStorage.setItem("username", displayName);
-            localStorage.setItem("userEmail", email);
-
-            addToast("Registration successful. Please log in.", "success");
-
-            goto(resolve(`/login`));
-
-            localStorage.setItem("justRegistered", "true");
-            goto(resolve(`/login`));
+            // set email in local storage for validation page
+            localStorage.setItem("email", email);
+            goto(resolve(`/register/verification`));
         } catch (err) {
+            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
@@ -167,10 +205,6 @@
         >
     </div>
     <h1 class="text-center mb-4">Register</h1>
-
-    {#if error}
-        <div class="alert alert-danger" role="alert">{error}</div>
-    {/if}
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">

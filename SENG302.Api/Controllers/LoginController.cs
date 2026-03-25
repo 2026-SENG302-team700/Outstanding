@@ -5,13 +5,14 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Filters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
 [ApiController]
-[Route("api/login")]
+[Route("api")]
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -26,18 +27,21 @@ public class LoginController : ControllerBase
     /// Check to ensure the provided email and password match a registered user
     /// </summary>
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
-    /// <returns>a Task<ActionResult<User>></returns>
-    [HttpPost]
+    /// <returns>a Task<ActionResult<User></returns>
+    [HttpPost("login")]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
+        userCredentials.Email = userCredentials.Email.ToLower();
         // Ensure the credentials are correct
         var verification = await _userService.CheckUserCredentialsAsync(
             userCredentials.Email,
             userCredentials.PasswordString
         );
+        var user = verification.user;
+        var status = verification.userVerificationResult;
 
         // Check if the credentials are incorrect
-        if (verification == UserVerificationResult.DoesNotExist)
+        if (status == UserVerificationResult.DoesNotExist)
         {
             return NotFound(new
             {
@@ -46,7 +50,15 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.MalformedEmail)
+        else if (status == UserVerificationResult.AccountUnverified)
+        {
+            return BadRequest(new
+            {
+                login = false,
+                message = "Account is not validated yet, check your emails."
+            });
+        }
+        else if (status == UserVerificationResult.MalformedEmail)
         {
             return BadRequest(new
             {
@@ -55,13 +67,14 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.Success)
+        else if (status == UserVerificationResult.Success && user != null)
         {
             // Create the user claims
             var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userCredentials.Email),
-            new Claim(ClaimTypes.Email, userCredentials.Email)
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName)
         };
 
 
@@ -81,16 +94,16 @@ public class LoginController : ControllerBase
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = false
             });
         }
-        else if (verification == UserVerificationResult.SuccessRehashNeeded)
+        else if (status == UserVerificationResult.SuccessRehashNeeded)
         {
             return Ok(new
             {
                 login = true,
-                message = "login success",
+                message = user != null ? user.DisplayName : "",
                 hashStatus = true
             });
         }
@@ -102,6 +115,28 @@ public class LoginController : ControllerBase
                 message = "Invalid email or password",
                 hashStatus = false
             });
+        }
+    }
+
+    /// <summary>
+    /// Removes a cookie from a browser when called upon.
+    /// </summary>
+    /// <returns>
+    /// OK: in all cases if signoutasync fails or not (shouldn't throw exception unless something terribly goes wrong)
+    /// Internal Server Error 500: if SignOutAsync throws an error (if this occurs, SignOutAsync may be deprecated)
+    /// </returns>
+    [Authorize]
+    [HttpDelete("logout")]
+    public async Task<ActionResult> LogoutUser()
+    {
+        try
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, e.Message);
         }
     }
 }

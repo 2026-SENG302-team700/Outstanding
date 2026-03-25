@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
+using NSubstitute;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Services;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -26,6 +29,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     // Note: This will only work if we remember to use a TimeProvider instead of DateTime.Now or DateTimeOffset.Now in our code.
     protected DateTimeOffset TestNow;
     protected readonly FakeTimeProvider FakeTimeProvider;
+    protected string FakeTestDirectory; // Fake Test Directory for Unit Tests regarding FileService
 
     protected HttpClient HttpClient { get; private init; }
 
@@ -34,12 +38,26 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
     {
         TestNow = DateTimeOffset.Now;
         FakeTimeProvider = new FakeTimeProvider(TestNow);
+        FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
+        
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
         _webAppFactory = webAppFactory.WithWebHostBuilder(config =>
         {
+            // Changes we need to make to app configuration directly
+            config.ConfigureAppConfiguration((context, configBuilder) =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    {
+                        // Mocking a file service path with a fake one to not build up unnecessary files.
+                        "FileStorage:BasePath", FakeTestDirectory
+                    }
+                });
+            });
+            
             // There are some changes we need to make between how our app is configured normally, and how it should be configured for tests
             // In our tests, we want to mock / fake some things, or completely replace others
             config.ConfigureTestServices(services =>
@@ -54,6 +72,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.RemoveAll<TimeProvider>();
                 // Replace it with our fake time provider, which keeps a consistent time throughout
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
+                services.AddSingleton<IEmailService>(Substitute.For<IEmailService>());
 
                 // Replace authentication with test auth
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
@@ -69,6 +88,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         await using var dbContext = await DbContextFactory.CreateDbContextAsync();
         await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
+        CreateTestDirectory();
     }
 
     public async Task DisposeAsync()
@@ -76,7 +96,22 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         // Close and dispose the sqlite connection when tests are done
         await _connection.CloseAsync();
         await _connection.DisposeAsync();
+        DisposeDirectory();
     }
 
+    // Creates test directory bucket
+    private void CreateTestDirectory()
+    {
+        Directory.CreateDirectory(FakeTestDirectory);
+    }
+
+    // Disposes test directory bucket at the end of test.
+    private void DisposeDirectory()
+    {
+        if (Directory.Exists(FakeTestDirectory))
+        {
+            Directory.Delete(FakeTestDirectory, true);
+        }
+    }
 }
 

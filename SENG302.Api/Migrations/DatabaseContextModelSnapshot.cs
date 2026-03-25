@@ -17,6 +17,64 @@ namespace SENG302.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
+            modelBuilder.Entity("SENG302.Api.Models.Entities.CustomFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FileKey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("MimeType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CustomFiles");
+                });
+
+            modelBuilder.Entity("SENG302.Api.Models.Entities.TaskItem", b =>
+                {
+                    b.Property<int>("TaskId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TaskListId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TaskId", "TaskListId");
+
+                    b.ToTable("TaskItems");
+                });
+
             modelBuilder.Entity("SENG302.Api.Models.Entities.TaskList", b =>
                 {
                     b.Property<int>("Id")
@@ -27,6 +85,9 @@ namespace SENG302.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("NextId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("UserEmail")
                         .IsRequired()
@@ -39,8 +100,9 @@ namespace SENG302.Api.Migrations
 
             modelBuilder.Entity("SENG302.Api.Models.Entities.User", b =>
                 {
-                    b.Property<string>("Email")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Country")
                         .IsRequired()
@@ -48,16 +110,39 @@ namespace SENG302.Api.Migrations
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PasswordKey")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ProfilePicture")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float>("ProfilePictureOffsetX")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("ProfilePictureOffsetY")
+                        .HasColumnType("REAL");
+
+                    b.Property<float>("ProfilePictureZoom")
+                        .HasColumnType("REAL");
+
                     b.Property<DateTimeOffset>("TimeCreated")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Email");
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

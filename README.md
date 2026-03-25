@@ -1,6 +1,6 @@
-# SENG302  Project Overview
+# SENG302 Project Overview
 
-Welcome to the  project for SENG302 2026. In this README we have included some useful information to help you get started. We advise you take some time reading through this entire document, as doing so may save you many headaches down the line!
+Welcome to the project for SENG302 2026. In this README we have included some useful information to help you get started. We advise you take some time reading through this entire document, as doing so may save you many headaches down the line!
 
 ## Dependencies
 
@@ -17,6 +17,7 @@ For many of you, this will be the first time using C# and or Sveltekit, so we ha
 - [Sveltekit](https://kit.svelte.dev/docs) - Used for the front-end framework
 - [Using Sveltekit as an SPA](https://khromov.se/the-missing-guide-to-understanding-adapter-static-in-sveltekit/) - An interesting article about using Sveltekit as a single page application
 - [Bootstrap 5.3](https://getbootstrap.com/docs/5.3/getting-started/introduction) - Used within the Sveltekit front-end for styling
+- [Bootstrap Icons 1.13.1](https://getbootstrap.com/docs/5.3/getting-started/introduction/) - Used within the Sveltekit front-end for icons
 
 ### Back-end
 
@@ -56,7 +57,11 @@ To install the Svelte dependencies, run the following command from the `SENG302.
 npm install
 ```
 
-#### 2 - Running the project
+#### 2 - Setting environment variables (SMTP)
+
+To run the API you need to ensure you have the user secrects set locally. You can refer to **appsettings.json** to see variables you need set in **appsettings.Local.json**. To download the **appsettings.Local.json** file please refer to the team 700 teaching team communications chat within mattermost. There will be a pinned message that has the file attached. Please ensure the name of this file does not chnage and you move the file to _team700/SENG302.Api/_ e.g. _(team700/SENG302.Api/appsettings.Local.json)_
+
+#### 3 - Running the project
 
 To run the API, run the following command from the `SENG302.Api` project directory
 
@@ -73,48 +78,3 @@ npm run dev
 ```
 
 The app should now be available on port 5173 and visible in your browser at <http://localhost:5173>.
-
-#### 3 - What's included to play with
-
-The  project comes with a small example book management system where the user can:
-
-- view a list of books
-- add new books
-- view individual books
-- delete books
-
-We can also see the API specifications that our API provides by going to <http://localhost:5000/swagger/index.html>. From here we can even run example requests to see the output using the 'Try it out!' button. This _Swagger_ API page is only enabled in `Development` mode, and should **never be turned on publicly available servers**.
-
-We have provided Bootstrap 5 for styling the front-end. You can see this styling in the `class` property of the HTML elements. Bootstrap uses pre-defined classes to style elements such as `card`, `btn`, `mb-2`, etc. The [Bootstrap docs](https://getbootstrap.com/docs/5.0/getting-started/introduction/) are an excellent place to see all the different classes available with examples.
-
-### Running and implementing tests
-
-By convention, C# applications place their tests in a separate project, in this case `SENG302.Api.Tests`. This is similar to how Java separates between `main` and `test` packages.
-
-From the `SENG302.Api.Tests` project, run the command
-
-```bash
-dotnet test
-```
-
-To see coverage information in the terminal, run the command
-
-```bash
-dotnet test /p:CollectCoverage=true
-```
-
-**Note**: the `/p` argument is used to pass parameters to `dotnet`.
-
-As we will discuss in SENG301, you may want to run only part of your tests for performance, or smoke testing reasons. There are several ways to run subsets of tests in C#, however a common approach is splitting by types of tests (i.e. unit and integration).
-
-Within the project these types of tests are split into their own folders by convention, and we can specify which folder to run with our `dotnet test` command.
-
-For example,
-
-```bash
-dotnet test --filter "FullyQualifiedName~Unit"
-```
-
-will run all unit tests.
-
-Later in the course, we will show you how to define `tags` to run staged tests. We will also teach you how to write different levels of tests, including integration tests. You can already take a look into the `Tests` project if you are curious.

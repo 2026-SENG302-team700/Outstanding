@@ -1,18 +1,32 @@
 ﻿<script lang="ts">
-    // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
-    import type { Book } from "$lib/types";
+    import type { Modal } from "bootstrap";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
+    import { addToast } from "$lib/toast/toast";
+    import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    import { user } from "$lib/stores/user";
 
     let email = $state("");
     let username = $state("");
+    let pfpUrl: string | null = $state(null);
+    let modalElement: HTMLElement | undefined = $state();
+    let logoutModal: Modal | undefined;
 
-    onMount(() => {
+    onMount(async () => {
         retrieveUserData();
+
+        const { Modal: BootstrapModal } = await import("bootstrap");
+        if (modalElement) {
+            logoutModal = new BootstrapModal(modalElement);
+        }
     });
+
+    /// shows the logout popup
+    function showModal() {
+        logoutModal?.show();
+    }
 
     /// <summary>
     /// Gets User email and Username from local storage
@@ -40,18 +54,72 @@
             goto(resolve("/"));
         }
     }
+
+    /**
+     * Sends a request to delete the session token to the backend
+     * Will always return user to landing page UNLESS an internal server error occurs
+     * (meaning the session token MAY NOT be deleted)
+     */
+    async function logoutUser() {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/logout`), {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            if (response.status === 500) {
+                addToast("Failed to logout. Refresh Webpage", "error");
+                return;
+            } else {
+                goto("/");
+            }
+        } catch (err) {
+            addToast(err.message, "error");
+        }
+    }
 </script>
 
 <div class="display: flex; flex-direction: row;">
     <div class="profile-box">
-        <img
-            class="profile-image"
-            ,
-            src="/defaultProfile.png"
-            alt="No Profile Picture"
-        />
+        <button
+            class="btn btn-primary ms-auto"
+            onclick={() => goto(resolve("/home/profile/edit-profile"))}
+            >Edit Profile</button
+        >
+        <ProfilePic pfpData={$user.pfpData} size="large" />
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
+        <button
+            type="button"
+            class="btn btn-outline-danger"
+            onclick={showModal}
+        >
+            Logout
+        </button>
+    </div>
+    <div class="modal fade" bind:this={modalElement} tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Are you sure you want to logout?
+                    </h5>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">Close</button
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-dismiss="modal"
+                        onclick={logoutUser}>Logout</button
+                    >
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

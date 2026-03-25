@@ -11,14 +11,15 @@
     onMount(() => {
         fetchLists();
     });
-    
+
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
     async function fetchLists() {
         try {
             loading = true;
-            const response = await fetchWithCsrf(resolve(`/api/tasks`), {
+            const response = await fetchWithCsrf(resolve(`/api/taskList`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -28,6 +29,7 @@
                 return;
             }
             taskLists = data;
+            console.log(taskLists);
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -59,21 +61,24 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {#each taskLists as list}
-                        <tr>
-                            <td>{list.name}</td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+        <div class="overflow-y-auto bg-white text-dark mt-2" style="max-height: 400px;">
+            <span class="fs-5 p-2 mb-2"><b>Name</b></span>
+            {#each taskLists as taskList}
+                    <div
+                            class="border-bottom task-item-box p-2"
+                            tabindex="0"
+                            role="button"
+                            on:click={() => 
+                                goto(`/home/task-list/${taskList.id}`)}
+                            on:keydown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    goto(`/home/task-list/${taskList.id}`);
+                                }
+                            }}
+                    >
+                        <span class="fs-5">{taskList.name}</span>
+                    </div>
+                {/each}
         </div>
     {/if}
 </div>
@@ -82,4 +87,14 @@
     .cursor-pointer {
         cursor: pointer;
     }
+    
+    .task-item-box {
+        background-color: transparent;
+        transition: background-color 0.2s ease;
+    }
+    
+    .task-item-box:hover {
+        background-color: #f8f8f8;
+    }
+    
 </style>

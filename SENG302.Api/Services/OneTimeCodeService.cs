@@ -1,0 +1,118 @@
+﻿using System.Security.Cryptography;
+using SENG302.Api.DataAccess;
+using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Models.Entities;
+
+
+namespace SENG302.Api.Services;
+
+public interface IOneTimeCodeService
+{
+    public int TimeoutTimeSeconds { get; }
+    public string GenerateOneTimeCode();
+    public long GetEpochTime();
+    public bool CompareTimes(long startTime, long endTime);
+    public bool CompareCodes(string enteredCode, string originalCode);
+    public CodeVerificationResult VerfiyCode(User user, long completionTime, string enteredCode);
+}
+
+public enum CodeVerificationResult{
+    CodeExpired,
+    CodeIncorrect,
+    CodeSuccessful
+}
+
+public class OneTimeCodeService : IOneTimeCodeService
+{
+    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
+    private readonly TimeProvider _timeProvider;
+
+    // Static variable representing the time limit for the code to be entered in
+    public int TimeoutTimeSeconds { get; } = 300;
+    private static int _expectedCodeLength = 6;
+
+    public OneTimeCodeService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
+    {
+        _dbContextFactory = dbContextFactory;
+        _timeProvider = timeProvider;
+    }
+    
+    /// <summary>
+    /// Generates a six digit one time code to be used
+    /// </summary>
+    /// <returns></returns>
+    public string GenerateOneTimeCode()
+    {
+        byte[] bytes = new byte[4];
+        // Modifies array of bytes with random cryptographically secure bytes
+        RandomNumberGenerator.Fill(bytes);
+
+        int value = BitConverter.ToInt32(bytes, 0);
+        // Convert to 6 digits and pads with zeroes if necessary
+        string sixDigitCode = Math.Abs(value % 1000000).ToString("D6");
+
+        return sixDigitCode;
+    }
+
+    /// <summary>
+    /// Returns the Unix time or Epoch time of the server which is the number of seconds passed since Jan 1st 1970 midnight
+    /// </summary>
+    /// <returns>int representing amount of seconds since Jan 1st 1970</returns>
+    public long GetEpochTime()
+    {
+        long epochTimeSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        return epochTimeSeconds;
+    }
+
+    /// <summary>
+    /// Compares the start and end time to see if it is under the time limit specified in timeoutTimeSeconds.
+    /// </summary>
+    /// <param name="startTime"></param> The time the code was generated (stored in the database)
+    /// <param name="endTime"></param> The time that the user called the api/register/code/validation endpoint in the
+    /// Registration Controller.
+    /// <returns>
+    /// A boolean indicating if the code was entered in time or not
+    /// </returns>
+    public bool CompareTimes(long startTime, long endTime)
+    {
+        return endTime - startTime < TimeoutTimeSeconds;
+    }
+
+    /// <summary>
+    /// Compares the two codes passed in
+    /// </summary>
+    /// <param name="enteredCode"></param> This is the code that the user entered
+    /// <param name="originalCode"></param> The original code that was generated
+    /// <returns>
+    /// Returns a boolean indicating if the codes are equal
+    /// </returns>
+    public bool CompareCodes(string enteredCode, string originalCode)
+    {
+        if (originalCode.Length != _expectedCodeLength || enteredCode.Length != _expectedCodeLength) return false;
+        return enteredCode == originalCode;
+    }
+
+    /// <summary>
+    /// Calls the function to compare times and entered code and returns an enum indicating the
+    /// result of the code verification based on the result of the helper functions
+    /// </summary>
+    /// <param name="user"></param> User contains CodeGenerationTime and OneTimeCode from when the code was originally created
+    /// <param name="completionTime"></param> Completion time is user completed time
+    /// <param name="enteredCode"></param> Users entered code
+    /// <returns></returns>
+    public CodeVerificationResult VerfiyCode(User user, long completionTime, string enteredCode)
+    {
+        if (!CompareTimes(user.CodeGenerationTime, completionTime))
+        {
+            return CodeVerificationResult.CodeExpired;
+        }
+
+        if (!CompareCodes(enteredCode, user.OneTimeCode))
+        {
+            return CodeVerificationResult.CodeIncorrect;
+        }
+
+        return CodeVerificationResult.CodeSuccessful;
+    }
+}

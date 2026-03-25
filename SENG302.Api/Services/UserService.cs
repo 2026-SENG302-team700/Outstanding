@@ -10,10 +10,18 @@ namespace SENG302.Api.Services;
 
 public interface IUserService
 {
+    bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword, string newPasswordConfirm);
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
-    Task<User?> GetUserByIdAsync(string email);
-    Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string password);
+    Task<User?> GetUserByIdAsync(int id);
+    Task<int?> GetUserIdFromEmailAsync(string email);
+    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
+    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
+    Task<User?> DeleteUserByIdAsync(int id);
+    Task<User?> GetUserFromEmailAsync(string email);
+    Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
 }
 
 public enum UserVerificationResult
@@ -22,91 +30,24 @@ public enum UserVerificationResult
     Failed,
     MalformedEmail,
     Success,
-    SuccessRehashNeeded
+    SuccessRehashNeeded,
+    AccountUnverified
 }
 
-/// <summary>
-/// Exception to throw when e-mail already exists in the db.
-/// </summary>
-public class DuplicateEmailException : Exception
+public class UserVerificationResponse
 {
-    public DuplicateEmailException() { }
-
-    public DuplicateEmailException(string message) : base(message) { }
-
-    public DuplicateEmailException(string message, Exception inner) : base(message, inner) { }
+    public UserVerificationResult userVerificationResult;
+    public User? user;
 }
 
-/// <summary>
-/// Exception to throw when the display name has an invalid name length.
-/// </summary>
-public class InvalidDisplayNameLengthException : Exception
+
+public class InvalidCodeException : Exception
 {
-    public InvalidDisplayNameLengthException() { }
+    public InvalidCodeException() { }
 
-    public InvalidDisplayNameLengthException(string message) : base(message) { }
+    public InvalidCodeException(string message) : base(message) { }
 
-    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name has invalid characters
-/// </summary>
-public class InvalidDisplayNameCharsException : Exception
-{
-    public InvalidDisplayNameCharsException() { }
-
-    public InvalidDisplayNameCharsException(string message) : base(message) { }
-
-    public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the email is of an invalid format
-/// </summary>
-public class InvalidEmailFormatException : Exception
-{
-    public InvalidEmailFormatException() { }
-
-    public InvalidEmailFormatException(string message) : base(message) { }
-
-    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the password formatting is invalid (doesn't meet requirements)
-/// </summary>
-public class InvalidPasswordException : Exception
-{
-    public InvalidPasswordException() { }
-
-    public InvalidPasswordException(string message) : base(message) { }
-
-    public InvalidPasswordException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when passwords are mismatched
-/// </summary>
-public class MismatchedPasswordException : Exception
-{
-    public MismatchedPasswordException() { }
-
-    public MismatchedPasswordException(string message) : base(message) { }
-
-    public MismatchedPasswordException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the country code given from the front-end is invalid
-/// </summary>
-public class InvalidCountryException : Exception
-{
-    public InvalidCountryException() { }
-
-    public InvalidCountryException(string message) : base(message) { }
-
-    public InvalidCountryException(string message, Exception inner) : base(message, inner) { }
+    public InvalidCodeException(string message, Exception inner) : base(message, inner) { }
 }
 
 public class UserService : IUserService
@@ -118,6 +59,83 @@ public class UserService : IUserService
     {
         _dbContextFactory = dbContextFactory;
         _timeProvider = timeProvider;
+    }
+
+    /// <summary>
+    /// Runs all email validation checks and throws relavent exceptions
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="email"></param>
+    /// <exception cref="DuplicateEmailException"></exception>
+    /// <exception cref="InvalidEmailFormatException"></exception>
+    public void ValidateEmail(DatabaseContext context, string email)
+    {
+        if (EmailAlreadyExists(context, email))
+        {
+            throw new DuplicateEmailException("This email address is already in use by another account");
+        }
+
+        if (!CheckEmailFormat(email))
+        {
+            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
+        }
+    }
+
+    /// <summary>
+    /// Runs all display name validations and throws relavent exceptions
+    /// </summary>
+    /// <param name="displayName"></param>
+    /// <exception cref="InvalidDisplayNameLengthException"></exception>
+    /// <exception cref="InvalidDisplayNameCharsException"></exception>
+    public void ValidateDisplayName(string displayName)
+    {
+        if (DisplayNameLength(displayName))
+        {
+            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+        }
+
+        if (!DisplayNameChars(displayName))
+        {
+            throw new InvalidDisplayNameCharsException(
+                "Display name must only include letters, spaces, hyphens or apostrophes"
+                );
+        }
+    }
+    /// <summary>
+    /// Runs all password validations and throws relavent excpetions
+    /// </summary>
+    /// <param name="passwordOne"></param>
+    /// <param name="passwordTwo"></param>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public void ValidatePassword(string passwordOne, string passwordTwo)
+    {
+        if (!PasswordMatching(passwordOne, passwordTwo))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+
+        if (!CheckPassword(passwordOne))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+    }
+
+    /// <summary>
+    /// Runs all country validations and throws relavent exceptions
+    /// </summary>
+    /// <param name="country"></param>
+    /// <exception cref="InvalidCountryException"></exception>
+    public void ValidateCountry(string country)
+    {
+        if (!ValidCountry(country))
+        {
+            throw new InvalidCountryException(
+                "Invalid Country ISO code -- Front End sending wrong country codes"
+            );
+        }
     }
 
     /// <summary>
@@ -163,46 +181,10 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        if (EmailAlreadyExists(context, email))
-        {
-            throw new DuplicateEmailException("This email address is already in use by another account");
-        }
-
-        if (DisplayNameLength(displayName))
-        {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
-        }
-
-        if (!DisplayNameChars(displayName))
-        {
-            throw new InvalidDisplayNameCharsException(
-                "Display name must only include letters, spaces, hyphens or apostrophes"
-                );
-        }
-
-        if (!CheckEmailFormat(email))
-        {
-            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
-        }
-
-        if (!CheckPassword(passwordString))
-        {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
-            );
-        }
-
-        if (!PasswordMatching(passwordString, passwordConfirm))
-        {
-            throw new MismatchedPasswordException("Passwords do not match");
-        }
-
-        if (!ValidCountry(country))
-        {
-            throw new InvalidCountryException(
-                "Invalid Country ISO code -- Front End sending wrong country codes"
-            );
-        }
+        ValidateEmail(context, email);
+        ValidateDisplayName(displayName);
+        ValidatePassword(passwordString, passwordConfirm);
+        ValidateCountry(country);
 
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
@@ -221,7 +203,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameLength(string displayName)
     {
-        return ((displayName.Length < 3) || (displayName.Length > 64));
+        return (displayName.Length < 3) || (displayName.Length > 64);
     }
 
     /// <summary>
@@ -234,13 +216,7 @@ public class UserService : IUserService
     /// </returns>
     private bool DisplayNameChars(string displayName)
     {
-        // regex below allow a-z, A-Z, - and ' -- 
-        var validCharsRegex = new Regex(
-            @"^[\p{L}0-9\s'-]+$",
-            RegexOptions.None, // Regex Options, can ignore, 
-            TimeSpan.FromSeconds(2) // TimeSpan until regex times out
-            );
-        return (validCharsRegex.IsMatch(displayName));
+        return ValidationPatterns.UserDisplayName.IsMatch(displayName);
     }
 
     /// <summary>
@@ -281,11 +257,10 @@ public class UserService : IUserService
         {
             return false;
         }
+
         try
         {
-            return Regex.IsMatch(email,
-                @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-                RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+            return ValidationPatterns.UserEmail.IsMatch(email);
         }
         catch (RegexMatchTimeoutException)
         {
@@ -303,41 +278,7 @@ public class UserService : IUserService
     /// </returns>
     private bool CheckPassword(string password)
     {
-        var lowerCharRegex = new Regex(
-            @"[a-z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var upperCharRegex = new Regex(
-            @"[A-Z]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var numCharRegex = new Regex(
-            @"[0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        var specialCharRegex = new Regex(
-            @"[^a-zA-Z0-9]+",
-            RegexOptions.None,
-            TimeSpan.FromSeconds(2)
-        );
-
-        if (
-            (password.Length < 8) ||
-            (!lowerCharRegex.IsMatch(password)) ||
-            (!upperCharRegex.IsMatch(password)) ||
-            (!numCharRegex.IsMatch(password)) ||
-            (!specialCharRegex.IsMatch(password))
-            )
-        {
-            return false;
-        }
-        return true;
+        return ValidationPatterns.UserPassword.IsMatch(password);
     }
 
     /// <summary>
@@ -378,14 +319,44 @@ public class UserService : IUserService
     /// </returns>
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
-        return context.Users.Where((t) => t.Email == email).Count() > 0;
+        return context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Count() > 0;
     }
 
-    public async Task<User?> GetUserByIdAsync(string email)
+    /// <summary>
+    /// Fetch a user from the database that matches the passed in id
+    /// </summary>
+    /// <param name="id">a int of the provided id</param>
+    /// <returns>The user that has the id that was passed in</returns>
+    public async Task<User?> GetUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    /// <summary>
+    /// Fetch a users id from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    /// <returns>The user id of the user that has the email that was passed in</returns>
+    public async Task<int?> GetUserIdFromEmailAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+        return user?.Id;
+    }
+
+    /// <summary>
+    /// Fetch a user from the database that matches the passed in email
+    /// </summary>
+    /// <param name="email">a string of the provided email</param>
+    public async Task<User?> GetUserFromEmailAsync(string email)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+        return user;
     }
 
     /// <summary>
@@ -394,7 +365,7 @@ public class UserService : IUserService
     /// <param name="email">a string of the provided email</param>
     /// <param name="passwordString">an un-hashed string of the provided password</param>
     /// <returns>The user that matches the email and password provided or null if they do not match</returns>
-    public async Task<UserVerificationResult> CheckUserCredentialsAsync(string email, string passwordString)
+    public async Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString)
     {
         PasswordHasher<User> passwordHasher = new();
 
@@ -402,26 +373,263 @@ public class UserService : IUserService
 
         if (!CheckEmailFormat(email))
         {
-            return UserVerificationResult.MalformedEmail;
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.MalformedEmail,
+                user = null
+            };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         if (user == null)
         {
-            return UserVerificationResult.DoesNotExist;
+            return new UserVerificationResponse
+            {
+                userVerificationResult = UserVerificationResult.DoesNotExist,
+                user = null
+            };
+        }
+
+        if (!user.EmailVerified)
+        {
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - user.CodeGenerationTime < 300)
+            {
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.AccountUnverified,
+                    user = user
+                };
+            }
+            else
+            {
+                await DeleteUserByIdAsync(user.Id);
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.DoesNotExist,
+                    user = user
+                };
+            }
+
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
         switch (verificationResult)
         {
             case PasswordVerificationResult.Success:
-                return UserVerificationResult.Success;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.Success,
+                    user = user
+                };
 
             case PasswordVerificationResult.SuccessRehashNeeded:
-                return UserVerificationResult.SuccessRehashNeeded;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.SuccessRehashNeeded,
+                    user = user
+                };
 
             default:
-                return UserVerificationResult.Failed;
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.Failed,
+                    user = null
+                };
         }
+    }
+
+    /// <summary>
+    /// Update the users details with the passed in values
+    /// </summary>
+    /// <param name="userId">a string of the provided email</param>
+    /// <param name="newEmail">a string of the provided email</param>
+    /// <param name="newDisplayName">a string of the users new display name</param>
+    /// <param name="newCountry">a string of the users new country</param>
+    /// <returns>The new user that has been saved in the database</returns>
+    public async Task<User?> UpdateUser(int userId,
+        string newEmail,
+        string newDisplayName,
+        string newCountry
+        )
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null) return null;
+
+        // Validation
+        if (user.Email != newEmail) ValidateEmail(context, newEmail);
+        if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
+        if (user.Country != newCountry) ValidateCountry(newCountry);
+
+        user.Email = newEmail;
+        user.DisplayName = newDisplayName;
+        user.Country = newCountry;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+
+    /// <summary>
+    /// sets the given user's profile picture to the file id of the given image. Fails if the user does not exist
+    /// Also sets the picture's offset and zoom level
+    /// </summary>
+    /// <param name="userId">the id of the user changing their profile picture</param>
+    /// <param name="fileId">the id of the file that the user wants to add to their profile</param>
+    /// <param name="x">the x offset of the image</param>
+    /// <param name="y">the y offset of the image</param>
+    /// <param name="zoom">the zoom level of the image</param>
+    /// <returns>the user object with the new profile picture</returns>
+    public async Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null) return null;
+
+        user.ProfilePicture = fileId;
+        user.ProfilePictureOffsetX = x;
+        user.ProfilePictureOffsetY = y;
+        user.ProfilePictureZoom = zoom;
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    /// <summary>
+    /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
+    /// </summary>
+    /// <param name="email"></param> The user's email
+    /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
+    /// an empty string if the code is expired
+    /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired
+    /// <param name="userVerified"></param> A boolean that notifies method whether the user has successfully verified their account or not
+    /// <returns>
+    /// A bool indicating if the user was updated successfully wrapped in Task object as the function is asynchronous
+    /// </returns>
+    public async Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+        int? id = await GetUserIdFromEmailAsync(email);
+        if (id == null) return null;
+
+        User? user = await GetUserByIdAsync((int)id);
+        if (user == null) return user;
+
+        user.OneTimeCode = oneTimeCode;
+        user.CodeGenerationTime = epochTime;
+
+        if (userVerified)
+        {
+            user.EmailVerified = true;
+        }
+
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    /// <summary>
+    /// Deletes the user based on the ID
+    /// </summary>
+    /// <param name="id"></param> User ID
+    /// <returns>A boolean representing if the user has been deleted properly</returns>
+    public async Task<User?> DeleteUserByIdAsync(int id)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        User? user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        if (user != null)
+        {
+            context.Users.Remove(user);
+            await context.SaveChangesAsync();
+        }
+        return user;
+    }
+
+    /// <summary>
+    /// Checks the password hash and returns a verification result
+    /// </summary>
+    /// <param name="user">The user you are checking the password for</param>
+    /// <param name="password">the password you are checking matches the user</param>
+    /// <returns>The verification result</returns>
+    public PasswordVerificationResult VerifyPassword(User user, string password)
+    {
+        PasswordHasher<User> passwordHasher = new();
+        return passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
+    }
+    
+    /// <summary>
+    /// Performs all validation for the update password request
+    /// </summary>
+    /// <param name="user">The users whose password is being updated</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns></returns>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    /// <exception cref="ArgumentException"></exception>
+    public bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword,
+        string newPasswordConfirm)
+    {
+        // Validate old password is the users correct password
+        var result = VerifyPassword(user, oldPassword);
+        if (!(result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded))
+        {
+            throw new MismatchedPasswordException("Old password does not match password on file");
+        }
+        
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+        
+        // Validate new password not the same as old password
+        if (PasswordMatching(newPassword, oldPassword))
+        {
+            throw new ArgumentException("New password can't be the same as old password");
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates and performs the request to update the users password
+    /// </summary>
+    /// <param name="userId">The users id</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserByIdAsync(userId);
+        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        // validate inputs
+        if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
+        
+        // Perform update
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
     }
 }

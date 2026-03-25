@@ -4,21 +4,20 @@ using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Filters;
 using System.Security.Claims;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
 [Authorize]
 [ApiController]
-[Route("api/tasks")]
-public class TaskController : ControllerBase
+[Route("api/taskList")]
+public class TaskListController : ControllerBase
 {
-    private readonly ITaskService _taskService;
+    private readonly ITaskListService _taskListService;
 
-    public TaskController(ITaskService taskService)
+    public TaskListController(ITaskListService taskListService)
     {
-        _taskService = taskService;
+        _taskListService = taskListService;
     }
 
     /// <summary>
@@ -29,7 +28,7 @@ public class TaskController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskList>> getTaskList(int id)
     {
-        var taskList = await _taskService.GetTaskListByIdAsync(id);
+        var taskList = await _taskListService.GetTaskListByIdAsync(id);
         if (taskList == null)
         {
             return NotFound();
@@ -45,12 +44,12 @@ public class TaskController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TaskList>>> GetTaskListsForUser()
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrEmpty(userEmail))
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
             return Unauthorized();
 
 
-        var taskLists = await _taskService.GetTaskListsByUserEmailAsync(userEmail);
+        var taskLists = await _taskListService.GetTaskListsByUserIdAsync(int.Parse(userIdString));
         return Ok(taskLists);
     }
 
@@ -66,10 +65,10 @@ public class TaskController : ControllerBase
     {
         try
         {
-            var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userEmail))
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
                 return Unauthorized();
-            await _taskService.CreateNewTaskListAsync(taskListRequest.Name, userEmail);
+            await _taskListService.CreateNewTaskListAsync(taskListRequest.Name, int.Parse(userIdString));
             return Ok("Task list created successfully");
         }
         catch (ArgumentException e)
