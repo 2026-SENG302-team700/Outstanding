@@ -305,7 +305,7 @@ public class UserController : ControllerBase
                 return Unauthorized(new { message = "Unable to find user from cookie" });
             }
 
-            var success = await _userService.UpdatePasswordAsync(
+            await _userService.UpdatePasswordAsync(
                 int.Parse(userIdString),
                 updatePasswordRequest.OldPassword,
                 updatePasswordRequest.NewPassword,

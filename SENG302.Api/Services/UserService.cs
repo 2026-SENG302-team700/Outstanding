@@ -21,7 +21,7 @@ public interface IUserService
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> SetUserProfilePicture(int userId, int fileId);
     Task<User?> GetUserFromEmailAsync(string email);
-    Task<bool> UpdatePasswordAsync(int userId, string oldEmail, string newEmail, string newEmailConfirm);
+    Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
 }
 
 public enum UserVerificationResult
@@ -588,14 +588,14 @@ public class UserService : IUserService
     /// <param name="newPassword">The password the user wishes to change to</param>
     /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
     /// <returns>true on successful update</returns>
-    public async Task<bool> UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    public async Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
     {
         // Get user from Id
         User? user = await GetUserByIdAsync(userId);
         if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
         
         // validate inputs
-        if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return false;
+        if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
         
         // Perform update
         PasswordHasher<User> passwordHasher = new();
@@ -604,6 +604,5 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         context.Users.Update(user);
         await context.SaveChangesAsync();
-        return true;
     }
 }
