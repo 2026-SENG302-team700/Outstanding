@@ -102,36 +102,39 @@
      */
     async function requestPasswordChange() {
         clearModalData()
-        if (resendTimer > 0 || isSending) return;
         currentModalStep = "verify";
-        isSending = true;
+
         authModal?.show();
-
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/generation`),
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
+        
+        if (!isSending && resendTimer == 0) {
+            isSending = true;
+            resendTimer = 0;
+            try {
+                const response = await fetchWithCsrf(
+                    resolve(`/api/user/password/code/generation`),
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                        }),
                     },
-                    body: JSON.stringify({
-                        email: email,
-                    }),
-                },
-            );
+                );
 
-            if (response.ok) {
-                addToast("Verification code sent!", "success");
-                startResendCountdown();
-            } else {
-                const data = await response.json().catch(() => null);
-                codeError = data?.message || "Failed to send code.";
+                if (response.ok) {
+                    addToast("Verification code sent!", "success");
+                    startResendCountdown();
+                } else {
+                    const data = await response.json().catch(() => null);
+                    codeError = data?.message || "Failed to send code.";
+                }
+            } catch (err) {
+                codeError = "Failed to send email: " + (err as Error).message;
+            } finally {
+                isSending = false;
             }
-        } catch (err) {
-            codeError = "Failed to send email: " + (err as Error).message;
-        } finally {
-            isSending = false;
         }
     }
 
@@ -578,6 +581,7 @@
     </div>
 </div>
 
+<!-- update password modal -->
 <div
     class="modal fade"
     bind:this={modalElement}
@@ -777,8 +781,8 @@
                 <button
                     type="button"
                     class="btn btn-secondary"
-                    data-bs-dismiss="modal">Cancel</button
-                >
+                    data-bs-dismiss="modal"
+                >Cancel</button>
             </div>
         </div>
     </div>
