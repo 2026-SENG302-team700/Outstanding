@@ -74,6 +74,19 @@
     }
 
     /**
+     * Clears all the modal data
+     */
+    function clearModalData() {
+        codeError = "";
+        digit1 = "";
+        digit2 = "";
+        digit3 = "";
+        digit4 = "";
+        digit5 = "";
+        digit6 = "";
+    }
+
+    /**
      * Start a new timer for the resend button to ensure the user cant spam their email
      */
     function startResendCountdown() {
@@ -88,6 +101,7 @@
      * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
      */
     async function requestPasswordChange() {
+        clearModalData()
         if (resendTimer > 0 || isSending) return;
         currentModalStep = "verify";
         isSending = true;
@@ -578,12 +592,6 @@
                         ? "Verify Your Identity"
                         : "Set New Password"}
                 </h5>
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                ></button>
             </div>
             <div class="modal-body">
                 {#if currentModalStep === "verify"}
@@ -696,6 +704,12 @@
                         <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
                     </form>
                 {/if}
+                <button
+                        type="button"
+                        class="btn btn-secondary w-100 py-2 mt-3"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                >cancel</button>
             </div>
         </div>
     </div>
