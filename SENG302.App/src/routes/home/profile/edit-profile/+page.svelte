@@ -88,17 +88,12 @@
      * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
      */
     async function requestPasswordChange() {
-        // if (resendTimer > 0 || isSending) return;
-        
-        console.log("reqPassChange: passed first if statement");
-        
         currentModalStep = "verify";
-        if (!isSending) {
-            isSending = true;
-        }
-        authModal?.show();
 
-        if (isSending) {
+        authModal?.show();
+        
+        if (!isSending && resendTimer == 0) {
+            isSending = true;
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
