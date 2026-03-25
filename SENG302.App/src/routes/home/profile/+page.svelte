@@ -1,10 +1,9 @@
 ﻿<script lang="ts">
-    // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
+    import type { Modal } from "bootstrap";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import { user } from "$lib/stores/user";
@@ -12,10 +11,22 @@
     let email = $state("");
     let username = $state("");
     let pfpUrl: string | null = $state(null);
+    let modalElement: HTMLElement | undefined = $state();
+    let logoutModal: Modal | undefined;
 
-    onMount(() => {
+    onMount(async () => {
         retrieveUserData();
+
+        const { Modal: BootstrapModal } = await import("bootstrap");
+        if (modalElement) {
+            logoutModal = new BootstrapModal(modalElement);
+        }
     });
+
+    /// shows the logout popup
+    function showModal() {
+        logoutModal?.show();
+    }
 
     /// <summary>
     /// Gets User email and Username from local storage
@@ -55,12 +66,11 @@
                 method: "DELETE",
                 credentials: "include",
             });
-            
+
             if (response.status === 500) {
-                addToast("Failed to logout. Refresh Webpage", "error")
+                addToast("Failed to logout. Refresh Webpage", "error");
                 return;
-            }
-            else {
+            } else {
                 goto("/");
             }
         } catch (err) {
@@ -76,16 +86,40 @@
             onclick={() => goto(resolve("/home/profile/edit-profile"))}
             >Edit Profile</button
         >
-        <ProfilePic pfpUrl={$user.pfpUrl} size="large" />
+        <ProfilePic pfpData={$user.pfpData} size="large" />
         <p class="username">{username}</p>
         <p class="user_email">Email: {email}</p>
         <button
             type="button"
             class="btn btn-outline-danger"
-            onclick={logoutUser}
+            onclick={showModal}
         >
             Logout
         </button>
+    </div>
+    <div class="modal fade" bind:this={modalElement} tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Are you sure you want to logout?
+                    </h5>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">Close</button
+                    >
+                    <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        data-bs-dismiss="modal"
+                        onclick={logoutUser}>Logout</button
+                    >
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

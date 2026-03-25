@@ -1,7 +1,6 @@
 <script lang="ts">
-    // import defaultLogo from '$team-700/SENG302.App/static/defaultProfile.png/';
     import { onMount } from "svelte";
-    import type { Modal } from 'bootstrap';
+    import type { Modal } from "bootstrap";
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
@@ -10,6 +9,7 @@
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
+    import ImageEditor from "$lib/image-editor/image-editor.svelte";
 
     let displayName = $state("");
     let email = $state("");
@@ -30,10 +30,14 @@
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
-    let userCode = $derived(digit1 + digit2 + digit3 + digit4 + digit5 + digit6);
+    let userCode = $derived(
+        digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
+    );
     let updatingPassword = $state(false)
 
     let codeError = $state("");
+    let imageEditor: ImageEditor;
+
     let errors = $state({
         email: "",
         displayName: "",
@@ -48,15 +52,14 @@
         }
     });
 
-    onMount(async() => {
+    onMount(async () => {
         retrieveUserData();
 
-        const { Modal : BootstrapModal } = await import('bootstrap');
-        
-        if (modalElement){
+        const { Modal: BootstrapModal } = await import("bootstrap");
+
+        if (modalElement) {
             authModal = new BootstrapModal(modalElement);
         }
-        
     });
 
     /**
@@ -72,7 +75,7 @@
 
     /**
      * Start a new timer for the resend button to ensure the user cant spam their email
-    */
+     */
     function startResendCountdown() {
         resendTimer = 30;
         const interval = setInterval(() => {
@@ -83,7 +86,7 @@
 
     /**
      * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
-    */
+     */
     async function requestPasswordChange() {
         if (resendTimer > 0 || isSending) return;
         currentModalStep = "verify";
@@ -111,7 +114,6 @@
                 const data = await response.json().catch(() => null);
                 codeError = data?.message || "Failed to send code.";
             }
-
         } catch (err) {
             codeError = "Failed to send email: " + (err as Error).message;
         } finally {
@@ -211,11 +213,15 @@
     /// Move the focus back one box when backspace is clicked and the input box is empty
     /// </summary>
     function handleKeyDown(e: KeyboardEvent) {
-    const input = e.target as HTMLInputElement;
-    if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
-        (input.previousElementSibling as HTMLInputElement).focus();
+        const input = e.target as HTMLInputElement;
+        if (
+            e.key === "Backspace" &&
+            !input.value &&
+            input.previousElementSibling
+        ) {
+            (input.previousElementSibling as HTMLInputElement).focus();
+        }
     }
-}
 
     /// <summary>
     /// Updates the users information with the provided information
@@ -238,11 +244,13 @@
                 }),
             });
 
-
             if (response.ok) {
                 addToast("Profile edited successful");
                 const updatedUser = await response.json();
-                user.update(u => ({...u, displayName: updatedUser.displayName}));
+                user.update((u) => ({
+                    ...u,
+                    displayName: updatedUser.displayName,
+                }));
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
@@ -307,7 +315,7 @@
     }
     /**
      * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
-    */
+     */
     async function checkCode() {
         if (userCode.length < 6) return;
         try {
@@ -328,9 +336,12 @@
 
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
-                codeError = data?.message || `Error ${response.status}: Invalid code.`;
+                codeError =
+                    data?.message || `Error ${response.status}: Invalid code.`;
                 digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
-                const firstInput = document.querySelector('#code-input input') as HTMLInputElement;
+                const firstInput = document.querySelector(
+                    "#code-input input",
+                ) as HTMLInputElement;
                 firstInput?.focus();
             } else {
                 currentModalStep = "update";
@@ -400,31 +411,48 @@
                 updatingPassword = false;
             }
         }
-            
+    
     /**
-     * Method used to update the profile picture, confirm the conditions are right and then update
-    */
-    async function updatePfp() {
+     * Sends an image to the image editor
+     */
+    async function sendToEditor() {
         if (!files || files.length === 0) return;
-        
+        imageEditor.setImg(files[0]);
+    }
+
+
+    /**
+     * Updates the profile picture on the back end
+     * @param imageData the x, y and zoom of the new profile picture
+     * @param imageFile the file to upload
+     */
+    async function updatePfp(imageData: PfpData, imageFile: File) {
         try {
             const formData = new FormData();
-            formData.append("file", files[0]);
+            formData.append("file", imageFile);
+            formData.append("x", imageData.offsetX.toString());
+            formData.append("y", imageData.offsetY.toString());
+            formData.append("zoom", imageData.zoom.toString());
 
-            const response = await fetchWithCsrf(resolve(`/api/user/pfp`), {
-                method: "PUT",
-                body: formData
-            });
-            
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/pfp` as any),
+                {
+                    method: "PUT",
+                    body: formData,
+                },
+            );
+
             if (!response.ok) {
-                throw new Error("Failed to save profile picture.");
+                if (response.status == 500) {
+                    throw new Error("Failed to upload picture");
+                } else {
+                    throw new Error(await response.text());
+                }
             } else {
-                const pfpResponse = await fetchWithCsrf(resolve('/api/user/pfp'), {
-                    method: "GET",
-                    credentials: "include",
-                });
-                const blob = await pfpResponse.blob();
-                user.update(u => ({...u, pfpUrl: URL.createObjectURL(blob)}));
+                user.update((u) => ({
+                    ...u,
+                    pfpData: imageData,
+                }));
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -433,61 +461,58 @@
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
-    <div class="d-flex flex-column align-items-center m-3">
+    <div
+        class="d-flex flex-column align-items-center justify-content-center m-3"
+    >
         <div class="position-relative d-inline-block">
-            <ProfilePic pfpUrl={$user.pfpUrl} size="xl" />
+            <ProfilePic pfpData={$user.pfpData} size="xl" />
 
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                on:click={() => pfpInput.click()}
+                data-bs-toggle="modal"
+                data-bs-target="#pfpInputModal"
+                on:click={() => {
+                    imageEditor.reset();
+                }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
-
-            <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:change={updatePfp}
-            />            
         </div>
     </div>
-    
+
     <div class="flex-grow-1 m-3">
         <form on:submit|preventDefault={updateUser}>
             <div class="mb-4">
                 <h5 class="text-muted mb-2">Personal Information</h5>
-                <hr class="mt-0" style="opacity: 0.15;">
+                <hr class="mt-0" style="opacity: 0.15;" />
                 <div class="mb-3">
-                    <label for="displayName" class="form-label">Display Name</label>
+                    <label for="displayName" class="form-label"
+                        >Display Name</label
+                    >
                     <input
-                            type="text"
-                            class="form-control"
-                            bind:value={displayName}
-                            id="displayName"
+                        type="text"
+                        class="form-control"
+                        bind:value={displayName}
+                        id="displayName"
                     />
                 </div>
                 <div class="mb-3">
                     <label for="userEmail" class="form-label">Email</label>
                     <input
-                            type="email"
-                            class="form-control"
-                            id="userEmail"
-                            bind:value={email}
+                        type="email"
+                        class="form-control"
+                        id="userEmail"
+                        bind:value={email}
                     />
                 </div>
                 <div class="mb-3">
                     <label for="country" class="form-label">Country</label>
                     <select
-                            class="form-select"
-                            class:country-select={!country}
-                            bind:value={country}
-                            id="country"
+                        class="form-select"
+                        class:country-select={!country}
+                        bind:value={country}
+                        id="country"
                     >
                         {#each countries as country}
                             <option value={country.code}>
@@ -499,10 +524,16 @@
             </div>
             <div class="mt-5 mb-4">
                 <h5 class="text-muted mb-2">Account Security</h5>
-                <hr class="mt-0" style="opacity: 0.15;">
+                <hr class="mt-0" style="opacity: 0.15;" />
                 <div class="d-flex align-items-center justify-content-between">
-                    <p class="small text-secondary mb-0">Change your password to keep your account secure.</p>
-                    <button type="button" class="btn btn-outline-primary btn-sm" on:click={requestPasswordChange}>
+                    <p class="small text-secondary mb-0">
+                        Change your password to keep your account secure.
+                    </p>
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        on:click={requestPasswordChange}
+                    >
                         Update Password
                     </button>
                 </div>
@@ -518,30 +549,84 @@
     </div>
 </div>
 
-<div class="modal fade" bind:this={modalElement} tabindex="-1" aria-hidden="true">
+<div
+    class="modal fade"
+    bind:this={modalElement}
+    tabindex="-1"
+    aria-hidden="true"
+>
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold">
-                    {currentModalStep === 'verify' ? 'Verify Your Identity' : 'Set New Password'}
+                    {currentModalStep === "verify"
+                        ? "Verify Your Identity"
+                        : "Set New Password"}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
             <div class="modal-body">
-                {#if currentModalStep === 'verify'}
+                {#if currentModalStep === "verify"}
                     <div class="text-centre">
                         <p class="text-secondary">
-                            We've sent a 6-digit verification code to <br>
+                            We've sent a 6-digit verification code to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
-                        
+
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit1} on:input={handleInput} on:keydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit2} on:input={handleInput} on:keydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit3} on:input={handleInput} on:keydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit4} on:input={handleInput} on:keydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit5} on:input={handleInput} on:keydown={handleKeyDown}/>
-                            <input type="text" class="form-control form-control-lg text-center" maxlength="1" bind:value={digit6} on:input={handleInput} on:keydown={handleKeyDown}/>
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit1}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit2}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit3}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit4}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit5}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit6}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
                         </div>
 
                         {#if codeError}
@@ -549,9 +634,9 @@
                                 <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
                             </div>
                         {/if}
-                    
-                        <button 
-                            class="btn btn-link btn-sm text-decoration-none" 
+
+                        <button
+                            class="btn btn-link btn-sm text-decoration-none"
                             on:click={requestPasswordChange}
                             disabled={resendTimer > 0 || isSending}
                         >
@@ -596,6 +681,75 @@
                         <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
                     </form>
                 {/if}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for pfp selection -->
+<div
+    class="modal fade"
+    id="pfpInputModal"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    aria-labelledby="pfpInputModalLabel"
+    aria-hidden="true"
+>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="pfpInputModalLabel">
+                    Edit Profile Picture
+                </h1>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    on:click={() => pfpInput.click()}
+                >
+                    Choose Image
+                </button>
+
+                <input
+                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                    bind:files
+                    bind:this={pfpInput}
+                    id="pfp"
+                    name="pfp"
+                    type="file"
+                    class="d-none"
+                    on:change={sendToEditor}
+                />
+
+                <ImageEditor bind:this={imageEditor} />
+            </div>
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    on:click={() => {
+                        const data = imageEditor.exportData();
+                        if (data) {
+                            updatePfp(data.data, data.file);
+                        } else {
+                            addToast("No file selected!", "error");
+                        }
+                    }}
+                    class="btn btn-primary"
+                    data-bs-dismiss="modal">Submit</button
+                >
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button
+                >
             </div>
         </div>
     </div>

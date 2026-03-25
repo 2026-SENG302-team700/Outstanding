@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { addToast } from "$lib/toast/toast";
+    import { onDestroy, onMount } from "svelte";
 
-    let { onImageSubmit, inputImage } = $props();
-
-    const profileSize = $state(300.0);
+    const profileSize = $state(250.0);
 
     let imageSrc = $state("");
+    let imageFile = $state();
 
     // svelte-ignore state_referenced_locally
     let zoom = $state(profileSize);
@@ -30,16 +30,39 @@
             ${yOffset + (profileSize / 2 - 1) - (newHeight * (zoom / profileSize)) / 2}px;`,
     );
 
+    const mimeTypes = [
+        "image/webp",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/svg+xml",
+    ];
+
     /**
      * Insert an image into this ImageEditor object
      * Also calculates which side of the image is the long side,
      * and calculates the max size the image can be
-     * Note: this function is called in onMount if inputImage is set
-     * @param url the data url of the image
+     * @param file the image file
      */
-    async function setImg(url: string) {
+    export async function setImg(file: File) {
+        if (!mimeTypes.includes(file.type)) {
+            addToast(
+                "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
+                "error",
+            );
+            return;
+        }
+
+        if (file.size > 5000000) {
+            addToast("Image too large, maximum file size is 5MB", "error");
+            return;
+        }
+
+        reset();
         try {
-            imageSrc = url;
+            imageFile = file;
+            imageSrc = URL.createObjectURL(file);
+
             const dimensions = await getImgDimensions(imageSrc);
             width = dimensions.width;
             height = dimensions.height;
@@ -76,6 +99,18 @@
         } catch (error) {
             throw new Error(`Could not load image at ${url}, ${error}`);
         }
+    }
+
+    /**
+     * Reset the image to null and zeroes out all properties
+     */
+    export async function reset() {
+        zoom = profileSize;
+        if (imageSrc) URL.revokeObjectURL(imageSrc);
+        imageSrc = "";
+        imageFile = null;
+        xOffset = 0;
+        yOffset = 0;
     }
 
     /**
@@ -136,56 +171,44 @@
     }
 
     /**
-     * Takes the current position and zoom of the
-     * image and stamps it onto a CanvasRenderingContext2D
-     * @param ctx The CanvasRenderingContext2D of a canvas
+     * Translate the data into a more general format, one that the backend can understand
      */
-    async function stampImageOntoCTX(ctx: CanvasRenderingContext2D) {
-        const size = newWidth * (zoom / profileSize);
+    export function exportData(): { data: PfpData; file: File } | null {
+        if (imageFile == null) {
+            return null;
+        }
 
-        const scale = width / size;
-
-        const cropSize = profileSize * scale;
-
-        const x = (width / 2) - cropSize / 2 - xOffset * scale;
-        const y = (height / 2) - cropSize / 2 - yOffset * scale;
-
-        const img = new Image();
-        img.src = imageSrc;
-
-        await img.decode();
-        
-        ctx.drawImage(img, x, y, cropSize, cropSize, 0, 0, profileSize, profileSize);
+        return {
+            data: {
+                // Create a new object url because we don't want it to get dereferenced
+                imageSource: URL.createObjectURL(imageFile as File),
+                offsetX:
+                    (xOffset +
+                        (profileSize / 2 - 1) -
+                        (newWidth * (zoom / profileSize)) / 2) /
+                    profileSize,
+                offsetY:
+                    (yOffset +
+                        (profileSize / 2 - 1) -
+                        (newHeight * (zoom / profileSize)) / 2) /
+                    profileSize,
+                zoom: zoom / Math.min(width, height) / profileSize,
+            },
+            file: imageFile as File,
+        };
     }
 
     onMount(() => {
-        if (inputImage) {
-            setImg(inputImage);
-        }
-        
         document.addEventListener("mouseup", () => {
             isMoving = false;
         });
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
+    });
 
-        const canvas: HTMLCanvasElement = document.getElementById(
-            "editCanvas",
-        ) as HTMLCanvasElement;
-
-        const ctx = canvas.getContext("2d");
-
-        if (ctx) {
-            document
-                .getElementById("submitButton")
-                ?.addEventListener("click", async (e) => {
-                    ctx.reset();
-                    await stampImageOntoCTX(ctx);
-                    const url = canvas.toDataURL('image/jpeg');
-                    onImageSubmit(url);
-                });
-        }
+    onDestroy(() => {
+        if (imageSrc) URL.revokeObjectURL(imageSrc);
     });
 </script>
 
@@ -200,13 +223,13 @@
         <img
             draggable="false"
             src={imageSrc}
-            alt="New profile"
+            alt={imageSrc == "" ? "" : "New profile"}
             class="image-editor-image-editing"
             style={imageStyle}
         />
     </div>
 
-    <label for="zoom-range" class="form-label">Zoom</label>
+    <div style="height: 15px;"></div>
     <input
         type="range"
         class="form-range"
@@ -219,20 +242,13 @@
         }}
         value={zoom}
     />
-    <canvas
-        id="editCanvas"
-        class="image-editor-image-parent"
-        style="height: {profileSize}px; width: {profileSize}px; display: none;"
-        width='{profileSize}'
-        height='{profileSize}'
-    ></canvas>
-    <button id="submitButton" class="btn btn-primary w-15">Submit</button>
 </div>
 
 <style>
     .image-editor-content {
         display: flex;
         flex-direction: column;
+        align-items: center;
     }
 
     .image-editor-image-editing {

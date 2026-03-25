@@ -16,10 +16,10 @@ public interface IUserService
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
     Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
-    Task<User?> SetUserProfilePicture(int userId, int fileId);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
 }
@@ -319,7 +319,7 @@ public class UserService : IUserService
     /// </returns>
     private bool EmailAlreadyExists(DatabaseContext context, string email)
     {
-        return context.Users.Where((t) => t.Email == email).Count() > 0;
+        return context.Users.Where((t) => t.Email.ToLower().Equals(email.ToLower())).Count() > 0;
     }
 
     /// <summary>
@@ -343,7 +343,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         return user?.Id;
     }
 
@@ -355,7 +355,7 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         return user;
     }
 
@@ -380,7 +380,7 @@ public class UserService : IUserService
             };
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         if (user == null)
         {
             return new UserVerificationResponse
@@ -392,11 +392,24 @@ public class UserService : IUserService
 
         if (!user.EmailVerified)
         {
-            return new UserVerificationResponse
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - user.CodeGenerationTime < 300)
             {
-                userVerificationResult = UserVerificationResult.AccountUnverified,
-                user = user
-            };
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.AccountUnverified,
+                    user = user
+                };
+            }
+            else
+            {
+                await DeleteUserByIdAsync(user.Id);
+                return new UserVerificationResponse
+                {
+                    userVerificationResult = UserVerificationResult.DoesNotExist,
+                    user = user
+                };
+            }
+
         }
 
         PasswordVerificationResult verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordKey, passwordString);
@@ -457,7 +470,18 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<User?> SetUserProfilePicture(int userId, int fileId)
+
+    /// <summary>
+    /// sets the given user's profile picture to the file id of the given image. Fails if the user does not exist
+    /// Also sets the picture's offset and zoom level
+    /// </summary>
+    /// <param name="userId">the id of the user changing their profile picture</param>
+    /// <param name="fileId">the id of the file that the user wants to add to their profile</param>
+    /// <param name="x">the x offset of the image</param>
+    /// <param name="y">the y offset of the image</param>
+    /// <param name="zoom">the zoom level of the image</param>
+    /// <returns>the user object with the new profile picture</returns>
+    public async Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -466,6 +490,9 @@ public class UserService : IUserService
         if (user == null) return null;
 
         user.ProfilePicture = fileId;
+        user.ProfilePictureOffsetX = x;
+        user.ProfilePictureOffsetY = y;
+        user.ProfilePictureZoom = zoom;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -475,7 +502,7 @@ public class UserService : IUserService
     /// <summary>
     /// Updates the OneTimeCode and CodeGenerationTime attributes of the User object when the user is emailed the one time codes
     /// </summary>
-    /// <param name="user"></param> The user object
+    /// <param name="email"></param> The user's email
     /// <param name="oneTimeCode"></param> The code that was generated and emailed to the user or
     /// an empty string if the code is expired
     /// <param name="epochTime"></param> The time that code was generated at or 0 to represent that the code expired

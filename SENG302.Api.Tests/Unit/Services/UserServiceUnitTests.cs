@@ -83,11 +83,29 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         {
             var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
             user.EmailVerified = false;
+            user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
             context.Users.Add(user);
             await context.SaveChangesAsync();
         }
         var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.AccountUnverified, result.userVerificationResult);
+        Assert.NotNull(result.user);
+    }
+    
+    [Fact]
+    public async Task CheckUserCredentials_UnverifiedEmailTimeExpired_ExpectAccountUnverifiedResult()
+    {
+        var email = "unverified@test.com";
+        using (var context = await DbFactory.CreateDbContextAsync())
+        {
+            var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+            user.EmailVerified = false;
+            user.CodeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+        var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+        Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
         Assert.NotNull(result.user);
     }
     
