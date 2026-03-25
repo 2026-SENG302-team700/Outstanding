@@ -16,7 +16,7 @@
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
-    let modalElement: HTMLElement | undefined = $state();
+    let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
     let resendTimer = $state(0);
     let isSending = $state(false);
@@ -33,6 +33,7 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
+    let updatingPassword = $state(false)
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -40,6 +41,9 @@
     let errors = $state({
         email: "",
         displayName: "",
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: ""
     });
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
@@ -57,6 +61,17 @@
             authModal = new BootstrapModal(modalElement);
         }
     });
+
+    /**
+     * Clears all currently set errors
+     */
+    function clearErrors() {
+        errors.email = "";
+        errors.displayName = "";
+        errors.oldPassword = "";
+        errors.newPassword = "";
+        errors.confirmPassword = "";
+    }
 
     /**
      * Start a new timer for the resend button to ensure the user cant spam their email
@@ -141,11 +156,7 @@
      * returns true if all fields are valid, false otherwise
      */
     function isValid() {
-        // Clear errors
-        errors = {
-            email: "",
-            displayName: "",
-        };
+        clearErrors()
 
         // Front end Validation
         let valid = true;
@@ -261,6 +272,48 @@
     }
 
     /**
+     * Validated the inputs to a change password request and sets the appropriate errors
+     * the new passwords must match and be of the correct form
+     * returns whether result is valid or not
+     */
+    function validateChangePasswordInputs() {
+        clearErrors()
+        var isValid = true;
+        
+        // Check not empty
+        if (!oldPassword) {
+            errors.oldPassword = "field is required";
+            isValid = false;
+        }
+        if (!newPassword) {
+            errors.newPassword = "field is required";
+            isValid = false;
+        }
+        if (!confirmPassword) {
+            errors.confirmPassword = "field is required";
+            isValid = false;
+        }
+        
+        // checks passwords match
+        if (newPassword !== confirmPassword) {
+            isValid = false;
+            errors.confirmPassword = "Passwords do not match"
+            confirmPassword = "";
+        }
+
+        // check password is valid
+        const passwordRegex = new RegExp(regexPatterns.user.password);
+        if (!passwordRegex.test(newPassword)) {
+            isValid = false;
+            errors.newPassword = "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters"
+            newPassword = "";
+            confirmPassword = "";
+        }
+        
+        return isValid;
+    }
+    /**
      * Check the code the user supplied when the user clicks the verify button. Send a post request to the backend with the provided code.
      */
     async function checkCode() {
@@ -297,10 +350,68 @@
             codeError = "Connection error. Please try again later.";
         }
     }
-    /**
-     * Method used to update the profile picture, confirm the conditions are right and then update
-     */
 
+        /**
+         * validates the input data and sends a request to the backend to update the users password
+         */
+        async function updatePassword() {
+            const valid = validateChangePasswordInputs();
+            if (!valid) return;
+            
+            updatingPassword = true;
+            try {
+                const response = await fetchWithCsrf(resolve(`/api/user/password`),
+                    {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            oldPassword: oldPassword,
+                            newPassword: newPassword,
+                            newPasswordConfirm: confirmPassword
+                        })
+                    }
+                );
+                if (response.ok) {
+                    addToast("New password updated successfully")
+                    authModal.hide()
+                    goto(resolve("/home/profile"));
+                    return;
+                }
+                
+                const data = await response.json().catch(() => null);
+                if (response.status === 400){
+                    switch (data.message) {
+                        case "Old password does not match password on file":
+                            errors.oldPassword = "Old password does not match password on file";
+                            oldPassword = "";
+                            break;
+                        case "Passwords do not match":
+                            errors.confirmPassword = "Password does not match";
+                            confirmPassword = "";
+                            break;
+                        case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                            errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                            newPassword = "";
+                            confirmPassword = "";
+                            break;
+                        case "New password can't be the same as old password":
+                            errors.newPassword = "New password can't be the same as old password";
+                            newPassword = "";
+                            confirmPassword = "";
+                            break;
+                    }
+                } else {
+                    addToast("Failed to update password ");
+                }
+            } catch (err) {
+                addToast("Failed to update password");
+            } finally {
+                updatingPassword = false;
+            }
+        }
+    
     /**
      * Sends an image to the image editor
      */
@@ -308,6 +419,7 @@
         if (!files || files.length === 0) return;
         imageEditor.setImg(files[0]);
     }
+
 
     /**
      * Updates the profile picture on the back end
@@ -410,14 +522,6 @@
                     </select>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => {
-                    goto(resolve("/home/profile"));
-                }}>Cancel</button
-            >
             <div class="mt-5 mb-4">
                 <h5 class="text-muted mb-2">Account Security</h5>
                 <hr class="mt-0" style="opacity: 0.15;" />
@@ -434,7 +538,14 @@
                     </button>
                 </div>
             </div>
-        </form>
+            <button type="submit" class="btn btn-primary">Update</button>
+            <button
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => {
+                goto(resolve("/home/profile"));
+            }}>Cancel</button>
+    </form>
     </div>
 </div>
 
@@ -520,9 +631,7 @@
 
                         {#if codeError}
                             <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"
-                                ></i>
-                                {codeError}
+                                <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
                             </div>
                         {/if}
 
@@ -541,57 +650,35 @@
                         </button>
                     </div>
                 {:else}
-                    <form
-                        on:submit|preventDefault={() =>
-                            console.log("Update logic goes here")}
-                    >
+                    <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label
-                                for="oldPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >Current Password</label
-                            >
-                            <input
-                                type="password"
-                                class="form-control"
-                                id="oldPassword"
-                                bind:value={oldPassword}
-                                required
-                            />
+                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
+                            <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
+                            {#if errors.oldPassword}
+                                <div class="invalid-feedback">
+                                    {errors.oldPassword}
+                                </div>
+                            {/if}
                         </div>
                         <div class="mb-3">
-                            <label
-                                for="newPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >New Password</label
-                            >
-                            <input
-                                type="password"
-                                class="form-control"
-                                id="newPassword"
-                                bind:value={newPassword}
-                                required
-                            />
+                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
+                            <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
+                            {#if errors.newPassword}
+                                <div class="invalid-feedback">
+                                    {errors.newPassword}
+                                </div>
+                            {/if}
                         </div>
                         <div class="mb-3">
-                            <label
-                                for="confirmPassword"
-                                class="form-label small fw-bold text-secondary"
-                                >Confirm New Password</label
-                            >
-                            <input
-                                type="password"
-                                class="form-control"
-                                id="confirmPassword"
-                                bind:value={confirmPassword}
-                                required
-                            />
+                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
+                            <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
+                            {#if errors.confirmPassword}
+                                <div class="invalid-feedback">
+                                    {errors.confirmPassword}
+                                </div>
+                            {/if}
                         </div>
-                        <button
-                            type="submit"
-                            class="btn btn-primary w-100 py-2 mt-3"
-                            >Update Password</button
-                        >
+                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
                     </form>
                 {/if}
             </div>

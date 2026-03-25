@@ -1,19 +1,36 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Controllers;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
 public class UserControllerTests : BaseIntegrationTestFixture
 {
-    public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory) { }
+    private readonly IEmailService _mockEmailService;
+    private readonly IOneTimeCodeService _mockOneTimeCodeService;
+    private readonly IFileService _mockFileService;
+    private readonly UserController _controller;
 
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
+    public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
+    {
+        _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
+        _mockEmailService = Substitute.For<IEmailService>();
+        _mockFileService = Substitute.For<IFileService>();
+        _controller = new UserController(ServiceUnderTest,_mockFileService, _mockOneTimeCodeService, _mockEmailService);
+    }
+    
 
     private async Task AddTestUser()
     {
@@ -29,6 +46,32 @@ public class UserControllerTests : BaseIntegrationTestFixture
         });
         await context.SaveChangesAsync();
     }
+    
+    private void SetupUserContext(string userId, string name, string email)
+    {
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Name, name), new Claim(ClaimTypes.Email, email) };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var principal = new ClaimsPrincipal(identity);
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+    }
+    
+    private void SetupUserContext2(string userId, string name)
+    {
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, userId), new Claim(ClaimTypes.Name, name)};
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var principal = new ClaimsPrincipal(identity);
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+    }
+    
+    
 
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
@@ -233,5 +276,149 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
         var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+    
+    
+
+    [Fact]
+    public async Task ValidateUpdatedPassword_PasswordMismatch_ReturnsBadRequest()
+    {
+        var email = "test@example.com";
+        string password = "password";
+        string displayName = "Test User";
+        string oneTimeCode = "111111";
+        
+        SetupUserContext("1", displayName, email);
+        
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", displayName},
+            {"CODE", oneTimeCode},
+            {"MINUTES", "5"}
+        };
+
+        UpdatePasswordRequest request = new UpdatePasswordRequest { OldPassword = password, NewPassword = "Newpassword@2003", NewPasswordConfirm = "NewPasswordd@2004" };
+
+        _mockEmailService.SendEmailAsync(email, EmailTemplate.VerifyEmailCode, emailDictionary).Returns(Task.CompletedTask);;
+
+        var response = await _controller.updatePassword(request);
+        response.ShouldBeOfType<BadRequestObjectResult>();
+        BadRequestObjectResult responseObject = (BadRequestObjectResult)response;
+        // responseObject.Value.ShouldBe("");
+    }
+    
+    [Fact]
+    public async Task ValidateUpdatedPassword_InvalidPassword_ReturnsBadRequest()
+    {
+        var email = "test@example.com";
+        string password = "password";
+        string displayName = "Test User";
+        string oneTimeCode = "111111";
+        
+        SetupUserContext("1", displayName, email);
+        
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country"
+        });
+        await context.SaveChangesAsync();
+        
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", displayName},
+            {"CODE", oneTimeCode},
+            {"MINUTES", "5"}
+        };
+
+        UpdatePasswordRequest request = new UpdatePasswordRequest() { OldPassword = password, NewPassword = "newpassword", NewPasswordConfirm = "newpassword" };
+
+        _mockEmailService.SendEmailAsync(email, EmailTemplate.VerifyEmailCode, emailDictionary).Returns(Task.CompletedTask);;
+
+        var response = await _controller.updatePassword(request);
+        response.ShouldBeOfType<BadRequestObjectResult>();
+    }
+    
+    [Fact]
+    public async Task ValidateUpdatedPassword_ValidPassword_ReturnsOKResponse()
+    {
+        var email = "test@example.com";
+        string password = "password";
+        string displayName = "Test User";
+        string oneTimeCode = "111111";
+        
+        SetupUserContext("1", displayName, email);
+        
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            Country = "Test Country"
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, password);
+        user.PasswordKey = passwordKey;
+        context.Users.Add(user);
+
+        await context.SaveChangesAsync();
+        
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", displayName},
+            {"CODE", oneTimeCode},
+            {"MINUTES", "5"}
+        };
+
+        UpdatePasswordRequest request = new UpdatePasswordRequest() { OldPassword = password, NewPassword = "NewPassword@1999", NewPasswordConfirm = "NewPassword@1999" };
+
+        _mockEmailService.SendEmailAsync(email, EmailTemplate.VerifyEmailCode, emailDictionary).Returns(Task.CompletedTask);;
+
+        var response = await _controller.updatePassword(request);
+        response.ShouldBeOfType<OkResult>();
+    }
+    
+    [Fact]
+    public async Task ValidateUpdatedPassword_UnauthorizedUser_ReturnsUnauthorizedResponse()
+    {
+        var email = "test@example.com";
+        string password = "password";
+        string displayName = "Test User";
+        string oneTimeCode = "111111";
+
+        SetupUserContext2("1", displayName);
+        
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"DISPLAY_NAME", displayName},
+            {"CODE", oneTimeCode},
+            {"MINUTES", "5"}
+        };
+
+        UpdatePasswordRequest request = new UpdatePasswordRequest() { OldPassword = password, NewPassword = "NewPassword@1999", NewPasswordConfirm = "NewPassword@1999" };
+
+        _mockEmailService.SendEmailAsync(email, EmailTemplate.VerifyEmailCode, emailDictionary).Returns(Task.CompletedTask);;
+
+        var response = await _controller.updatePassword(request);
+        response.ShouldBeOfType<UnauthorizedObjectResult>();
     }
 }

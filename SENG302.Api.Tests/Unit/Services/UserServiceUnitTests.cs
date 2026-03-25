@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Services;
+using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Services;
 
@@ -125,5 +127,90 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         Assert.Equal("new@test.com", updatedUser.Email);
         Assert.Equal("New Name", updatedUser.DisplayName);
         Assert.Equal("AU", updatedUser.Country);
+    }
+
+    [Fact]
+    public void ValidateUpdatePasswordRequest_ValidData_ReturnTrue()
+    {
+        var user = new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test",
+            Country = "NZ",
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, "Team700!");
+        user.PasswordKey = passwordKey;
+
+        var valid = UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "Team700!", "Team701!", "Team701!");
+        valid.ShouldBeTrue();
+    }
+    
+    [Fact]
+    public void ValidateUpdatePasswordRequest_CurrentPasswordNotCorrect_ThrowMismatchedPasswordException()
+    {
+        var user = new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test",
+            Country = "NZ",
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, "Team700!");
+        user.PasswordKey = passwordKey;
+
+        Should.Throw<MismatchedPasswordException>(() =>
+            UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "no match", "Team701!", "Team701!"));
+    }
+    
+    [Fact]
+    public void ValidateUpdatePasswordRequest_NewPasswordsDontMatch_ThrowMismatchedPasswordException()
+    {
+        var user = new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test",
+            Country = "NZ",
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, "Team700!");
+        user.PasswordKey = passwordKey;
+
+        Should.Throw<MismatchedPasswordException>(() =>
+            UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "Team700!", "Team701!", "no match"));
+    }
+    
+    [Fact]
+    public void ValidateUpdatePasswordRequest_WeakPassword_ThrowInvalidPassword()
+    {
+        var user = new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test",
+            Country = "NZ",
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, "Team700!");
+        user.PasswordKey = passwordKey;
+
+        Should.Throw<InvalidPasswordException>(() =>
+            UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "Team700!", "weakPassword", "weakPassword"));
+    }
+    
+    [Fact]
+    public void ValidateUpdatePasswordRequest_NewPasswordSameAsOld_ThrowArgumentException()
+    {
+        var user = new User
+        {
+            Email = "test@example.com",
+            DisplayName = "Test",
+            Country = "NZ",
+        };
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, "Team700!");
+        user.PasswordKey = passwordKey;
+
+        Should.Throw<ArgumentException>(() =>
+            UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "Team700!", "Team700!", "Team700!"));
     }
 }

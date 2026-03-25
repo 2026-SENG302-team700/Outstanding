@@ -10,6 +10,7 @@ namespace SENG302.Api.Services;
 
 public interface IUserService
 {
+    bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword, string newPasswordConfirm);
     Task<User> GenerateNewUserAsync(string email, string displayName, string passwordString, string country);
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(int id);
@@ -20,6 +21,7 @@ public interface IUserService
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
+    Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
 }
 
 public enum UserVerificationResult
@@ -547,5 +549,87 @@ public class UserService : IUserService
             await context.SaveChangesAsync();
         }
         return user;
+    }
+
+    /// <summary>
+    /// Checks the password hash and returns a verification result
+    /// </summary>
+    /// <param name="user">The user you are checking the password for</param>
+    /// <param name="password">the password you are checking matches the user</param>
+    /// <returns>The verification result</returns>
+    public PasswordVerificationResult VerifyPassword(User user, string password)
+    {
+        PasswordHasher<User> passwordHasher = new();
+        return passwordHasher.VerifyHashedPassword(user, user.PasswordKey, password);
+    }
+    
+    /// <summary>
+    /// Performs all validation for the update password request
+    /// </summary>
+    /// <param name="user">The users whose password is being updated</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns></returns>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    /// <exception cref="ArgumentException"></exception>
+    public bool ValidateUpdatePasswordRequest(User user, string oldPassword, string newPassword,
+        string newPasswordConfirm)
+    {
+        // Validate old password is the users correct password
+        var result = VerifyPassword(user, oldPassword);
+        if (!(result == PasswordVerificationResult.Success || result == PasswordVerificationResult.SuccessRehashNeeded))
+        {
+            throw new MismatchedPasswordException("Old password does not match password on file");
+        }
+        
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+        
+        // Validate new password not the same as old password
+        if (PasswordMatching(newPassword, oldPassword))
+        {
+            throw new ArgumentException("New password can't be the same as old password");
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates and performs the request to update the users password
+    /// </summary>
+    /// <param name="userId">The users id</param>
+    /// <param name="oldPassword">The password that the user wishes to change from</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserByIdAsync(userId);
+        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        // validate inputs
+        if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
+        
+        // Perform update
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
     }
 }
