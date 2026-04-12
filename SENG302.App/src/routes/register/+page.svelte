@@ -5,6 +5,7 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
+    import PasswordForm from "$lib/forms/password-form.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -40,8 +41,9 @@
             valid = false;
         }
 
-        if (displayName.trim() == '' || displayName.trim().length < 3) {
-            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+        if (displayName.trim() == "" || displayName.trim().length < 3) {
+            errors.displayName =
+                "Display name cannot be made entirely or mostly out of spaces.";
             valid = false;
         }
 
@@ -68,8 +70,6 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
-
-        
 
         // Check for empty fields
         if (!email) {
@@ -124,7 +124,7 @@
                 "Display name must be between 3 and 64 characters.";
             valid = false;
         }
-        
+
         // clears password fields if the data is not valid
         if (!valid) {
             password = "";
@@ -138,6 +138,7 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
+        console.log(password);
         if (!validateInputs()) return;
 
         try {
@@ -259,34 +260,20 @@
             {/if}
         </div>
         <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                class:is-invalid={errors.password}
-                placeholder="Password *"
-                bind:value={password}
-                disabled={loading}
+            <PasswordForm
+                bind:password
+                error={errors.password}
+                {loading}
+                passConfirm={false}
             />
-            {#if errors.password}
-                <div class="invalid-feedback">
-                    {errors.password}
-                </div>
-            {/if}
         </div>
         <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                class:is-invalid={errors.passwordConfirm}
-                placeholder="Confirm Password *"
-                bind:value={passwordConfirm}
-                disabled={loading}
+            <PasswordForm
+                bind:password={passwordConfirm}
+                error={errors.passwordConfirm}
+                {loading}
+                passConfirm={true}
             />
-            {#if errors.passwordConfirm}
-                <div class="invalid-feedback">
-                    {errors.passwordConfirm}
-                </div>
-            {/if}
         </div>
         <div>
             <button
