@@ -2,10 +2,12 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import PasswordForm from "$lib/forms/password-form.svelte";
+    import EmailForm from "$lib/forms/email-form.svelte";
+    import DisplayNameForm from "$lib/forms/display-name-form.svelte";
+    import CountrySelectForm from "$lib/forms/country-select-form.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -209,55 +211,21 @@
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.email}
-                placeholder="Email *"
-                bind:value={email}
-                disabled={loading}
-            />
-            {#if errors.email}
-                <div class="invalid-feedback">
-                    {errors.email}
-                </div>
-            {/if}
+            <EmailForm bind:email error={errors.email} {loading} />
         </div>
         <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.displayName}
-                placeholder="Display Name *"
-                bind:value={displayName}
-                disabled={loading}
+            <DisplayNameForm
+                bind:displayName
+                error={errors.displayName}
+                {loading}
             />
-            {#if errors.displayName}
-                <div class="invalid-feedback">
-                    {errors.displayName}
-                </div>
-            {/if}
         </div>
         <div class="mb-3">
-            <select
-                class="form-control"
-                class:country-select={!selectedCountryCode}
-                class:is-invalid={errors.country}
-                bind:value={selectedCountryCode}
-                disabled={loading}
-            >
-                <option value="">Select Country *</option>
-                {#each countries as country}
-                    <option value={country.code}>
-                        {country.name}
-                    </option>
-                {/each}
-            </select>
-            {#if errors.country}
-                <div class="invalid-feedback">
-                    {errors.country}
-                </div>
-            {/if}
+            <CountrySelectForm
+                bind:selectedCountryCode
+                error={errors.country}
+                {loading}
+            />
         </div>
         <div class="mb-3">
             <PasswordForm
