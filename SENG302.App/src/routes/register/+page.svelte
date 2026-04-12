@@ -4,10 +4,12 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import PasswordForm from "$lib/forms/password-form.svelte";
-    import EmailForm from "$lib/forms/email-form.svelte";
-    import DisplayNameForm from "$lib/forms/display-name-form.svelte";
-    import CountrySelectForm from "$lib/forms/country-select-form.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import DisplayNameForm from "$lib/components/display-name-form.svelte";
+    import CountrySelectForm from "$lib/components/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -140,7 +142,6 @@
      * redirects the user to the home page. If there is an error, displays an appropriate message.
      */
     async function registerUser() {
-        console.log(password);
         if (!validateInputs()) return;
 
         try {
@@ -201,11 +202,7 @@
 
 <div class="container">
     <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}>Cancel</button
-        >
+        <CancelButton path="/"></CancelButton>
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
@@ -244,13 +241,7 @@
             />
         </div>
         <div>
-            <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
-            >
-                {loading ? "Registering..." : "Register"}
-            </button>
+            <AuthenticatorButton buttonType={"register"} />
         </div>
     </form>
 </div>
