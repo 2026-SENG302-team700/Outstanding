@@ -93,6 +93,14 @@ public class UserServiceUnitTest : BaseUnitTestFixture
     }
     
     [Fact]
+    public async Task CheckUserCredentials_InvalidEmail_ExpectInvalidEmailResult()
+    {
+        var result = await UserServiceUnderTest.CheckUserCredentialsAsync("hear❤️t5@test.com", "AnyPassword1!");
+        Assert.Equal(UserVerificationResult.MalformedEmail, result.userVerificationResult);
+        Assert.Null(result.user);
+    }
+    
+    [Fact]
     public async Task CheckUserCredentials_UnverifiedEmailTimeExpired_ExpectAccountUnverifiedResult()
     {
         var email = "unverified@test.com";
@@ -106,6 +114,22 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         }
         var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
+        Assert.NotNull(result.user);
+    }
+    
+    [Fact]
+    public async Task CheckUserCredentials_ValidEmailPassword_ExpectSuccessResult()
+    {
+        var email = "unverified@test.com";
+        using (var context = await DbFactory.CreateDbContextAsync())
+        {
+            var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
+            user.EmailVerified = true;
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+        }
+        var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
+        Assert.Equal(UserVerificationResult.Success, result.userVerificationResult);
         Assert.NotNull(result.user);
     }
     

@@ -154,6 +154,7 @@ public class LoginControllerTest : BaseIntegrationTestFixture
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "fella!1Aa", "shivsheep.gmail.com", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "2016swag", "NZ")]
+    [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep$1a", "shiv3.hear❤️t@gmail.com", "NZ")]
     public async Task LoginUser_MalformedEmail_ReturnBadRequest(
         string userEmail,
         string userDisplayName,
