@@ -4,6 +4,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -104,11 +106,7 @@
 
 <div class="container">
     <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(resolve("/"))}>Cancel</button
-        >
+        <CancelButton path="/"></CancelButton>
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
@@ -144,13 +142,7 @@
             {/if}
         </div>
         <div class="mb-3">
-            <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
-            >
-                {loading ? "Loading..." : "Login"}
-            </button>
+            <AuthenticatorButton buttonType={"login"} />
         </div>
         <div class="mb-3">
             <button
