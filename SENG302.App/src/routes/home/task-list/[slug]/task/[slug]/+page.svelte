@@ -5,6 +5,8 @@
     import { onMount } from "svelte";
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import { formatDate } from "$lib/datepicker/formatDate";
+    import TitleForm from "$lib/components/title-form.svelte";
+    import DescriptionForm from "$lib/components/description-form.svelte";
 
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
@@ -177,18 +179,11 @@
         <div style="display: flex; flex-direction: column;" class="mb-4">
             {#if editMode}
                 <strong>Title:</strong>
-                <input
-                    type="text"
-                    class="form-control text-center fs-3 fw-bold"
-                    class:is-invalid={errors.name}
-                    bind:value={editedTask.editedName}
-                    disabled={loading}
+                <TitleForm
+                        bind:name={editedTask.editedName}
+                        error={errors.name}
+                        loading={loading}
                 />
-                {#if errors.name}
-                    <div class="invalid-feedback">
-                        {errors.name}
-                    </div>
-                {/if}
             {:else}
                 <h1 class="text-center mb-4">{taskItem.name}</h1>
             {/if}
@@ -196,19 +191,11 @@
             <div class="mb-2">
                 {#if editMode}
                     <strong>Description:</strong>
-                    <input
-                        type="text"
-                        class="form-control"
-                        class:is-invalid={errors.description}
-                        placeholder="Description"
-                        bind:value={editedTask.editedDesc}
-                        disabled={loading}
-                    />
-                    {#if errors.description}
-                        <div class="invalid-feedback">
-                            {errors.description}
-                        </div>
-                    {/if}
+                    <DescriptionForm
+                        bind:description={editedTask.editedDesc}
+                        error={errors.description}
+                        loading={loading}
+                    />    
                 {:else}
                     <strong>Description:</strong>
                     {taskItem.description

@@ -147,7 +147,12 @@
         </h1>
     </div>
     <div class="mb-3">
-        <CancelButton path="." />
+        <button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto(".")}
+        >Cancel
+        </button>
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
