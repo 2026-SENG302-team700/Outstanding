@@ -99,7 +99,7 @@
             class="btn btn-primary"
             on:click={() =>
                 goto(resolve(`/home/task-list/${params.slug}/create-task`))}
-            >+ Add Task
+            >Add Task
         </button>
     </div>
     {#if loading && tasks.length === 0}
