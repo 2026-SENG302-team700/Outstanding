@@ -4,7 +4,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import SubmitButton from "$lib/components/submit-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
 
     let email = $state("");
@@ -142,7 +142,7 @@
             {/if}
         </div>
         <div class="mb-3">
-            <AuthenticatorButton buttonType={"login"} />
+            <SubmitButton buttonType={"login"} />
         </div>
         <div class="mb-3">
             <button

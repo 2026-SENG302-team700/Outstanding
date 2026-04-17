@@ -6,9 +6,9 @@
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import PasswordForm from "$lib/components/password-form.svelte";
     import EmailForm from "$lib/components/email-form.svelte";
-    import DisplayNameForm from "$lib/components/display-name-form.svelte";
+    import ObjectNameForm from "$lib/components/object-name-form.svelte";
     import CountrySelectForm from "$lib/components/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import AuthenticatorButton from "$lib/components/submit-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
 
     let email = $state("");
@@ -211,10 +211,11 @@
             <EmailForm bind:email error={errors.email} {loading} />
         </div>
         <div class="mb-3">
-            <DisplayNameForm
+            <ObjectNameForm
                 bind:displayName
                 error={errors.displayName}
                 {loading}
+                type={"user"}
             />
         </div>
         <div class="mb-3">
