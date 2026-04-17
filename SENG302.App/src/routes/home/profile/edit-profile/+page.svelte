@@ -443,9 +443,8 @@
      */
     async function sendToEditor() {
         clearErrors()
-        console.log("Is file showing as empty?")
+        imageEditor.highlightError(false);
         if (!files || files.length === 0) return;
-        console.log("File definitely exists and is greater than 0: ", files)
         imageEditor.setImg(files[0]);
     }
     
@@ -458,22 +457,22 @@
     async function updatePfp() {
         const data = imageEditor.exportData();
         
-        console.log("error: " + imageError)
-
-        errors.image = imageError;
-        console.log("error: " + errors.image);
-        console.log("files: ", files)
+        console.log("imageError: " + imageError)
         
         console.log('data: ', data)
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected"
             }
+        }
+        errors.image = imageError;
+        console.log("error: " + errors.image);
+        
+        if (imageError) {
+            imageEditor.highlightError(true)
             return;
         }
         
-        if (imageError) {
-            return;}
         
         let imageData = data.data
         let imageFile = data.file
