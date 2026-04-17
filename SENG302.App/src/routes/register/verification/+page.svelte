@@ -54,12 +54,13 @@
                     resendLinkVisible = true;
                 }
             } else {
-                buttonDisabled = true;
-                displayError(
-                    "Code is no longer valid, account no longer exists",
-                    false,
-                );
-                checkCode();
+                // buttonDisabled = true;
+                // displayError(
+                //     "Code is no longer valid, account no longer exists",
+                //     false,
+                // );
+                // checkCode();
+                timeRemainingText = formatTime(0);
             }
         }, 1000);
     }
