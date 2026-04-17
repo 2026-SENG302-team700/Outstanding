@@ -37,6 +37,7 @@
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
+    let pfpCancelButton: HTMLButtonElement;
 
     let errors = $state({
         email: "",
@@ -433,7 +434,10 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
-        if (!files || files.length === 0) return;
+        console.log("recieve file");
+        if (!files || files.length === 0) {
+            return;
+        }
         imageEditor.setImg(files[0]);
     }
 
@@ -491,6 +495,7 @@
                 data-bs-target="#pfpInputModal"
                 on:click={() => {
                     imageEditor.reset();
+                    pfpInput.click();
                 }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
@@ -759,7 +764,13 @@
                     name="pfp"
                     type="file"
                     class="d-none"
-                    on:change={sendToEditor}
+                    on:cancel={() => {pfpCancelButton.click()}}
+                    on:change={async () => {
+                        await sendToEditor();
+                        pfpInput.value = '';
+                    }
+                    
+                    }
                 />
 
                 <ImageEditor bind:this={imageEditor} />
@@ -782,6 +793,7 @@
                     type="button"
                     class="btn btn-secondary"
                     data-bs-dismiss="modal"
+                    bind:this={pfpCancelButton}
                 >Cancel</button>
             </div>
         </div>
