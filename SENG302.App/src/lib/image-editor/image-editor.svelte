@@ -3,7 +3,9 @@
     import { onDestroy, onMount } from "svelte";
 
     const profileSize = $state(250.0);
-
+    
+    let { imageErrors = $bindable("") } = $props()
+    
     let imageSrc = $state("");
     let imageFile = $state();
 
@@ -46,6 +48,7 @@
      */
     export async function setImg(file: File) {
         if (!mimeTypes.includes(file.type)) {
+            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp"
             addToast(
                 "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
                 "error",
@@ -54,6 +57,9 @@
         }
 
         if (file.size > 5000000) {
+            console.log("ImageError: ", imageErrors)
+            imageErrors = "Image too large, maximum file size is 5MB", "error"
+            console.log("ImageError: ", imageErrors)
             addToast("Image too large, maximum file size is 5MB", "error");
             return;
         }
@@ -77,7 +83,7 @@
                 newWidth = (newHeight / height) * width;
             }
         } catch (error) {
-            console.log("image not found");
+            console.log("image not found", error);
         }
     }
 
@@ -91,7 +97,6 @@
             img.src = url;
 
             await img.decode();
-
             return {
                 width: img.naturalWidth,
                 height: img.naturalHeight,

@@ -18,6 +18,7 @@
     let pfpInput: HTMLInputElement;
     let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
+    let pfpModal: Modal | undefined;
     let resendTimer = $state(0);
     let isSending = $state(false);
     let currentModalStep = $state("verify");
@@ -45,6 +46,7 @@
         newPassword: "",
         confirmPassword: ""
     });
+    let imageError = $state("")
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
         if (userCode.length === 6) {
@@ -59,6 +61,7 @@
 
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
+            pfpModal = new BootstrapModal(pfpModal);
         }
     });
 
@@ -436,14 +439,32 @@
         if (!files || files.length === 0) return;
         imageEditor.setImg(files[0]);
     }
-
+    
 
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
      * @param imageFile the file to upload
      */
-    async function updatePfp(imageData: PfpData, imageFile: File) {
+    async function updatePfp() {
+        const data = imageEditor.exportData();
+        
+        console.log("error: " + imageError)
+        
+        if (!data) {
+            if (!imageError) {
+                imageError = "No file Selected"
+            }
+            addToast("No file selected!", "error");
+            return;
+        }
+        
+        if (imageError) {return;}
+        
+        
+        imageData = data.data
+        imageFile = data.file
+        
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -470,6 +491,7 @@
                     ...u,
                     pfpData: imageData,
                 }));
+                pfpModal.hide()
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -491,6 +513,7 @@
                 data-bs-target="#pfpInputModal"
                 on:click={() => {
                     imageEditor.reset();
+                    pfpModal?.Show()
                 }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
@@ -726,6 +749,7 @@
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
+    bind:this={modalElement}
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
 >
@@ -743,46 +767,43 @@
                 ></button>
             </div>
             <div class="modal-body">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    on:click={() => pfpInput.click()}
-                >
-                    Choose Image
-                </button>
+                <form on:submit|preventDefault={() => updatePfp()}>
+                    <button
+                            type="button"
+                            class="btn btn-primary"
+                            on:click={() => pfpInput.click()}
+                    >
+                        Choose Image
+                    </button>
 
-                <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:change={sendToEditor}
-                />
-
-                <ImageEditor bind:this={imageEditor} />
-            </div>
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    on:click={() => {
-                        const data = imageEditor.exportData();
-                        if (data) {
-                            updatePfp(data.data, data.file);
-                        } else {
-                            addToast("No file selected!", "error");
-                        }
-                    }}
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal">Submit</button
-                >
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                >Cancel</button>
+                    <input
+                            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                            bind:files
+                            bind:this={pfpInput}
+                            id="pfp"
+                            name="pfp"
+                            type="file"
+                            class="d-none"
+                            on:change={sendToEditor}
+                    />
+                    <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
+                    {#if imageError}
+                        <div class="invalid-feedback">
+                            {imageError}
+                        </div>
+                    {/if}
+                    <div class="modal-footer">
+                        <button
+                                type="submit"
+                                class="btn btn-primary"
+                        >Submit</button>
+                        <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                        >Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
