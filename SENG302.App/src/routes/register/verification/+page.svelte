@@ -61,6 +61,7 @@
                 // );
                 // checkCode();
                 timeRemainingText = formatTime(0);
+                resendLinkVisible = false;
             }
         }, 1000);
     }
