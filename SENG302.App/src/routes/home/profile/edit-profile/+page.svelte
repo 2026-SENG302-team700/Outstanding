@@ -748,14 +748,6 @@
                 ></button>
             </div>
             <div class="modal-body">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    on:click={() => pfpInput.click()}
-                >
-                    Choose Image
-                </button>
-
                 <input
                     accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
                     bind:files
