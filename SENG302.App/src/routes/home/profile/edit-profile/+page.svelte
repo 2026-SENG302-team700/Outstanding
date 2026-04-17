@@ -759,6 +759,7 @@
                     on:cancel={() => {pfpCancelButton.click()}}
                     on:change={async () => {
                         await sendToEditor();
+                        // Reset the value so that if we select the same image a second time the on:change event is triggered
                         pfpInput.value = '';
                     }
                     
