@@ -60,7 +60,6 @@
             console.log("ImageError: ", imageErrors)
             imageErrors = "Image too large, maximum file size is 5MB", "error"
             console.log("ImageError: ", imageErrors)
-            addToast("Image too large, maximum file size is 5MB", "error");
             return;
         }
 

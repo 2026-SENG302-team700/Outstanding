@@ -16,6 +16,7 @@
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+    let pfpModalElement: HTMLElement | undefined = $state();
     let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
     let pfpModal: Modal | undefined;
@@ -44,7 +45,8 @@
         displayName: "",
         oldPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        image: ""
     });
     let imageError = $state("")
     // automatically trigger the checkCode when the length reaches 6
@@ -61,7 +63,9 @@
 
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
-            pfpModal = new BootstrapModal(pfpModal);
+        }
+        if (pfpModalElement) {
+            pfpModal = new BootstrapModal(pfpModalElement);
         }
     });
 
@@ -74,6 +78,8 @@
         errors.oldPassword = "";
         errors.newPassword = "";
         errors.confirmPassword = "";
+        errors.image = "";
+        imageError = "";
     }
 
     /**
@@ -436,7 +442,10 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
+        clearErrors()
+        console.log("Is file showing as empty?")
         if (!files || files.length === 0) return;
+        console.log("File definitely exists and is greater than 0: ", files)
         imageEditor.setImg(files[0]);
     }
     
@@ -450,20 +459,24 @@
         const data = imageEditor.exportData();
         
         console.log("error: " + imageError)
+
+        errors.image = imageError;
+        console.log("error: " + errors.image);
+        console.log("files: ", files)
         
+        console.log('data: ', data)
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected"
             }
-            addToast("No file selected!", "error");
             return;
         }
         
-        if (imageError) {return;}
+        if (imageError) {
+            return;}
         
-        
-        imageData = data.data
-        imageFile = data.file
+        let imageData = data.data
+        let imageFile = data.file
         
         try {
             const formData = new FormData();
@@ -513,7 +526,8 @@
                 data-bs-target="#pfpInputModal"
                 on:click={() => {
                     imageEditor.reset();
-                    pfpModal?.Show()
+                    clearErrors();
+                    pfpInput.value = ""
                 }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
@@ -749,7 +763,7 @@
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
-    bind:this={modalElement}
+    bind:this={pfpModalElement}
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
 >
@@ -787,9 +801,9 @@
                             on:change={sendToEditor}
                     />
                     <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
-                    {#if imageError}
-                        <div class="invalid-feedback">
-                            {imageError}
+                    {#if errors.image}
+                        <div class="text-danger small mt-1">
+                            {errors.image}
                         </div>
                     {/if}
                     <div class="modal-footer">
