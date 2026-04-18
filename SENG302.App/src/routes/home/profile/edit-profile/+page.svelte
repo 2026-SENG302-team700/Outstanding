@@ -39,6 +39,7 @@
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
+    let pfpCancelButton: HTMLButtonElement;
 
     let errors = $state({
         email: "",
@@ -444,7 +445,10 @@
     async function sendToEditor() {
         clearErrors()
         imageEditor.highlightError(false);
-        if (!files || files.length === 0) return;
+        console.log("recieve file");
+        if (!files || files.length === 0) {
+            return;
+        }
         imageEditor.setImg(files[0]);
     }
     
@@ -527,6 +531,7 @@
                     imageEditor.reset();
                     clearErrors();
                     pfpInput.value = ""
+                    pfpInput.click();
                 }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
@@ -781,14 +786,6 @@
             </div>
             <div class="modal-body">
                 <form on:submit|preventDefault={() => updatePfp()}>
-                    <button
-                            type="button"
-                            class="btn btn-primary"
-                            on:click={() => pfpInput.click()}
-                    >
-                        Choose Image
-                    </button>
-
                     <input
                             accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
                             bind:files
@@ -797,7 +794,13 @@
                             name="pfp"
                             type="file"
                             class="d-none"
-                            on:change={sendToEditor}
+                            on:cancel={() => {pfpCancelButton.click()}}
+                            on:change={async () => {
+                            await sendToEditor();
+                            // Reset the value so that if we select the same image a second time the on:change event is triggered
+                            pfpInput.value = '';
+                        }
+                    }
                     />
                     <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
                     {#if errors.image}
@@ -814,6 +817,7 @@
                                 type="button"
                                 class="btn btn-secondary"
                                 data-bs-dismiss="modal"
+                                bind:this={pfpCancelButton}
                         >Cancel</button>
                     </div>
                 </form>
