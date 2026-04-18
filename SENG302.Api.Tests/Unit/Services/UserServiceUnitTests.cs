@@ -63,6 +63,13 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         errors.Keys.ShouldContain("displayName");
         errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
+
+    [Fact]
+    public void ValidateDisplayName_OnlyNumbers_ExpectInvalidDisplayNameCharsException()
+    {
+        var service = (UserService)UserServiceUnderTest;
+        Assert.Throws<InvalidDisplayNameCharsException>(() => service.ValidateDisplayName("12345"));
+    }
     
     [Fact]
     public void ValidatePassword_MismatchedPasswords_ExpectErrorMessageInErrors()

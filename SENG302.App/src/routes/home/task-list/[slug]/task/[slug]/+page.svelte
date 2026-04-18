@@ -196,7 +196,7 @@
                     </div>
                 {/if}
             {:else}
-                <h1 class="text-center mb-4">{taskItem.name}</h1>
+                <h1 class="text-break text-center mb-4" style="width: 1250px;">{taskItem.name}</h1>
             {/if}
 
             <div class="mb-2">
@@ -217,9 +217,11 @@
                     {/if}
                 {:else}
                     <strong>Description:</strong>
-                    {taskItem.description
-                        ? taskItem.description
-                        : "No Description"}
+                    <div class="text-break" style="width: 1250px;">
+                        {taskItem.description
+                            ? taskItem.description
+                            : "No Description"}
+                    </div>
                 {/if}
             </div>
             <div class="mb-2">
