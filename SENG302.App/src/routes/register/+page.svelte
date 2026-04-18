@@ -5,6 +5,13 @@
     import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import DisplayNameForm from "$lib/components/display-name-form.svelte";
+    import CountrySelectForm from "$lib/components/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
+
 
     let email = $state("");
     let displayName = $state("");
@@ -195,104 +202,47 @@
 
 <div class="container">
     <div class="mb-3">
-        <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => goto(resolve("/"))}>Cancel</button
-        >
+        <CancelButton path="/" />
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
-            <input
-                    type="text"
-                    class="form-control"
-                    class:is-invalid={errors.email}
-                    placeholder="Email *"
-                    bind:value={email}
-                    disabled={loading}
-            />
-            {#if errors.email}
-                <div class="invalid-feedback">
-                    {errors.email}
-                </div>
-            {/if}
+            <EmailForm bind:email error={errors.email} {loading} />
         </div>
         <div class="mb-3">
-            <input
-                    type="text"
-                    class="form-control"
-                    class:is-invalid={errors.displayName}
-                    placeholder="Display Name *"
-                    bind:value={displayName}
-                    disabled={loading}
+            <DisplayNameForm
+                    bind:displayName
+                    error={errors.displayName}
+                    {loading}
             />
-            {#if errors.displayName}
-                <div class="invalid-feedback">
-                    {errors.displayName}
-                </div>
-            {/if}
         </div>
         <div class="mb-3">
-            <select
-                    class="form-control"
-                    class:country-select={!selectedCountryCode}
-                    class:is-invalid={errors.country}
-                    bind:value={selectedCountryCode}
-                    disabled={loading}
-            >
-                <option value="">Select Country *</option>
-                {#each countries as country}
-                    <option value={country.code}>
-                        {country.name}
-                    </option>
-                {/each}
-            </select>
-            {#if errors.country}
-                <div class="invalid-feedback">
-                    {errors.country}
-                </div>
-            {/if}
+            <CountrySelectForm
+                    bind:selectedCountryCode
+                    error={errors.country}
+                    {loading}
+            />
         </div>
         <div class="mb-3">
-            <input
-                    type="password"
-                    class="form-control"
-                    class:is-invalid={errors.password}
-                    placeholder="Password *"
-                    bind:value={password}
-                    disabled={loading}
+            <PasswordForm
+                    bind:password
+                    error={errors.password}
+                    {loading}
+                    passConfirm={false}
             />
-            {#if errors.password}
-                <div class="invalid-feedback">
-                    {errors.password}
-                </div>
-            {/if}
         </div>
         <div class="mb-3">
-            <input
-                    type="password"
-                    class="form-control"
-                    class:is-invalid={errors.passwordConfirm}
-                    placeholder="Confirm Password *"
-                    bind:value={passwordConfirm}
-                    disabled={loading}
+            <PasswordForm
+                    bind:password={passwordConfirm}
+                    error={errors.passwordConfirm}
+                    {loading}
+                    passConfirm={true}
+
             />
-            {#if errors.passwordConfirm}
-                <div class="invalid-feedback">
-                    {errors.passwordConfirm}
-                </div>
-            {/if}
         </div>
         <div>
-            <button
-                    type="submit"
-                    class="btn btn-primary w-100"
-                    disabled={loading}
-            >
-                {loading ? "Registering..." : "Register"}
-            </button>
+            <AuthenticatorButton buttonType={"register"} />
         </div>
     </form>
 </div>

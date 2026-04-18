@@ -218,7 +218,7 @@
                     class="btn btn-primary w-100"
                     disabled={loading}
             >
-                {loading ? "Creating..." : "Add Task"}
+                {loading ? "Creating..." : "Create"}
             </button>
         </div>
     </form>
