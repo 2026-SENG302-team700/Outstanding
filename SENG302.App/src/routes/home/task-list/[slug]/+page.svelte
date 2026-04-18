@@ -90,7 +90,7 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
+        <h1 class="text-break text-center mb-4" style="flex: 1; justify-content: center; width: 1270px">
             {listName}
         </h1>
     </div>
