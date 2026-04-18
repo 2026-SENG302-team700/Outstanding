@@ -684,7 +684,7 @@
                 {:else}
                     <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
+                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password *</label>
                             <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
                             {#if errors.oldPassword}
                                 <div class="invalid-feedback">
@@ -693,7 +693,7 @@
                             {/if}
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
+                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password *</label>
                             <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
                             {#if errors.newPassword}
                                 <div class="invalid-feedback">
@@ -702,7 +702,7 @@
                             {/if}
                         </div>
                         <div class="mb-3">
-                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
+                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password *</label>
                             <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
                             {#if errors.confirmPassword}
                                 <div class="invalid-feedback">
