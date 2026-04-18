@@ -461,16 +461,12 @@
     async function updatePfp() {
         const data = imageEditor.exportData();
         
-        console.log("imageError: " + imageError)
-        
-        console.log('data: ', data)
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected"
             }
         }
         errors.image = imageError;
-        console.log("error: " + errors.image);
         
         if (imageError) {
             imageEditor.highlightError(true)

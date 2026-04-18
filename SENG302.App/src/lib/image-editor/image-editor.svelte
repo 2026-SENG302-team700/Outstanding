@@ -57,9 +57,7 @@
         }
 
         if (file.size > 5000000) {
-            console.log("ImageError: ", imageErrors)
             imageErrors = "Image too large, maximum file size is 5MB", "error"
-            console.log("ImageError: ", imageErrors)
             return;
         }
 
