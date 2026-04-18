@@ -2,14 +2,9 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import PasswordForm from "$lib/components/password-form.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import DisplayNameForm from "$lib/components/display-name-form.svelte";
-    import CountrySelectForm from "$lib/components/country-select-form.svelte";
-    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
 
     let email = $state("");
     let displayName = $state("");
@@ -45,9 +40,8 @@
             valid = false;
         }
 
-        if (displayName.trim() == "" || displayName.trim().length < 3) {
-            errors.displayName =
-                "Display name cannot be made entirely or mostly out of spaces.";
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
             valid = false;
         }
 
@@ -74,6 +68,8 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
+
+
 
         // Check for empty fields
         if (!email) {
@@ -168,21 +164,18 @@
                 // we display a toast with the badrequest response
                 // from the back end.
 
+                if (data?.errors) {
+                    errors.email = data.errors.email ?? "";
+                    errors.displayName = data.errors.displayName ?? "";
+                    errors.password = data.errors.password ?? "";
+                    errors.passwordConfirm = data.errors.passwordConfirm ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
+                }
+
                 password = "";
                 passwordConfirm = "";
 
-                switch (data.errorType) {
-                    // check for duplicate email, throws regular error rather than "something went wrong"
-                    case "DuplicateEmailException":
-                        email = "";
-                        errors.email =
-                            data?.message ||
-                            "This email address is already in use by another account.";
-                        break;
-                    default:
-                        addToast(data?.message || "An error occured.", "error");
-                        break;
-                }
                 return;
             }
             // set email in local storage for validation page
@@ -202,46 +195,104 @@
 
 <div class="container">
     <div class="mb-3">
-        <CancelButton path="/"></CancelButton>
+        <button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto(resolve("/"))}>Cancel</button
+        >
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
     <form on:submit|preventDefault={registerUser}>
         <div class="mb-3">
-            <EmailForm bind:email error={errors.email} {loading} />
+            <input
+                    type="text"
+                    class="form-control"
+                    class:is-invalid={errors.email}
+                    placeholder="Email *"
+                    bind:value={email}
+                    disabled={loading}
+            />
+            {#if errors.email}
+                <div class="invalid-feedback">
+                    {errors.email}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
-            <DisplayNameForm
-                bind:displayName
-                error={errors.displayName}
-                {loading}
+            <input
+                    type="text"
+                    class="form-control"
+                    class:is-invalid={errors.displayName}
+                    placeholder="Display Name *"
+                    bind:value={displayName}
+                    disabled={loading}
             />
+            {#if errors.displayName}
+                <div class="invalid-feedback">
+                    {errors.displayName}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
-            <CountrySelectForm
-                bind:selectedCountryCode
-                error={errors.country}
-                {loading}
-            />
+            <select
+                    class="form-control"
+                    class:country-select={!selectedCountryCode}
+                    class:is-invalid={errors.country}
+                    bind:value={selectedCountryCode}
+                    disabled={loading}
+            >
+                <option value="">Select Country *</option>
+                {#each countries as country}
+                    <option value={country.code}>
+                        {country.name}
+                    </option>
+                {/each}
+            </select>
+            {#if errors.country}
+                <div class="invalid-feedback">
+                    {errors.country}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
-            <PasswordForm
-                bind:password
-                error={errors.password}
-                {loading}
-                passConfirm={false}
+            <input
+                    type="password"
+                    class="form-control"
+                    class:is-invalid={errors.password}
+                    placeholder="Password *"
+                    bind:value={password}
+                    disabled={loading}
             />
+            {#if errors.password}
+                <div class="invalid-feedback">
+                    {errors.password}
+                </div>
+            {/if}
         </div>
         <div class="mb-3">
-            <PasswordForm
-                bind:password={passwordConfirm}
-                error={errors.passwordConfirm}
-                {loading}
-                passConfirm={true}
+            <input
+                    type="password"
+                    class="form-control"
+                    class:is-invalid={errors.passwordConfirm}
+                    placeholder="Confirm Password *"
+                    bind:value={passwordConfirm}
+                    disabled={loading}
             />
+            {#if errors.passwordConfirm}
+                <div class="invalid-feedback">
+                    {errors.passwordConfirm}
+                </div>
+            {/if}
         </div>
         <div>
-            <AuthenticatorButton buttonType={"register"} />
+            <button
+                    type="submit"
+                    class="btn btn-primary w-100"
+                    disabled={loading}
+            >
+                {loading ? "Registering..." : "Register"}
+            </button>
         </div>
     </form>
 </div>

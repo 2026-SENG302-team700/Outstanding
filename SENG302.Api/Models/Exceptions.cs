@@ -1,64 +1,4 @@
 /// <summary>
-/// Exception to throw when e-mail already exists in the db.
-/// </summary>
-public class DuplicateEmailException : Exception
-{
-    public DuplicateEmailException() { }
-
-    public DuplicateEmailException(string message) : base(message) { }
-
-    public DuplicateEmailException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name has an invalid name length.
-/// </summary>
-public class InvalidLengthException : Exception
-{
-    public InvalidLengthException() { }
-
-    public InvalidLengthException(string message) : base(message) { }
-
-    public InvalidLengthException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name length is invalid.
-/// </summary>
-public class InvalidDisplayNameLengthException : Exception
-{
-    public InvalidDisplayNameLengthException() { }
-
-    public InvalidDisplayNameLengthException(string message) : base(message) { }
-
-    public InvalidDisplayNameLengthException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the display name has invalid characters
-/// </summary>
-public class InvalidDisplayNameCharsException : Exception
-{
-    public InvalidDisplayNameCharsException() { }
-
-    public InvalidDisplayNameCharsException(string message) : base(message) { }
-
-    public InvalidDisplayNameCharsException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
-/// Exception to throw when the email is of an invalid format
-/// </summary>
-public class InvalidEmailFormatException : Exception
-{
-    public InvalidEmailFormatException() { }
-
-    public InvalidEmailFormatException(string message) : base(message) { }
-
-    public InvalidEmailFormatException(string message, Exception inner) : base(message, inner) { }
-}
-
-/// <summary>
 /// Exception to throw when the password formatting is invalid (doesn't meet requirements)
 /// </summary>
 public class InvalidPasswordException : Exception
@@ -92,4 +32,19 @@ public class InvalidCountryException : Exception
     public InvalidCountryException(string message) : base(message) { }
 
     public InvalidCountryException(string message, Exception inner) : base(message, inner) { }
+}
+
+
+/// <summary>
+/// Exception to throw when general, and multiple validation error(s) occur.
+/// </summary>
+public class MultipleValidationException : Exception
+{
+    public Dictionary<string, string> Errors { get; }
+
+    public MultipleValidationException(Dictionary<string, string> errors) : base("validation errors occurred")
+    {
+        Errors = errors;
+    }
+    
 }

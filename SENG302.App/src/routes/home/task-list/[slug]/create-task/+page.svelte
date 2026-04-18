@@ -85,11 +85,14 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-
-                addToast(
-                    (await response.text()) || "An error occured.",
-                    "error",
-                );
+                const data = await response.json().catch(() => null);
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
+                }
                 return;
             }
 
@@ -145,21 +148,21 @@
     </div>
     <div class="mb-3">
         <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(".")}
-            >Cancel
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto(".")}
+        >Cancel
         </button>
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
             <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.name}
-                placeholder="Title *"
-                bind:value={name}
-                disabled={loading}
+                    type="text"
+                    class="form-control"
+                    class:is-invalid={errors.name}
+                    placeholder="Title *"
+                    bind:value={name}
+                    disabled={loading}
             />
             {#if errors.name}
                 <div class="invalid-feedback">
@@ -170,12 +173,12 @@
 
         <div class="mb-3">
             <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.description}
-                placeholder="Description"
-                bind:value={description}
-                disabled={loading}
+                    type="text"
+                    class="form-control"
+                    class:is-invalid={errors.description}
+                    placeholder="Description"
+                    bind:value={description}
+                    disabled={loading}
             />
             {#if errors.description}
                 <div class="invalid-feedback">
@@ -196,10 +199,10 @@
             <div class="d-flex align-items-center gap-2">
                 <label class="form-label mb-0">Due Date:</label>
                 <DatePicker
-                    bind:value={taskDue}
-                    error={errors.dueDate}
-                    bind:date={datePicker}
-                    disabled={loading}
+                        bind:value={taskDue}
+                        error={errors.dueDate}
+                        bind:date={datePicker}
+                        disabled={loading}
                 />
             </div>
             {#if errors.dueDate}
@@ -211,11 +214,11 @@
 
         <div>
             <button
-                type="submit"
-                class="btn btn-primary w-100"
-                disabled={loading}
+                    type="submit"
+                    class="btn btn-primary w-100"
+                    disabled={loading}
             >
-                {loading ? "Creating..." : "Create"}
+                {loading ? "Creating..." : "Add Task"}
             </button>
         </div>
     </form>

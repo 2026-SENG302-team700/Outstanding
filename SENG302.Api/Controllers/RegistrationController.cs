@@ -46,28 +46,20 @@ public class RegistrationController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> RegisterUser([FromBody] PostUserRequest user)
     {
+        var errors = new Dictionary<string, string>();
+        
         if (string.IsNullOrWhiteSpace(user.Email))
         {
-            return BadRequest(new
-            {
-                message = "Email is required!"
-            });
+            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
         }
-        ;
-        if (string.IsNullOrWhiteSpace(user.DisplayName))
+        
+        var displayName = user.DisplayName.Trim();
+
+        if (string.IsNullOrWhiteSpace(displayName))
         {
-            return BadRequest(new
-            {
-                message = "Display name is required!"
-            });
+            errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
-        if (user.DisplayName.Trim().Length < 3)
-        {
-            return BadRequest(new
-            {
-                message = "Display name is not long enough!"
-            });
-        }
+        
         if (string.IsNullOrWhiteSpace(user.Country))
         {
             return BadRequest(new
@@ -75,24 +67,36 @@ public class RegistrationController : ControllerBase
                 message = "Country is required!"
             });
         }
+        
         if (string.IsNullOrWhiteSpace(user.PasswordString))
         {
-            return BadRequest(new
-            {
-                message = "A password is required!"
-            });
+            errors["password"] =
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
         }
+        
         if (string.IsNullOrWhiteSpace(user.PasswordConfirm))
         {
-            return BadRequest(new
-            {
-                message = "Passwords do not match"
-            });
+            errors["passwordConfirm"] = "Passwords do not match";
         }
 
+        if (errors.Count > 0)
+        {
+            return BadRequest(new BadRequestValidationResponse
+            {
+                Errors = errors
+            });
+        }
+        
         try
         {
             await _userService.CreateNewUserAsync(user.Email, user.DisplayName, user.PasswordString, user.PasswordConfirm, user.Country);
+        }
+        catch (MultipleValidationException e)
+        {
+            return BadRequest(new BadRequestValidationResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {

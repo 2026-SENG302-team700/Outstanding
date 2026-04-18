@@ -111,9 +111,15 @@
                 },
             );
 
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
             if (!response.ok) {
-                error = data.message || "Failed to update task.";
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    error = data?.message || "Failed to update task (Internal Server Error occurred).";
+                }
                 return;
             }
             taskItem = data;
@@ -145,21 +151,21 @@
 
 <div class="container">
     <div
-        class="mb-3 card-body d-flex justify-content-between align-items-center"
+            class="mb-3 card-body d-flex justify-content-between align-items-center"
     >
         {#if editMode}
             <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => goto("../../..")}
-                >Cancel
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => goto("../../..")}
+            >Cancel
             </button>
         {:else}
             <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => goto("..")}
-                >Back
+                    type="button"
+                    class="btn btn-secondary"
+                    on:click={() => goto("..")}
+            >Back
             </button>
         {/if}
 
@@ -178,11 +184,11 @@
             {#if editMode}
                 <strong>Title:</strong>
                 <input
-                    type="text"
-                    class="form-control text-center fs-3 fw-bold"
-                    class:is-invalid={errors.name}
-                    bind:value={editedTask.editedName}
-                    disabled={loading}
+                        type="text"
+                        class="form-control text-center fs-3 fw-bold"
+                        class:is-invalid={errors.name}
+                        bind:value={editedTask.editedName}
+                        disabled={loading}
                 />
                 {#if errors.name}
                     <div class="invalid-feedback">
@@ -197,12 +203,12 @@
                 {#if editMode}
                     <strong>Description:</strong>
                     <input
-                        type="text"
-                        class="form-control"
-                        class:is-invalid={errors.description}
-                        placeholder="Description"
-                        bind:value={editedTask.editedDesc}
-                        disabled={loading}
+                            type="text"
+                            class="form-control"
+                            class:is-invalid={errors.description}
+                            placeholder="Description"
+                            bind:value={editedTask.editedDesc}
+                            disabled={loading}
                     />
                     {#if errors.description}
                         <div class="invalid-feedback">
@@ -220,9 +226,9 @@
                 <strong>Due Date:</strong>
                 {#if editMode}
                     <DatePicker
-                        bind:value={editedTask.editedDueDate}
-                        error={errors.dueDate}
-                        disabled={loading}
+                            bind:value={editedTask.editedDueDate}
+                            error={errors.dueDate}
+                            disabled={loading}
                     />
                     {#if errors.dueDate}
                         <div class="invalid-feedback d-block">

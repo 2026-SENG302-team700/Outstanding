@@ -29,7 +29,6 @@
                 return;
             }
             taskLists = data;
-            console.log(taskLists);
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
