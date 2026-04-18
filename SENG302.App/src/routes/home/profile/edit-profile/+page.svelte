@@ -374,7 +374,6 @@
          */
         async function updatePassword() {
             const valid = validateChangePasswordInputs();
-            if (!valid) return;
             
             updatingPassword = true;
             try {
@@ -391,7 +390,7 @@
                         })
                     }
                 );
-                if (response.ok) {
+                if (response.ok && valid) {
                     addToast("New password updated successfully")
                     authModal.hide()
                     goto(resolve("/home/profile"));
