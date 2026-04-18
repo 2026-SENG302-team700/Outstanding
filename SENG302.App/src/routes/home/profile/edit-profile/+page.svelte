@@ -88,6 +88,15 @@
     }
 
     /**
+     * Clears the all fields in the update password form
+     */
+    function clearPasswordFields() {
+        oldPassword = "";
+        newPassword = "";
+        confirmPassword = "";
+    }
+
+    /**
      * Start a new timer for the resend button to ensure the user cant spam their email
      */
     function startResendCountdown() {
@@ -401,7 +410,7 @@
                 if (response.status === 400){
                     switch (data.message) {
                         case "Old password does not match password on file":
-                            errors.oldPassword = "Old password does not match password on file";
+                            if (oldPassword) {errors.oldPassword = "Old password does not match password on file";}
                             oldPassword = "";
                             break;
                         case "Passwords do not match":
@@ -717,6 +726,11 @@
                         class="btn btn-secondary w-100 py-2 mt-3"
                         data-bs-dismiss="modal"
                         aria-label="Close"
+                        on:click={() => {
+                            clearErrors();
+                            clearPasswordFields();
+                        }   
+                        }
                 >Cancel</button>
             </div>
         </div>
