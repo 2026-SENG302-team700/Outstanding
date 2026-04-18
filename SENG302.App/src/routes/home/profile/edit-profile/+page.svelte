@@ -275,7 +275,6 @@
                 switch (data.errorType) {
                     // check for duplicate email, throws regular error rather than "something went wrong"
                     case "DuplicateEmailException":
-                        email = "";
                         errors.email = data.message;
                         break;
                     default:
