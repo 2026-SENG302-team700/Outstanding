@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import CreateItemButton from "$lib/components/create-item-button.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -47,12 +48,7 @@
 
     <div class="card-body d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Your Task Lists</h5>
-        <button
-            class="btn btn-primary"
-            onclick={() => goto(resolve("/home/new-list"))}
-        >
-            Add Task List
-        </button>
+        <CreateItemButton buttonType={"list"} {loading} path="/home/new-list"/>
     </div>
     {#if loading && taskLists.length === 0}
         <div class="text-center text-muted py-4">Loading task lists...</div>

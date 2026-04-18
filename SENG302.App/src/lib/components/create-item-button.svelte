@@ -2,21 +2,20 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
 
-    let { loading = false, buttonType = "register", path = `/`} = $props();
+    let { loading = false, buttonType = "list", path = `/`} = $props();
 </script>
 
-<button class="btn btn-primary"
-onclick={() => goto(resolve(route))}>
-    {buttonType == "register"
+<button type="button" class="btn btn-primary"
+onclick={() => goto(resolve(path))}>
+    {buttonType == "list"
         ? loading
-            ? "Registering..."
-            : "Register"
+            ? "Redirecting..."
+            : "Add task list"
         : 
-        buttonType == "login"
+        buttonType == "task"
         ? loading
-            ? "Logging In..."
-            : "Login"
-        : loading
-            ? "Creating List..."
-            : "Create List"}
+            ? "Redirecting..."
+            : "Add Task "
+        : "bob"
+        }
 </button>

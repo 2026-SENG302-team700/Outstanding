@@ -7,6 +7,7 @@
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -144,12 +145,7 @@
         </h1>
     </div>
     <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(".")}
-            >Cancel
-        </button>
+        <CancelButton path={`/home/task-list/${params.slug}`} />
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">

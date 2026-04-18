@@ -4,6 +4,7 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { onMount } from "svelte";
     import { formatDate } from "$lib/datepicker/formatDate";
+    import CreateItemButton from "$lib/components/create-item-button.svelte";
 
     let loading = $state(false);
     let listName = $state();
@@ -93,14 +94,14 @@
             {listName}
         </h1>
     </div>
-    <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-primary"
-            on:click={() =>
-                goto(resolve(`/home/task-list/${params.slug}/create-task`))}
-            >Add Task
-        </button>
+    <div class="mb-3" style="">
+        <div style="width:100%;">
+            <CreateItemButton 
+            {loading} 
+            buttonType={"task"} 
+            path= "/home/task-list/${params.slug}/create-task"/>
+        </div>
+        
     </div>
     {#if loading && tasks.length === 0}
         <div class="text-center text-muted py-4">Loading tasks...</div>
@@ -115,11 +116,11 @@
                     class="task-card"
                     tabindex="0"
                     role="button"
-                    on:click={() =>
+                    onclick={() =>
                         goto(
                             `/home/task-list/${params.slug}/task/${task.taskId}`,
                         )}
-                    on:keydown={(e) => {
+                    onkeydown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                             goto(
                                 `/home/task-list/${params.slug}/task/${task.taskId}`,
