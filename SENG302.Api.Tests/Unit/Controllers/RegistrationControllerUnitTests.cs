@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel;
+using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -27,15 +28,14 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
         
     }
     
-    [Theory]
-    [InlineData("test@example.com")]
-    public async Task GenerateCode_ValidEmail_ReturnOk(string userEmail)
+    [Fact]
+    public async Task GenerateCode_ValidEmail_ReturnOk()
     {
         long codeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
 
         User user = new User
         {
-            Email = userEmail,
+            Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country",
@@ -43,27 +43,26 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
             CodeGenerationTime = codeGenerationTime,
             EmailVerified = false,
         };
-        
+    
         var emailDictionary = new Dictionary<string, string>
         {
             {"DISPLAY_NAME", user.DisplayName},
             {"CODE", user.OneTimeCode},
             {"MINUTES", "5"}
         };
-        
+    
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
-        _mockOneTimeCodeService.GetEpochTime().Returns(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20);
-        _mockUserService.UpdateUserOneTimeCode(userEmail, user.OneTimeCode, codeGenerationTime, false).Returns(user);
+        _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
+        _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false).Returns(user);
         _mockEmailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary)
             .Returns(Task.CompletedTask);
-            
+        
         var data = new NewOneTimeCodeRequest
         {
-            Email = userEmail,
+            Email = user.Email,
         };
         // Call the controller directly
         var result = await _controller.initiateOneTimeCode(data);
         result.Result.ShouldBeOfType<OkResult>();
-        
     }
 }
