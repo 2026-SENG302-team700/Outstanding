@@ -6,7 +6,7 @@
     import { addToast } from "$lib/toast/toast";
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import StatusDropdown from "$lib/statusdropdown/status-dropdown.svelte";
+    import StatusDropdown from "$lib/components/status-dropdown.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
     import DescriptionForm from "$lib/components/description-form.svelte";
     import ObjectNameForm from "$lib/components/object-name-form.svelte";

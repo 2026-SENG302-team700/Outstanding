@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
+    import CancelButton from "$lib/components/cancel-button.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import { onMount } from "svelte";
@@ -15,7 +16,7 @@
     let resendLinkVisible = $state(false);
     let loading = $state(false);
     let buttonDisabled = $state(false);
-    let codeHasBeenSent = $state(false)
+    let codeHasBeenSent = $state(false);
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -26,7 +27,7 @@
 
     onMount(async () => {
         email = localStorage.getItem("email") ?? "";
-       
+
         await getCountDownTime();
         console.log("Server time: " + serverTime);
         countDownTimer();
@@ -50,7 +51,10 @@
             if (remainingSeconds > 0) {
                 remainingSeconds -= 1;
                 timeRemainingText = formatTime(remainingSeconds);
-                if (!resendLinkVisible && remainingSeconds < initialSeconds - 10) {
+                if (
+                    !resendLinkVisible &&
+                    remainingSeconds < initialSeconds - 10
+                ) {
                     resendLinkVisible = true;
                 }
             } else {
@@ -140,15 +144,19 @@
 
     /**
      * Handles the event a key is pressed. If the key is backspace and the previous input field is empty,
-     * it moves it back by one. 
+     * it moves it back by one.
      * @param e - The event that an button is pressed
      */
     function handleKeyDown(e: KeyboardEvent) {
         const input = e.target as HTMLInputElement;
-        if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
+        if (
+            e.key === "Backspace" &&
+            !input.value &&
+            input.previousElementSibling
+        ) {
             (input.previousElementSibling as HTMLInputElement).focus();
         }
-    }    
+    }
 
     /**
      * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating if they have
@@ -193,23 +201,23 @@
     async function sendCode() {
         try {
             clearInputFields();
-            
-            if (remainingSeconds < initialSeconds-10) {
+
+            if (remainingSeconds < initialSeconds - 10) {
                 displayError("", true);
             }
             loading = true;
-            
+
             let jsonBody;
             if (codeHasBeenSent) {
                 jsonBody = JSON.stringify({
                     email: email,
                     ResendingCode: true,
-                })
+                });
             } else {
                 jsonBody = JSON.stringify({
                     email: email,
                     ResendingCode: false,
-                })
+                });
             }
 
             const response = await fetchWithCsrf(
@@ -296,11 +304,7 @@
 <div class="d-flex justify-content-center align-items-start vh-100 bg-light">
     <div class="card shadow-sm p-4">
         <div class="mb-3">
-            <button
-                type="button"
-                class="btn btn-secondary"
-                on:click={() => goto(resolve("/register"))}>Cancel</button
-            >
+            <CancelButton path={"/register"} />
         </div>
         <h1 class="text-center mb-3">Verify your email address</h1>
         <hr
@@ -323,7 +327,7 @@
                         <a
                             role="button"
                             class="text-decoration-underline"
-                            on:click={sendCode}>Resend Code</a
+                            onclick={sendCode}>Resend Code</a
                         >
                     {/if}
                 {/key}
@@ -334,54 +338,54 @@
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit1}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
+                        oninput={handleInput}
+                        onkeydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit2}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
+                        oninput={handleInput}
+                        onkeydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit3}
-                        on:input={handleInput}
+                        oninput={handleInput}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit4}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
+                        oninput={handleInput}
+                        onkeydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit5}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
+                        oninput={handleInput}
+                        onkeydown={handleKeyDown}
                     />
                     <input
                         type="text"
                         class="form-control text-center"
                         maxlength="1"
                         bind:value={digit6}
-                        on:input={handleInput}
-                        on:keydown={handleKeyDown}
+                        oninput={handleInput}
+                        onkeydown={handleKeyDown}
                     />
                 </div>
                 {#key buttonDisabled}
                     <button
                         style="margin-top: 10px"
                         class="btn btn-primary w-100"
-                        on:click={checkCode}
+                        onclick={checkCode}
                         disabled={buttonDisabled}>Confirm registration</button
                     >
                 {/key}
