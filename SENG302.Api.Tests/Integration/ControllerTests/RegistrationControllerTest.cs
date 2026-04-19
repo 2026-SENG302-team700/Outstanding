@@ -82,9 +82,10 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         var message2 = await HttpClient.PostAsJsonAsync("/api/register", data2);
         message2.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         
-        var content = await message2.Content.ReadAsStringAsync();
-        var json = JsonSerializer.Deserialize<JsonElement>(content);
-        json.GetProperty("message").GetString().ShouldBe("This email address is already in use by another account");        
+        var content = await message2.Content.ReadAsStringAsync();                                                                     
+        var json = JsonSerializer.Deserialize<JsonElement>(content);                                                                  
+        var errors = json.GetProperty("errors");
+        errors.GetProperty("email").GetString().ShouldContain("This email address is already in use by another account");
     }
 
     [Theory]

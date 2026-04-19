@@ -40,16 +40,6 @@ public class UserVerificationResponse
     public User? user;
 }
 
-
-public class InvalidCodeException : Exception
-{
-    public InvalidCodeException() { }
-
-    public InvalidCodeException(string message) : base(message) { }
-
-    public InvalidCodeException(string message, Exception inner) : base(message, inner) { }
-}
-
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -64,70 +54,71 @@ public class UserService : IUserService
     /// <summary>
     /// Runs all email validation checks and throws relavent exceptions
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="email"></param>
-    /// <exception cref="DuplicateEmailException"></exception>
-    /// <exception cref="InvalidEmailFormatException"></exception>
-    public void ValidateEmail(DatabaseContext context, string email)
+    /// <param name="context">The database - checks to see if email in db already.</param>
+    /// <param name="email">E-mail to be validated</param>
+    public Dictionary<string, string> ValidateEmail(DatabaseContext context, string email)
     {
+        var errors = new Dictionary<string, string>();
+        
         if (EmailAlreadyExists(context, email))
         {
-            throw new DuplicateEmailException("This email address is already in use by another account");
+            errors["email"] = "This email address is already in use by another account";
         }
 
         if (!CheckEmailFormat(email))
         {
-            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
+            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
         }
+        return errors;
     }
 
     /// <summary>
     /// Runs all display name validations and throws relavent exceptions
     /// </summary>
-    /// <param name="displayName"></param>
-    /// <exception cref="InvalidDisplayNameLengthException"></exception>
-    /// <exception cref="InvalidDisplayNameCharsException"></exception>
-    public void ValidateDisplayName(string displayName)
+    /// <param name="displayName">Display Name to be validated</param>
+    public Dictionary<string, string> ValidateDisplayName(string displayName)
     {
+        var errors = new Dictionary<string, string>();
         if (DisplayNameLength(displayName))
         {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+            errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
 
         if (!DisplayNameChars(displayName))
         {
-            throw new InvalidDisplayNameCharsException(
-                "Display name must only include letters, spaces, hyphens or apostrophes"
-                );
+            errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
         }
+
+        return errors;
     }
+    
     /// <summary>
     /// Runs all password validations and throws relavent excpetions
     /// </summary>
-    /// <param name="passwordOne"></param>
-    /// <param name="passwordTwo"></param>
-    /// <exception cref="MismatchedPasswordException"></exception>
-    /// <exception cref="InvalidPasswordException"></exception>
-    public void ValidatePassword(string passwordOne, string passwordTwo)
+    /// <param name="passwordOne">The ACTUAL password field data</param>
+    /// <param name="passwordTwo">The password confirmation field data</param>
+    public Dictionary<string, string> ValidatePassword(string passwordOne, string passwordTwo)
     {
+        var errors = new Dictionary<string, string>();
+
         if (!PasswordMatching(passwordOne, passwordTwo))
         {
-            throw new MismatchedPasswordException("Passwords do not match");
+            errors["passwordConfirm"] = "Passwords do not match";
         }
 
         if (!CheckPassword(passwordOne))
         {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
-            );
+            errors["password"] = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
         }
+
+        return errors;
     }
 
     /// <summary>
     /// Runs all country validations and throws relavent exceptions
     /// </summary>
-    /// <param name="country"></param>
-    /// <exception cref="InvalidCountryException"></exception>
+    /// <param name="country">2-letter country code</param>
+    /// <exception cref="InvalidCountryException">Throws if received country ISO is not in the country list.</exception>
     public void ValidateCountry(string country)
     {
         if (!ValidCountry(country))
@@ -180,12 +171,27 @@ public class UserService : IUserService
         string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var errors = new Dictionary<string, string>();
 
-        ValidateEmail(context, email);
-        ValidateDisplayName(displayName);
-        ValidatePassword(passwordString, passwordConfirm);
-        ValidateCountry(country);
+        foreach (var (field, message) in ValidateEmail(context, email))
+        {
+            errors[field] = message;
+        }
+        foreach (var (field, message) in ValidateDisplayName(displayName))
+        {
+            errors[field] = message;
+        }
+        foreach (var (field, message) in ValidatePassword(passwordString, passwordConfirm))
+        {
+            errors[field] = message;
+        }
+        
+        ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
 
+        if (errors.Count > 0)
+            throw new MultipleValidationException(errors);
+        
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
@@ -457,10 +463,24 @@ public class UserService : IUserService
         if (user == null) return null;
 
         // Validation
-        if (user.Email != newEmail) ValidateEmail(context, newEmail);
-        if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
-        if (user.Country != newCountry) ValidateCountry(newCountry);
+        var errors = new Dictionary<string, string>();
+        if (newEmail != user.Email)
+        {
+            foreach (var (field, message) in ValidateEmail(context, newEmail))
+            {
+                errors[field] = message;
+            }
+        }        
+        foreach (var (field, message) in ValidateDisplayName(newDisplayName))
+        {
+            errors[field] = message;
+        }
+        
+        ValidateCountry(newCountry);
 
+        if (errors.Count > 0)
+            throw new MultipleValidationException(errors);
+        
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;

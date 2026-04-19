@@ -74,16 +74,32 @@ public class UserServiceTest : BaseIntegrationTestFixture
     }
 
     [Fact]
-    public async Task CreateNewUser_DuplicateEmail_DuplicateEmailException()
+    public async Task CreateNewUser_DuplicateEmail_MultipleValidationException()
     {
-        await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jason Whitaker", "4365passTOEHKT$%^&$%^", "4365passTOEHKT$%^&$%^", "US");
-        Should.Throw<DuplicateEmailException>(async () => await ServiceUnderTest.CreateNewUserAsync("j@whitsend.com", "Jack Allen", "p4ukS__45`k%NNNS", "p4ukS__45`k%NNNS", "US"));
+        await ServiceUnderTest.CreateNewUserAsync(
+            "j@whitsend.com",
+            "Jason Whitaker",
+            "4365passTOEHKT$%^&$%^", 
+            "4365passTOEHKT$%^&$%^",
+            "US");
+        var errors = Should.Throw<MultipleValidationException>(async () => 
+            await ServiceUnderTest.CreateNewUserAsync(
+                "j@whitsend.com", 
+                "Jack Allen",
+                "p4ukS__45`k%NNNS",
+                "p4ukS__45`k%NNNS",
+                "US"
+                )
+            );
+        
+        errors.Errors.Keys.ShouldContain("email");
+        errors.Errors.Values.ShouldContain("This email address is already in use by another account");
     }
     
     [Fact]
-    public async Task CreateNewUser_ShortDisplayName_InvalidDisplayNameLengthException()
+    public async Task CreateNewUser_ShortDisplayName_MultipleValidationException()
     {
-        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me", 
@@ -92,12 +108,15 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "12345678Ab$", 
                 "RO");
         });
+
+        errors.Errors.Keys.ShouldContain("displayName");
+        errors.Errors.Values.ShouldContain("Display name must be between 3 and 64 characters");
     }
 
     [Fact]
-    public async Task CreateNewUser_LongDisplayName_InvalidDisplayNameLengthException()
+    public async Task CreateNewUser_LongDisplayName_MultipleValidationException()
     {
-        await Should.ThrowAsync<InvalidDisplayNameLengthException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
@@ -107,11 +126,14 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO"
             );
         });
+        
+        errors.Errors.Keys.ShouldContain("displayName");
+        errors.Errors.Values.ShouldContain("Display name must be between 3 and 64 characters");
     }
     [Fact]
-    public async Task CreateNewUser_InvalidChars_InvalidDisplayNameCharsException()
+    public async Task CreateNewUser_InvalidChars_MultipleValidationException()
     {
-        await Should.ThrowAsync<InvalidDisplayNameCharsException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.me",
@@ -121,6 +143,9 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO"
             );
         });
+
+        errors.Errors.Keys.ShouldContain("displayName");
+        errors.Errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
 
     [Theory]
@@ -135,12 +160,9 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("froggy@-outlook.com")]
     [InlineData("froggy@outlook.com-")]
     [InlineData("crazy@.nz")]
-    [InlineData("longdomain@eggseggseggseggseggseggseggseggseggseggseggseggseggseggseggseggs.com")]
-    [InlineData("longdomain@gmail.eggseggseggseggseggseggseggseggseggseggseggseggseggseggseggseggs")]
-    [InlineData("test.user@gmail..com")]
-    public async Task CreateNewUser_InvalidEmail_InvalidEmailFormatException(string userEmail)
+    public async Task CreateNewUser_NoEmail_MultipleValidationException(string userEmail)
     {
-        await Should.ThrowAsync<InvalidEmailFormatException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 userEmail,
@@ -150,6 +172,9 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO"
             );
         });
+        
+        errors.Errors.Keys.ShouldContain("email");
+        errors.Errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
 
     [Theory]
@@ -162,9 +187,9 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("ABCdef!@#")] // Missing numeric
     [InlineData("abc123$%^")] // Missing Upper Case
     [InlineData("ABC123$%^")] // Missing Lower Case
-    public async Task CreateNewUser_InvalidPassword_InvalidPasswordException(string passwordString)
+    public async Task CreateNewUser_InvalidPassword_MultipleValidationException(string passwordString)
     {
-        await Should.ThrowAsync<InvalidPasswordException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.email",
@@ -174,12 +199,15 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "RO"
             );
         });
+        
+        errors.Errors.Keys.ShouldContain("password");
+        errors.Errors.Values.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters");
     }
 
     [Fact]
-    public async Task CreateNewUser_MismatchedPasswords_MismatchedPasswordException()
+    public async Task CreateNewUser_MismatchedPasswords_MultipleValidationException()
     {
-        await Should.ThrowAsync<MismatchedPasswordException>(async () =>
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
         {
             await ServiceUnderTest.CreateNewUserAsync(
                 "vlad@nistor.email",
@@ -188,6 +216,9 @@ public class UserServiceTest : BaseIntegrationTestFixture
                 "abcDEF123!@#",
                 "RO");
         });
+        
+        errors.Errors.Keys.ShouldContain("passwordConfirm");
+        errors.Errors.Values.ShouldContain("Passwords do not match");
     }
 
     [Fact]

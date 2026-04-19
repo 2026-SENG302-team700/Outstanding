@@ -115,7 +115,7 @@
         currentModalStep = "verify";
 
         authModal?.show();
-        
+
         if (!isSending && resendTimer == 0) {
             isSending = true;
             resendTimer = 0;
@@ -281,14 +281,11 @@
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
-                switch (data.errorType) {
-                    // check for duplicate email, throws regular error rather than "something went wrong"
-                    case "DuplicateEmailException":
-                        errors.email = data.message;
-                        break;
-                    default:
-                        addToast(data?.message || "An error occured.", "error");
-                        break;
+                if (data?.errors) {
+                    errors.email = data.errors.email ?? "";
+                    errors.displayName = data.errors.displayName ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
                 }
                 return;
             }
