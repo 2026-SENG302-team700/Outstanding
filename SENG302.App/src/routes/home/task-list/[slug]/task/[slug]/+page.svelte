@@ -10,7 +10,6 @@
     import StatusDropdown from "$lib/components/status-dropdown.svelte";
     import ObjectNameForm from "$lib/components/object-name-form.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
-    import path from "node:path";
 
     let loading = $state(false);
     let error = $state("");
