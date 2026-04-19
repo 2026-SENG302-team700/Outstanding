@@ -53,7 +53,7 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
     
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
         _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
-        _mockUserService.UpdateUserOneTimeCode(userEmail, user.OneTimeCode, codeGenerationTime, false).Returns(user);
+        _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false).Returns(user);
         _mockEmailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary)
             .Returns(Task.CompletedTask);
         
