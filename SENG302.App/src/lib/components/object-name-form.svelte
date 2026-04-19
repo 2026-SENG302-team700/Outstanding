@@ -1,5 +1,10 @@
 <script lang="ts">
-    let { displayName = $bindable(""), error = "", loading = false, type = "user"} = $props();
+    let {
+        displayName = $bindable(""),
+        error = "",
+        loading = false,
+        type = "user",
+    } = $props();
 </script>
 
 <div class="mb-3">
@@ -7,8 +12,12 @@
         type="text"
         class="form-control"
         class:is-invalid={error}
-        autocomplete={type == "user"? "name": ""}
-        placeholder={type == "user"? "Display Name *": "Name *"}
+        autocomplete={type == "user" ? "name" : ""}
+        placeholder={type == "user"
+            ? "Display Name *"
+            : type == "task"
+              ? "Title *"
+              : "Name *"}
         bind:value={displayName}
         disabled={loading}
     />

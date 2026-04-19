@@ -6,11 +6,10 @@
     import { addToast } from "$lib/toast/toast";
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
+    import StatusDropdown from "$lib/statusdropdown/status-dropdown.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
-    import TitleForm from "$lib/components/title-form.svelte";
     import DescriptionForm from "$lib/components/description-form.svelte";
-    import path from "node:path";
+    import ObjectNameForm from "$lib/components/object-name-form.svelte";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -155,7 +154,12 @@
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
-            <TitleForm bind:name error={errors.name} {loading} />
+            <ObjectNameForm
+                bind:displayName={name}
+                error={errors.name}
+                {loading}
+                type={"task"}
+            />
         </div>
 
         <div class="mb-3">

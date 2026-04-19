@@ -90,18 +90,21 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-break text-center mb-4" style="flex: 1; justify-content: center; width: 1270px">
+        <h1
+            class="text-break text-center mb-4"
+            style="flex: 1; justify-content: center; width: 1270px"
+        >
             {listName}
         </h1>
     </div>
     <div class="mb-3" style="">
         <div style="width:100%;">
-            <CreateItemButton 
-            {loading} 
-            buttonType={"task"} 
-            path= "/home/task-list/${params.slug}/create-task"/>
+            <CreateItemButton
+                {loading}
+                buttonType={"task"}
+                path="/home/task-list/{params.slug}/create-task"
+            />
         </div>
-        
     </div>
     {#if loading && tasks.length === 0}
         <div class="text-center text-muted py-4">Loading tasks...</div>

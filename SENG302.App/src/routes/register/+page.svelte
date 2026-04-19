@@ -202,7 +202,7 @@
 
 <div class="container">
     <div class="mb-3">
-        <CancelButton path="/"></CancelButton>
+        <CancelButton path="."></CancelButton>
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
