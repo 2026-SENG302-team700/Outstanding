@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.ComponentModel;
+using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -42,20 +43,20 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
             CodeGenerationTime = codeGenerationTime,
             EmailVerified = false,
         };
-        
+    
         var emailDictionary = new Dictionary<string, string>
         {
             {"DISPLAY_NAME", user.DisplayName},
             {"CODE", user.OneTimeCode},
             {"MINUTES", "5"}
         };
-        
+    
         _mockOneTimeCodeService.GenerateOneTimeCode().Returns(user.OneTimeCode);
-        _mockOneTimeCodeService.GetEpochTime().Returns(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20);
+        _mockOneTimeCodeService.GetEpochTime().Returns(codeGenerationTime);
         _mockUserService.UpdateUserOneTimeCode(user.Email, user.OneTimeCode, codeGenerationTime, false).Returns(user);
         _mockEmailService.SendEmailAsync(user.Email, EmailTemplate.VerifyEmailCode, emailDictionary)
             .Returns(Task.CompletedTask);
-            
+        
         var data = new NewOneTimeCodeRequest
         {
             Email = user.Email,
