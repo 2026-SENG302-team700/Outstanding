@@ -65,9 +65,10 @@
             <span class="fs-5 p-2 mb-2"><b>Name</b></span>
             {#each taskLists as taskList}
                     <div
-                            class="border-bottom task-item-box p-2"
+                            class="text-break border-bottom task-item-box p-2"
                             tabindex="0"
                             role="button"
+                            style="width: 1270px;"
                             on:click={() => 
                                 goto(`/home/task-list/${taskList.id}`)}
                             on:keydown={(e) => {

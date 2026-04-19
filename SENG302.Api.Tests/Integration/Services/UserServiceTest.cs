@@ -135,7 +135,10 @@ public class UserServiceTest : BaseIntegrationTestFixture
     [InlineData("froggy@-outlook.com")]
     [InlineData("froggy@outlook.com-")]
     [InlineData("crazy@.nz")]
-    public async Task CreateNewUser_NoEmail_InvalidEmailFormatException(string userEmail)
+    [InlineData("longdomain@eggseggseggseggseggseggseggseggseggseggseggseggseggseggseggseggs.com")]
+    [InlineData("longdomain@gmail.eggseggseggseggseggseggseggseggseggseggseggseggseggseggseggseggs")]
+    [InlineData("test.user@gmail..com")]
+    public async Task CreateNewUser_InvalidEmail_InvalidEmailFormatException(string userEmail)
     {
         await Should.ThrowAsync<InvalidEmailFormatException>(async () =>
         {
