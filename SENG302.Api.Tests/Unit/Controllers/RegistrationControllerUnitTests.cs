@@ -28,15 +28,14 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
         
     }
     
-    [Theory]
-    [InlineData("test@example.com")]
-    public async Task GenerateCode_ValidEmail_ReturnOk(string userEmail)
+    [Fact]
+    public async Task GenerateCode_ValidEmail_ReturnOk()
     {
         long codeGenerationTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 20;
 
         User user = new User
         {
-            Email = userEmail,
+            Email = "test@example.com",
             DisplayName = "Test User",
             PasswordKey = "password",
             Country = "Test Country",
@@ -60,11 +59,10 @@ public class RegistrationControllerUnitTests : BaseUnitTestFixture
         
         var data = new NewOneTimeCodeRequest
         {
-            Email = userEmail,
+            Email = user.Email,
         };
         // Call the controller directly
         var result = await _controller.initiateOneTimeCode(data);
         result.Result.ShouldBeOfType<OkResult>();
-        
     }
 }
