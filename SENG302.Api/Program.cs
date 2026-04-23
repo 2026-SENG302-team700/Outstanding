@@ -88,10 +88,10 @@ public class Program
         }
 
         // add the custom environment file
-        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        //builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 

@@ -69,10 +69,10 @@
                             role="button"
                             style="width: 1270px;"
                             on:click={() => 
-                                goto(`/home/task-list/${taskList.id}`)}
+                                goto(resolve(`/home/task-list/${taskList.id}`))}
                             on:keydown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
-                                    goto(`/home/task-list/${taskList.id}`);
+                                    goto(resolve(`/home/task-list/${taskList.id}`));
                                 }
                             }}
                     >

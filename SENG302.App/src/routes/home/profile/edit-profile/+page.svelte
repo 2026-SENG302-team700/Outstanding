@@ -154,7 +154,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -258,7 +258,7 @@
         if (!isValid()) return;
 
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
                 headers: {

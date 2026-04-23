@@ -48,12 +48,16 @@ deploy-staging:
     - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/staging/
     - cp runner-scripts/staging.sh /home/gitlab-runner/staging.sh
     - chmod u+x /home/gitlab-runner/staging.sh
-      
+
     - echo "export DB_HOST=${DB_HOST}" > /home/gitlab-runner/staging/.env
-    - echo "export TEST_DB_NAME=${TEST_DB_NAME}" >> /home/gitlab-runner/staging.env
-    - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/staging.env
-    - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/staging.env
-      
+    - echo "export DB_NAME=${TEST_DB_NAME}" >> /home/gitlab-runner/staging/.env
+    - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/staging/.env
+    - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/staging/.env
+
+    - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/staging/.env
+    - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/staging/.env
+    - echo "export EMAIL_PASS=${EMAIL_PASS}" >> /home/gitlab-runner/staging/.env
+
     - sudo systemctl restart staging
 
     # Build and deploy frontend
