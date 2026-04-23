@@ -36,10 +36,13 @@ svelte-build:
 .test_template:
   stage: test
   script:
-    - 'dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~$TEST_NAMESPACE" --collect: "XPlate Code Coverage" --result-directory SENG302.Api.Tests/coverage-results/$TEST_NAMESPACE DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover'
+    # Use Coverlet to collect coverage in OpenCover format via "XPlat Code Coverage"
+    # The results-directory includes the namespace to keep types isolated
+    - 'dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~$TEST_NAMESPACE" --collect:"XPlat Code Coverage" --results-directory SENG302.Api.Tests/coverage-results/$TEST_NAMESPACE -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover'
   artifacts:
     when: always
     paths:
+      # Collect individual results for each namespace
       - SENG302.Api.Tests/coverage-results/*/
     expire_in: 1 day
 
