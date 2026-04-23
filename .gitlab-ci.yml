@@ -31,11 +31,63 @@ svelte-build:
 
 # Runs the tests for the dotnet project
 # Later (sprint 2) you will add support for coverage collection and SonarQube
-dotnet-test:
+.test_template:
   stage: test
   script:
-    - cd SENG302.Api.Tests
-    - dotnet test
+    - "dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj \
+    --filter \"FullyQualifiedName~$TEST_NAMESPACE\" \
+    --collect: \"XPlate Code Coverage\" \
+    --result-directory SENG302.Api.Tests/coverage-results/$TEST_NAMESPACE \
+    -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover"
+
+artifacts:
+  when: always
+  paths:
+    - Outstanding.Api.Tests/coverage-results/*/
+  expire_in: 1 day
+
+unit-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: Unit
+        
+integration-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: integration
+
+integration-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: Acceptance
+
+
+coverage-reporting:
+  stage: coverage-report
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - apt-get update && apt-get install -y bc
+    - dotnet tool install -g dotnet-reportgenerator-globaltool
+    - export PATH="$PATH:$HOME/.dotnet/tools"
+    - "reportgenerator -reports:\"SENG302.Api.Tests/coverage-results/Unit/**/coverage.opencover.xml\" -targetdir:\"coverage-report/unit\" -reporttypes:\"Html;Cobertura\""
+    - "reportgenerator -reports:\"SENG302.Api.Tests/coverage-results/Integration/**/coverage.opencover.xml\" -targetdir:\"coverage-report/integration\" -reporttypes:\"Html;Cobertura\""
+    - "reportgenerator -reports:\"SENG302.Api.Tests/coverage-results/Acceptance/**/coverage.opencover.xml\" -targetdir:\"coverage-report/acceptance\" -reporttypes:\"Html;Cobertura\""
+    - "reportgenerator -reports:\"SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml\" -targetdir:\"coverage-report/combined\" -reporttypes:\"Html;Cobertura\""
+
+  coverage: '/Total Coverage: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - coverage-report/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage-report/combined/Cobertura.xml
+  
+  dependencies:
+    - unit-tests
+    - integration-tests
+    - acceptance-tests
+
 
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
 deploy-staging:
