@@ -37,12 +37,11 @@ svelte-build:
   stage: test
   script:
     - 'dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~$TEST_NAMESPACE" --collect: "XPlate Code Coverage" --result-directory SENG302.Api.Tests/coverage-results/$TEST_NAMESPACE DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover'
-
-artifacts:
-  when: always
-  paths:
-    - SENG302.Api.Tests/coverage-results/*/
-  expire_in: 1 day
+  artifacts:
+    when: always
+    paths:
+      - SENG302.Api.Tests/coverage-results/*/
+    expire_in: 1 day
 
 unit-tests:
   extends: .test_template
