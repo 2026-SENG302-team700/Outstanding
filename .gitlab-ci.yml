@@ -2,7 +2,7 @@ stages:
   - tagChecking
   - build
   - test
-#  - deploy
+  - deploy
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
