@@ -16,8 +16,10 @@
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+    let pfpModalElement: HTMLElement | undefined = $state();
     let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
+    let pfpModal: Modal | undefined;
     let resendTimer = $state(0);
     let isSending = $state(false);
     let currentModalStep = $state("verify");
@@ -44,8 +46,10 @@
         displayName: "",
         oldPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        image: ""
     });
+    let imageError = $state("")
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
         if (userCode.length === 6) {
@@ -61,6 +65,9 @@
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
         }
+        if (pfpModalElement) {
+            pfpModal = new BootstrapModal(pfpModalElement);
+        }
     });
 
     /**
@@ -72,6 +79,8 @@
         errors.oldPassword = "";
         errors.newPassword = "";
         errors.confirmPassword = "";
+        errors.image = "";
+        imageError = "";
     }
 
     /**
@@ -154,7 +163,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -258,7 +267,7 @@
         if (!isValid()) return;
 
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -438,20 +447,40 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
+        clearErrors()
+        imageEditor.highlightError(false);
         console.log("recieve file");
         if (!files || files.length === 0) {
             return;
         }
         imageEditor.setImg(files[0]);
     }
-
+    
 
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
      * @param imageFile the file to upload
      */
-    async function updatePfp(imageData: PfpData, imageFile: File) {
+    async function updatePfp() {
+        const data = imageEditor.exportData();
+        
+        if (!data) {
+            if (!imageError) {
+                imageError = "No file Selected"
+            }
+        }
+        errors.image = imageError;
+        
+        if (imageError) {
+            imageEditor.highlightError(true)
+            return;
+        }
+        
+        
+        let imageData = data.data
+        let imageFile = data.file
+        
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -478,6 +507,7 @@
                     ...u,
                     pfpData: imageData,
                 }));
+                pfpModal.hide()
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -499,6 +529,8 @@
                 data-bs-target="#pfpInputModal"
                 on:click={() => {
                     imageEditor.reset();
+                    clearErrors();
+                    pfpInput.value = ""
                     pfpInput.click();
                 }}
             >
@@ -740,6 +772,7 @@
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
+    bind:this={pfpModalElement}
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
 >
@@ -757,46 +790,42 @@
                 ></button>
             </div>
             <div class="modal-body">
-                <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:cancel={() => {pfpCancelButton.click()}}
-                    on:change={async () => {
-                        await sendToEditor();
-                        // Reset the value so that if we select the same image a second time the on:change event is triggered
-                        pfpInput.value = '';
-                    }
-                    
-                    }
-                />
-
-                <ImageEditor bind:this={imageEditor} />
-            </div>
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    on:click={() => {
-                        const data = imageEditor.exportData();
-                        if (data) {
-                            updatePfp(data.data, data.file);
-                        } else {
-                            addToast("No file selected!", "error");
+                <form on:submit|preventDefault={() => updatePfp()}>
+                    <input
+                            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                            bind:files
+                            bind:this={pfpInput}
+                            id="pfp"
+                            name="pfp"
+                            type="file"
+                            class="d-none"
+                            on:cancel={() => {pfpCancelButton.click()}}
+                            on:change={async () => {
+                            await sendToEditor();
+                            // Reset the value so that if we select the same image a second time the on:change event is triggered
+                            pfpInput.value = '';
                         }
-                    }}
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal">Submit</button
-                >
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    bind:this={pfpCancelButton}
-                >Cancel</button>
+                    }
+                    />
+                    <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
+                    {#if errors.image}
+                        <div class="text-danger small mt-1">
+                            {errors.image}
+                        </div>
+                    {/if}
+                    <div class="modal-footer">
+                        <button
+                                type="submit"
+                                class="btn btn-primary"
+                        >Submit</button>
+                        <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                                bind:this={pfpCancelButton}
+                        >Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

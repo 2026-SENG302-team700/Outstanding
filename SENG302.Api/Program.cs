@@ -88,10 +88,10 @@ public class Program
         }
 
         // add the custom environment file
-        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true);
+        builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        //builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 
@@ -105,10 +105,9 @@ public class Program
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
             });
         }
-
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider);
-
-
+        
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsDevelopment() || app.Environment.IsStaging()));
+        
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
         {
@@ -155,12 +154,19 @@ public class Program
         app.Run();
     }
 
-    protected static async Task InitializeDatabase(IServiceProvider serviceProvider)
+    protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        dbContext.Database.EnsureCreated();
+        if (isDevelopment)
+        {
+            dbContext.Database.EnsureCreated();
+        }
+        else
+        {
+            dbContext.Database.Migrate();
+        }
 
         await CreateExampleUsersHelper.CreateExamples(dbContext);
     }

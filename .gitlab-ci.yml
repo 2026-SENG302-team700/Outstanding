@@ -2,7 +2,9 @@ stages:
   - tagChecking
   - build
   - test
-#  - deploy
+  - coverage-report
+  - sonarqube
+  - deploy
 
 # Check that the tag matches the expected 'sprintX.Y' format
 tag-checker:
@@ -31,71 +33,149 @@ svelte-build:
 
 # Runs the tests for the dotnet project
 # Later (sprint 2) you will add support for coverage collection and SonarQube
-dotnet-test:
+.test_template:
   stage: test
   script:
-    - cd SENG302.Api.Tests
-    - dotnet test
+    # Use Coverlet to collect coverage in OpenCover format via "XPlat Code Coverage"
+    # The results-directory includes the namespace to keep types isolated
+    - 'dotnet test SENG302.Api.Tests/SENG302.Api.Tests.csproj --filter "FullyQualifiedName~$TEST_NAMESPACE" --collect:"XPlat Code Coverage" --results-directory SENG302.Api.Tests/coverage-results/$TEST_NAMESPACE -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover'
+  artifacts:
+    when: always
+    paths:
+      # Collect individual results for each namespace
+      - SENG302.Api.Tests/coverage-results/*/
+    expire_in: 1 day
+
+unit-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: Unit
+
+integration-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: Integration
+
+acceptance-tests:
+  extends: .test_template
+  variables:
+    TEST_NAMESPACE: Acceptance
+
+coverage-reporting:
+  stage: coverage-report
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - apt-get update && apt-get install -y bc
+    - dotnet tool install -g dotnet-reportgenerator-globaltool
+    - export PATH="$PATH:$HOME/.dotnet/tools"
+
+    # Generate full individual HTML + Cobertura reports for each type
+    - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Unit/**/coverage.opencover.xml" -targetdir:"coverage-report/unit" -reporttypes:"Html;Cobertura"'
+    - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Integration/**/coverage.opencover.xml" -targetdir:"coverage-report/integration" -reporttypes:"Html;Cobertura"'
+    - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Acceptance/**/coverage.opencover.xml" -targetdir:"coverage-report/acceptance" -reporttypes:"Html;Cobertura"'
+
+    # Generate the combined total report
+    - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml" -targetdir:"coverage-report/combined" -reporttypes:"Html;Cobertura"'
+
+  coverage: '/Total Coverage: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - coverage-report/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage-report/combined/Cobertura.xml
+  dependencies:
+    - unit-tests
+    - integration-tests
+    - acceptance-tests
+
+sonarqube-report:
+  stage: sonarqube
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - dotnet tool install --global dotnet-sonarscanner
+    - export PATH="$PATH:/root/.dotnet/tools"
+
+      # begin report analysis from test jobs
+    - dotnet sonarscanner begin /k:"$SONAR_PROJECT_KEY" /d:sonar.host.url="https://sonarqube.csse.canterbury.ac.nz"
+      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
+
+    # build required for sonarqube to analyse compiled output
+    - dotnet build SENG302.Api/SENG302.Api.csproj -c Release
+
+    # end analysis
+    - dotnet sonarscanner end /d:sonar.token="$SONARQUBE_TOKEN"
 
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
-#deploy-staging:
-#  stage: deploy
-#  script:
-#    # Build backend api and restart the underlying service
-#    - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
-#    - rm -rf /home/gitlab-runner/staging/ || true
-#    - mkdir -p /home/gitlab-runner/staging/
-#    - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/staging/
-#    - cp runner-scripts/staging.sh /home/gitlab-runner/staging.sh
-#    - chmod u+x /home/gitlab-runner/staging.sh
-#    - sudo systemctl restart staging
-#
-#    # Build and deploy frontend
-#    - cd ./SENG302.App
-#    - npm ci
-#    - NODE_ENV=test npm run build
-#    - rm -rf /home/gitlab-runner/staging-frontend/ || true
-#    - mkdir -p /home/gitlab-runner/staging-frontend/
-#    - cp -r ./build/* /home/gitlab-runner/staging-frontend/
-#    
-#    # Ensure the folder is owned by the group nginx belongs to
-#    - chgrp -R gitlab-runner /home/gitlab-runner/staging-frontend/
-#    # Give the group Read and Execute permissions
-#    - chmod -R 750 /home/gitlab-runner/staging-frontend/
-#  artifacts:
-#    paths:
-#      - SENG302.Api/bin/Release/net10.0/linux-x64/publish/
-#      - SENG302.App/build/
-#  only:
-#    - dev
-#
-#deploy-production:
-#  stage: deploy
-#  script:
-#    # Build backend api and restart the underlying service
-#    - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
-#    - rm -rf /home/gitlab-runner/production/ || true
-#    - mkdir -p /home/gitlab-runner/production/
-#    - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/production/
-#    - cp runner-scripts/production.sh /home/gitlab-runner/production.sh
-#    - chmod u+x /home/gitlab-runner/production.sh
-#    - sudo systemctl restart production
-#      
-#    # Build and deploy frontend
-#    - cd ./SENG302.App
-#    - npm ci
-#    - NODE_ENV=production npm run build
-#    - rm -rf /home/gitlab-runner/production-frontend/ || true
-#    - mkdir -p /home/gitlab-runner/production-frontend/
-#    - cp -r ./build/* /home/gitlab-runner/production-frontend/
-#
-#    # Ensure the folder is owned by the group nginx belongs to
-#    - chgrp -R gitlab-runner /home/gitlab-runner/production-frontend/
-#    # Give the group Read and Execute permissions
-#    - chmod -R 750 /home/gitlab-runner/production-frontend/
-#  artifacts:
-#    paths:
-#      - SENG302.Api/bin/Release/net10.0/linux-x64/publish/
-#      - SENG302.App/build/
-#  only:
-#    - tags
+deploy-staging:
+  stage: deploy
+  script:
+    # Build backend api and restart the underlying service
+    - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
+    - rm -rf /home/gitlab-runner/staging/ || true
+    - mkdir -p /home/gitlab-runner/staging/
+    - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/staging/
+    - cp runner-scripts/staging.sh /home/gitlab-runner/staging.sh
+    - chmod u+x /home/gitlab-runner/staging.sh
+
+    - echo "export DB_HOST=${DB_HOST}" > /home/gitlab-runner/staging/.env
+    - echo "export DB_NAME=${TEST_DB_NAME}" >> /home/gitlab-runner/staging/.env
+    - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/staging/.env
+    - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/staging/.env
+
+    - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/staging/.env
+    - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/staging/.env
+    - echo "export EMAIL_PASS=${EMAIL_PASS}" >> /home/gitlab-runner/staging/.env
+
+    - sudo systemctl restart staging
+
+    # Build and deploy frontend
+    - cd ./SENG302.App
+    - npm ci
+    - NODE_ENV=test npm run build
+    - rm -rf /home/gitlab-runner/staging-frontend/ || true
+    - mkdir -p /home/gitlab-runner/staging-frontend/
+    - cp -r ./build/* /home/gitlab-runner/staging-frontend/
+
+    # Ensure the folder is owned by the group nginx belongs to
+    - chgrp -R gitlab-runner /home/gitlab-runner/staging-frontend/
+    # Give the group Read and Execute permissions
+    - chmod -R 750 /home/gitlab-runner/staging-frontend/
+  artifacts:
+    paths:
+      - SENG302.Api/bin/Release/net10.0/linux-x64/publish/
+      - SENG302.App/build/
+  only:
+    - dev
+
+deploy-production:
+  stage: deploy
+  script:
+    # Build backend api and restart the underlying service
+    - dotnet publish SENG302.Api/SENG302.Api.csproj -c Release -r linux-x64 --self-contained false /p:PublishSingleFile=true
+    - rm -rf /home/gitlab-runner/production/ || true
+    - mkdir -p /home/gitlab-runner/production/
+    - cp -r ./SENG302.Api/bin/Release/net10.0/linux-x64/publish/* /home/gitlab-runner/production/
+    - cp runner-scripts/production.sh /home/gitlab-runner/production.sh
+    - chmod u+x /home/gitlab-runner/production.sh
+    - sudo systemctl restart production
+
+    # Build and deploy frontend
+    - cd ./SENG302.App
+    - npm ci
+    - NODE_ENV=production npm run build
+    - rm -rf /home/gitlab-runner/production-frontend/ || true
+    - mkdir -p /home/gitlab-runner/production-frontend/
+    - cp -r ./build/* /home/gitlab-runner/production-frontend/
+
+    # Ensure the folder is owned by the group nginx belongs to
+    - chgrp -R gitlab-runner /home/gitlab-runner/production-frontend/
+    # Give the group Read and Execute permissions
+    - chmod -R 750 /home/gitlab-runner/production-frontend/
+  artifacts:
+    paths:
+      - SENG302.Api/bin/Release/net10.0/linux-x64/publish/
+      - SENG302.App/build/
+  only:
+    - tags
