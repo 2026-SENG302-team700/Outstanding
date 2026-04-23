@@ -68,9 +68,13 @@ coverage-reporting:
     - apt-get update && apt-get install -y bc
     - dotnet tool install -g dotnet-reportgenerator-globaltool
     - export PATH="$PATH:$HOME/.dotnet/tools"
+
+    # Generate full individual HTML + Cobertura reports for each type
     - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Unit/**/coverage.opencover.xml" -targetdir:"coverage-report/unit" -reporttypes:"Html;Cobertura"'
     - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Integration/**/coverage.opencover.xml" -targetdir:"coverage-report/integration" -reporttypes:"Html;Cobertura"'
     - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/Acceptance/**/coverage.opencover.xml" -targetdir:"coverage-report/acceptance" -reporttypes:"Html;Cobertura"'
+
+    # Generate the combined total report
     - 'reportgenerator -reports:"SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml" -targetdir:"coverage-report/combined" -reporttypes:"Html;Cobertura"'
 
   coverage: '/Total Coverage: \d+\.\d+%/'
@@ -81,7 +85,6 @@ coverage-reporting:
       coverage_report:
         coverage_format: cobertura
         path: coverage-report/combined/Cobertura.xml
-
   dependencies:
     - unit-tests
     - integration-tests
