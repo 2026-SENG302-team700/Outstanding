@@ -180,7 +180,7 @@ public class UserController : ControllerBase
 
         if (!MimeTypeSets.Images.Contains(file.ContentType))
         {
-            return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp");
+            return BadRequest("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
         }
 
         var userId = int.Parse(userIdString);

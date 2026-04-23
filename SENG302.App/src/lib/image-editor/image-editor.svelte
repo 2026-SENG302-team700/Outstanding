@@ -1,6 +1,7 @@
 <script lang="ts">
     import { addToast } from "$lib/toast/toast";
     import { onDestroy, onMount } from "svelte";
+    import mimeMagicNumbers from "../../../../SENG302.Shared/mimeTypes.json";
 
     const profileSize = $state(250.0);
 
@@ -45,9 +46,41 @@
      * @param file the image file
      */
     export async function setImg(file: File) {
+
+        const magicNumber = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+        //var textDecoder = new TextDecoder("utf-8");
+        //var magicNumberString = textDecoder.decode(magicNumber);
+
+        const dict = Object.entries(mimeMagicNumbers);
+
+        for (let mimeI = 0; mimeI < dict.length; mimeI++) {
+            var mimeMagicNumber = dict[mimeI][0];
+            var valid = true;
+
+            for (var i = 0; i < magicNumber.length; i++) {
+                var fileByteStr = magicNumber[i].toString(16);
+                var mimeByteStr = mimeMagicNumber.slice(i * 2, i * 2 + 2);
+
+                if ((fileByteStr == "" || mimeByteStr == "") || (mimeByteStr != "??" && fileByteStr != mimeByteStr)) {
+                    valid = false;
+                    break;
+                }
+            }
+
+            if (valid) {
+                console.log(dict);
+            }
+        }
+        
+        console.log(magicNumber);
+        
+       // console.log(Object.keys(mimeMagicNumbers).filter(str => magicNumberString.match(str)));
+
+
+        
         if (!mimeTypes.includes(file.type)) {
             addToast(
-                "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
+                "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp",
                 "error",
             );
             return;
