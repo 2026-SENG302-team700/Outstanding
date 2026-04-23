@@ -8,6 +8,11 @@
 
   let pfpUrl: string | null = null;
 
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+  let { children }: Props = $props();
+
   onMount(() => {
     retrieveUser();
   });
@@ -98,7 +103,7 @@
     </div>
   </div>
 </nav>
-<slot />
+{@render children?.()}
 
 <style>
   .profile-image {
