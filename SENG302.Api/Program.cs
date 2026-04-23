@@ -105,9 +105,9 @@ public class Program
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
             });
         }
-        
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsDevelopment() || app.Environment.IsStaging()));
-        
+
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, app.Environment.IsDevelopment() || app.Environment.IsStaging());
+
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
         {
