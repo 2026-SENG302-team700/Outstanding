@@ -2,6 +2,8 @@ stages:
   - tagChecking
   - build
   - test
+  - coverage-report
+  - sonarqube
   - deploy
 
 # Check that the tag matches the expected 'sprintX.Y' format
@@ -36,6 +38,23 @@ dotnet-test:
   script:
     - cd SENG302.Api.Tests
     - dotnet test
+
+sonarqube-report:
+  stage: sonarqube
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - dotnet tool install --global dotnet-sonarscanner
+    - export PATH="$PATH:/root/.dotnet/tools"
+      
+      # begin report analysis from test jobs
+    - dotnet sonarscanner begin /k:"$SONAR_PROJECT_KEY" /d:sonar.host.url="https://sonarqube.csse.canterbury.ac.nz"
+      /d:sonar.token="$SONARQUBE_TOKEN" /d:sonar.cs.opencover.reportPaths="SENG302.Api.Tests/coverage-results/**/coverage.opencover.xml"
+    
+    # build required for sonarqube to analyse compiled output
+    - dotnet build SENG302.Api/SENG302.Api.csproj -c Release
+      
+    # end analysis
+    - dotnet sonarscanner end /d:sonar.token="$SONARQUBE_TOKEN"
 
 # During the DevOps workshop in sprint 2 we will cover the deployment configuration below
 deploy-staging:
