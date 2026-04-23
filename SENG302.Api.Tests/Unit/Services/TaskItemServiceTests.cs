@@ -48,25 +48,62 @@ public class TaskItemServiceTests
     [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // 129 chars
     public void ValidateName_InValidName_ThrowError(string name)
     {
-        Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemName(name));
+        var errors = new Dictionary<string, string>();
+
+        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemName(name))
+        {
+            errors[key] = value;
+        }        
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("name");
+        errors.Values.ShouldContain("Title is required and must be between 3 and 128 characters long");
     }
 
     [Fact]
     public void ValidateDescription_LongDescription_ThrowError()
     {
-        Should.Throw<InvalidLengthException>(() => ServiceUnderTest.ValidateTaskItemDescription(new string('a', 2049)));
+        var errors = new Dictionary<string, string>();
+
+        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDescription(new string('a', 2049)))
+        {
+            errors[key] = value;
+        }        
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("description");
+        errors.Values.ShouldContain("Description must be 2048 characters or less");
     }
 
     [Fact]
     public void ValidateDueDate_FutureDate_NoError()
     {
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1)))); // One day in the future
+        var errors = new Dictionary<string, string>();
+        
+        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1))))
+        {
+            errors[key] = value;
+        }        
+        
+        errors.ShouldBeEmpty();
     }
 
     [Fact]
     public void ValidateDueDate_PastDate_ThrowError()
     {
-        Should.Throw<ArgumentException>(() => ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)))); // One day in the future
+        var errors = new Dictionary<string, string>();
+        
+        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))))
+        {
+            errors[key] = value;
+        }        
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("dueDate");  
+        errors.Values.ShouldContain("Invalid due date, date must be in the future");
     }
 
     [Fact]

@@ -97,6 +97,15 @@
     }
 
     /**
+     * Clears the all fields in the update password form
+     */
+    function clearPasswordFields() {
+        oldPassword = "";
+        newPassword = "";
+        confirmPassword = "";
+    }
+
+    /**
      * Start a new timer for the resend button to ensure the user cant spam their email
      */
     function startResendCountdown() {
@@ -115,7 +124,7 @@
         currentModalStep = "verify";
 
         authModal?.show();
-        
+
         if (!isSending && resendTimer == 0) {
             isSending = true;
             resendTimer = 0;
@@ -154,7 +163,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -258,7 +267,7 @@
         if (!isValid()) return;
 
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -281,15 +290,11 @@
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
-                switch (data.errorType) {
-                    // check for duplicate email, throws regular error rather than "something went wrong"
-                    case "DuplicateEmailException":
-                        email = "";
-                        errors.email = data.message;
-                        break;
-                    default:
-                        addToast(data?.message || "An error occured.", "error");
-                        break;
+                if (data?.errors) {
+                    errors.email = data.errors.email ?? "";
+                    errors.displayName = data.errors.displayName ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
                 }
                 return;
             }
@@ -383,7 +388,6 @@
          */
         async function updatePassword() {
             const valid = validateChangePasswordInputs();
-            if (!valid) return;
             
             updatingPassword = true;
             try {
@@ -400,7 +404,7 @@
                         })
                     }
                 );
-                if (response.ok) {
+                if (response.ok && valid) {
                     addToast("New password updated successfully")
                     authModal.hide()
                     goto(resolve("/home/profile"));
@@ -411,7 +415,7 @@
                 if (response.status === 400){
                     switch (data.message) {
                         case "Old password does not match password on file":
-                            errors.oldPassword = "Old password does not match password on file";
+                            if (oldPassword) {errors.oldPassword = "Old password does not match password on file";}
                             oldPassword = "";
                             break;
                         case "Passwords do not match":
@@ -716,7 +720,7 @@
                 {:else}
                     <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
+                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password *</label>
                             <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
                             {#if errors.oldPassword}
                                 <div class="invalid-feedback">
@@ -725,7 +729,7 @@
                             {/if}
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
+                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password *</label>
                             <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
                             {#if errors.newPassword}
                                 <div class="invalid-feedback">
@@ -734,7 +738,7 @@
                             {/if}
                         </div>
                         <div class="mb-3">
-                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
+                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password *</label>
                             <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
                             {#if errors.confirmPassword}
                                 <div class="invalid-feedback">
@@ -750,6 +754,11 @@
                         class="btn btn-secondary w-100 py-2 mt-3"
                         data-bs-dismiss="modal"
                         aria-label="Close"
+                        on:click={() => {
+                            clearErrors();
+                            clearPasswordFields();
+                        }   
+                        }
                 >Cancel</button>
             </div>
         </div>

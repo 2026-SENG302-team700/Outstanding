@@ -7,6 +7,10 @@
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import DatePicker from "$lib/datepicker/datepicker.svelte";
     import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
+    import TitleForm from "$lib/components/title-form.svelte";
+    import DescriptionForm from "$lib/components/description-form.svelte";
+    import path from "node:path";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -85,11 +89,14 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-
-                addToast(
-                    (await response.text()) || "An error occured.",
-                    "error",
-                );
+                const data = await response.json().catch(() => null);
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
+                }
                 return;
             }
 
@@ -139,49 +146,24 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-center mb-4" style="flex: 1; justify-content: center;">
+        <h1 class="text-break text-center mb-4" style="flex: 1; justify-content: center; width: 1000px;">
             {listName}
         </h1>
     </div>
     <div class="mb-3">
-        <button
-            type="button"
-            class="btn btn-secondary"
-            on:click={() => goto(".")}
-            >Cancel
-        </button>
+        <CancelButton path={"."} />
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.name}
-                placeholder="Title *"
-                bind:value={name}
-                disabled={loading}
-            />
-            {#if errors.name}
-                <div class="invalid-feedback">
-                    {errors.name}
-                </div>
-            {/if}
+            <TitleForm bind:name error={errors.name} {loading} />
         </div>
 
         <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                class:is-invalid={errors.description}
-                placeholder="Description"
-                bind:value={description}
-                disabled={loading}
+            <DescriptionForm
+                bind:description
+                error={errors.description}
+                {loading}
             />
-            {#if errors.description}
-                <div class="invalid-feedback">
-                    {errors.description}
-                </div>
-            {/if}
         </div>
 
         <div class="mb-3 d-flex align-items-center gap-2">
