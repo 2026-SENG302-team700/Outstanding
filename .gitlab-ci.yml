@@ -54,7 +54,7 @@ unit-tests:
 integration-tests:
   extends: .test_template
   variables:
-    TEST_NAMESPACE: integration
+    TEST_NAMESPACE: Integration
 
 acceptance-tests:
   extends: .test_template
