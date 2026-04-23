@@ -41,7 +41,7 @@ svelte-build:
 artifacts:
   when: always
   paths:
-    - Outstanding.Api.Tests/coverage-results/*/
+    - SENG302.Api.Tests/coverage-results/*/
   expire_in: 1 day
 
 unit-tests:
