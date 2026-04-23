@@ -105,10 +105,9 @@ public class Program
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
             });
         }
-
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider);
-
-
+        
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsDevelopment() || app.Environment.IsStaging()));
+        
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
         {
@@ -155,12 +154,19 @@ public class Program
         app.Run();
     }
 
-    protected static async Task InitializeDatabase(IServiceProvider serviceProvider)
+    protected static async Task InitializeDatabase(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        dbContext.Database.EnsureCreated();
+        if (isDevelopment)
+        {
+            dbContext.Database.EnsureCreated();
+        }
+        else
+        {
+            dbContext.Database.Migrate();
+        }
 
         await CreateExampleUsersHelper.CreateExamples(dbContext);
     }
