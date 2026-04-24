@@ -7,9 +7,6 @@
     import { flip } from "svelte/animate";
     import { fade } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
-    import { flip } from "svelte/animate";
-    import { fade } from "svelte/transition";
-    import { cubicOut } from "svelte/easing";
 
     interface Task {
         id: string;
@@ -51,7 +48,7 @@
                 {task.title}
             </div>
         </div>
-    </div>
+    {/each}
 </div>
 
 <style>
