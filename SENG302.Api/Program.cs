@@ -33,10 +33,35 @@ public class Program
         // Add authorization service
         builder.Services.AddAuthorization();
 
-        // Configure database context with factory pattern
-        builder.Services.AddDbContextFactory<DatabaseContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
+        if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
+        {
+            var dbHost = builder.Configuration["DB_HOST"];
+            var dbName = builder.Configuration["DB_NAME"];
+            var dbUser = builder.Configuration["DB_USER"];
+            var dbPass = builder.Configuration["DB_PASS"];
+
+            if (dbHost == null || dbName == null || dbUser == null || dbPass == null)
+            {
+                throw new InvalidOperationException("Missing required database environment variables.");
+            }
+            
+            // build the connection string
+            var connectionString =
+                $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certification=true";
+
+            builder.Services.AddDbContextFactory<DatabaseContext>((_, options) => 
+                options.UseNpgsql(connectionString)
+                );
+        } else
+        {
+            // Configure database context with factory pattern
+            builder.Services.AddDbContextFactory<DatabaseContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
+
+        }
+        
+        
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services
