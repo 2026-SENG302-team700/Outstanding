@@ -48,7 +48,7 @@ public class Program
             
             // build the connection string
             var connectionString =
-                $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certification=true";
+                $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certificate=true";
 
             builder.Services.AddDbContextFactory<DatabaseContext>((_, options) => 
                 options.UseNpgsql(connectionString)
