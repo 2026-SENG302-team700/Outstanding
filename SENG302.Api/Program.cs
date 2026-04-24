@@ -82,7 +82,7 @@ public class Program
             options.Cookie.SecurePolicy = cookiePolicy;
         });
 
-        // Configure the cookie-based authentication and set security options
+        // Configure the cookie-based authentication and set security options 
         builder.Services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
