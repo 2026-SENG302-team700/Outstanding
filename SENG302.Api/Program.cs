@@ -46,7 +46,7 @@ public class Program
                 throw new InvalidOperationException("Missing required database environment variables.");
             }
             
-            // build the connection string
+            // build the connection string to be used by PosgreSQL
             var connectionString =
                 $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certificate=true";
 
