@@ -64,7 +64,7 @@ public class Program
         
         builder.Services.AddHttpContextAccessor();
 
-        // Register custom services
+        // Register custom services 
         RegisterServices(builder.Services);
 
         // Setup antiforgery (CSRF)
