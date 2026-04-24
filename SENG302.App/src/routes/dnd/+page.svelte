@@ -34,6 +34,12 @@
             description: "Darfield ew...",
             priority: "low",
         },
+        {
+            id: "4",
+            title: "Kia ora Vlad",
+            description: "",
+            priority: "high",
+        },
     ]);
 
     function handleDrop(state: DragDropState<Item>) {
@@ -104,6 +110,11 @@
                                         class="mt-2 text-sm text-swiss-mid-gray dark:text-white/60"
                                     >
                                         {item.description}
+                                    </p>
+                                    <p
+                                        class="mt-2 text-sm text-swiss-mid-gray dark:text-white/60"
+                                    >
+                                        {item.priority}
                                     </p>
                                 </div>
                             </div>
