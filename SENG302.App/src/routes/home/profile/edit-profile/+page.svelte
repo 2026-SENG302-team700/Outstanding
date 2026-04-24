@@ -36,6 +36,8 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false)
+    
+    let profanityFiltering = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -178,6 +180,7 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            profanityFiltering = data.profanityFiltering;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -277,6 +280,7 @@
                     email,
                     displayName,
                     country,
+                    profanityFiltering,
                 }),
             });
 
@@ -594,6 +598,20 @@
                         {/each}
                     </select>
                 </div>
+                <div class="mb-3">
+                    <label for="profanityFiltering" class="form-label">Profanity Filtering</label>
+                    <div class = "form-check form-switch">
+                        <input
+                                class="form-check-input"
+                                type="checkbox"
+                                role="switch"
+                                id="profanityFiltering"
+                                bind:checked={profanityFiltering}
+                        />
+                        <label class="form-check-label" for="profanityFiltering">
+                            {profanityFiltering ? "On" : "Off"}
+                        </label>
+                    </div>
             </div>
             <div class="mt-5 mb-4">
                 <h5 class="text-muted mb-2">Account Security</h5>

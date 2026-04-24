@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
@@ -50,7 +51,8 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest, userId);
             return Ok(response);
         }
         catch (MultipleValidationException e)
@@ -71,7 +73,8 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var response = await _taskItemService.GetTaskItemAsync(id);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var response = await _taskItemService.GetTaskItemAsync(id, userId);
             return Ok(response);
         }
         catch (Exception e)
@@ -94,7 +97,9 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            
+            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
             return Ok(taskItem);
         }
         catch (Exception e)
