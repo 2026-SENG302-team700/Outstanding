@@ -138,8 +138,8 @@ public class EmailService : IEmailService
 /// </summary>
 public class EmailSettings
 {
-    public string Host = Environment.GetEnvironmentVariable("EMAIL_HOST");
-    public int Port = 587;
-    public string FromEmail = Environment.GetEnvironmentVariable("EMAIL");
-    public string Password = Environment.GetEnvironmentVariable("EMAIL_PASS");
+    public string Host { get; set; } = Environment.GetEnvironmentVariable("EMAIL_HOST");
+    public int Port { get; set; } = 587;
+    public string FromEmail { get; set; } = Environment.GetEnvironmentVariable("EMAIL");
+    public string Password { get; set; } = Environment.GetEnvironmentVariable("EMAIL_PASS");
 }

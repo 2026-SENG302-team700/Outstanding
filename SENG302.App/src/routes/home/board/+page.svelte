@@ -50,61 +50,154 @@
   {:else if tasks.length === 0}
     <div class="text-center text-muted py-4">No tasks found.</div>
   {:else}
-    <div class="task-grid">
-      {#each tasks as task}
-        <div
-          class="task-card-small"
-          class:status-todo={task.currentStatus === 0}
-          class:status-inprogress={task.currentStatus === 1}
-          class:status-done={task.currentStatus === 2}
-          tabindex="0"
-          role="button"
-          on:click={() =>
-            goto(
-              resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`),
-            )}
-          on:keydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+    <div class="board-columns">
+      <!-- todo column -->
+      <div class="board-column">
+        <div class="column-header status-todo-header">Todo</div>
+        {#each tasks.filter((t) => t.currentStatus === 0) as task}
+          <div
+            class="task-card-small status-todo"
+            tabindex="0"
+            role="button"
+            on:click={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
-              );
-            }
-          }}
-        >
-          <div class="task-card-header">
-            <span class="task-title">{task.name}</span>
-            <span
-              class="status-badge"
-              class:badge-todo={task.currentStatus === 0}
-              class:badge-inprogress={task.currentStatus === 1}
-              class:badge-done={task.currentStatus === 2}
+              )}
+            on:keydown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                goto(
+                  resolve(
+                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
+                  ),
+                );
+            }}
+          >
+            <div class="task-card-header">
+              <span class="task-title">{task.name}</span>
+            </div>
+            <p class="task-description">{shortenDesc(task.description, 30)}</p>
+            <span class="due-date"
+              >🗓 {task.dueDate === null
+                ? "No due date"
+                : formatDate(task.dueDate)}</span
             >
-              {#if task.currentStatus === 0}Todo
-              {:else if task.currentStatus === 1}In Progress
-              {:else}Done{/if}
-            </span>
           </div>
-
-          <p class="task-description">{shortenDesc(task.description, 30)}</p>
-
-          <span class="due-date">
-            🗓 {task.dueDate === null
-              ? "No due date"
-              : formatDate(task.dueDate)}
-          </span>
-        </div>
-      {/each}
+        {/each}
+      </div>
+      <!-- in progress column -->
+      <div class="board-column">
+        <div class="column-header status-inprogress-header">In Progress</div>
+        {#each tasks.filter((t) => t.currentStatus === 1) as task}
+          <div
+            class="task-card-small status-inprogress"
+            tabindex="0"
+            role="button"
+            on:click={() =>
+              goto(
+                resolve(
+                  `/home/task-list/${task.taskListId}/task/${task.taskId}`,
+                ),
+              )}
+            on:keydown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                goto(
+                  resolve(
+                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
+                  ),
+                );
+            }}
+          >
+            <div class="task-card-header">
+              <span class="task-title">{task.name}</span>
+            </div>
+            <p class="task-description">{shortenDesc(task.description, 30)}</p>
+            <span class="due-date"
+              >🗓 {task.dueDate === null
+                ? "No due date"
+                : formatDate(task.dueDate)}</span
+            >
+          </div>
+        {/each}
+      </div>
+      <!-- done column -->
+      <div class="board-column">
+        <div class="column-header status-done-header">Done</div>
+        {#each tasks.filter((t) => t.currentStatus === 2) as task}
+          <div
+            class="task-card-small status-done"
+            tabindex="0"
+            role="button"
+            on:click={() =>
+              goto(
+                resolve(
+                  `/home/task-list/${task.taskListId}/task/${task.taskId}`,
+                ),
+              )}
+            on:keydown={(e) => {
+              if (e.key === "Enter" || e.key === " ")
+                goto(
+                  resolve(
+                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
+                  ),
+                );
+            }}
+          >
+            <div class="task-card-header">
+              <span class="task-title">{task.name}</span>
+            </div>
+            <p class="task-description">{shortenDesc(task.description, 30)}</p>
+            <span class="due-date"
+              >🗓 {task.dueDate === null
+                ? "No due date"
+                : formatDate(task.dueDate)}</span
+            >
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 </div>
 
 <style>
-  .task-grid {
+  .board-columns {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .board-column {
+    flex: 1;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .column-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .status-todo-header {
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .status-inprogress-header {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .status-done-header {
+    background: #dcfce7;
+    color: #15803d;
   }
 
   .task-card-small {
@@ -113,12 +206,11 @@
     border-left: 4px solid white;
     border-radius: 8px;
     padding: 8px 12px;
-    width: 250px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
     transition:
       box-shadow 0.2s ease,
       transform 0.1s ease;
-    cursor: default;
+    cursor: pointer;
   }
 
   .task-card-small:hover {
@@ -141,7 +233,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 4px;
-    gap: 6px;
   }
 
   .task-title {
@@ -161,25 +252,5 @@
   .due-date {
     font-size: 0.75rem;
     color: #9ca3af;
-  }
-
-  .status-badge {
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 999px;
-  }
-
-  .badge-todo {
-    background: #f3f4f6;
-    color: grey;
-  }
-  .badge-inprogress {
-    background: #eff6ff;
-    color: blue;
-  }
-  .badge-done {
-    background: #f0fdf4;
-    color: lightgreen;
   }
 </style>
