@@ -6,19 +6,13 @@
     } from "@dnd-kit/svelte";
     import { defaultPreset } from "@dnd-kit/dom";
     import { move } from "@dnd-kit/helpers";
-    import "./styles.css";
-    import SortableColumn from "./SortableColumn.svelte";
+    import "../styles.css";
+    import SortableColumn from "../SortableColumn.svelte";
 
-    function createRange(length: number) {
-        return Array.from({ length }, (_, i) => i + 1);
-    }
-
-    const ITEM_COUNT = 6;
+    const todoItems = ["buy milk", "make bed", "look for jobs", "go to sleep"];
 
     const COLORS: Record<string, string> = {
-        todo: "#FF851B",
-        inProgress: "#7193f1",
-        done: "#2ECC40",
+        column: "#FF851B",
     };
 
     const sensors = [
@@ -31,9 +25,7 @@
     ];
 
     const initialItems: Record<string, string[]> = {
-        todo: createRange(5).map((id) => `task example ${id}`),
-        inProgress: createRange(3).map((id) => `task example ${id + 5}`),
-        done: createRange(4).map((id) => `task example ${id + 8}`),
+        column: todoItems.map((id) => `${id}`),
     };
 
     let items = $state<Record<string, string[]>>(initialItems);
@@ -65,7 +57,7 @@
     {onDragOver}
     {onDragEnd}
 >
-    <div class="wrapper">
+    <div class="wrapper" style="width: 340px">
         {#each columns as column, columnIndex (column)}
             <SortableColumn
                 id={column}
