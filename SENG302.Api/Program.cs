@@ -11,7 +11,7 @@ namespace SENG302.Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -131,7 +131,7 @@ public class Program
             });
         }
 
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        await InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -184,16 +184,25 @@ public class Program
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        if (isDevelopment)
+        try
         {
-            dbContext.Database.EnsureCreated();
-        }
-        else
-        {
-            dbContext.Database.Migrate();
-        }
+            if (isDevelopment)
+            {
+                dbContext.Database.EnsureCreated();
+            }
+            else
+            {
+                await dbContext.Database.MigrateAsync();
+            }
 
-        await CreateExampleUsersHelper.CreateExamples(dbContext);
+            await CreateExampleUsersHelper.CreateExamples(dbContext);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error occured: ", e);
+            throw;
+        }
+        
     }
 
     protected static void RegisterServices(IServiceCollection services)
