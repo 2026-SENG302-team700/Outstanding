@@ -11,7 +11,7 @@ namespace SENG302.Api;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -131,7 +131,7 @@ public class Program
             });
         }
 
-        await InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -192,7 +192,7 @@ public class Program
             }
             else
             {
-                await dbContext.Database.MigrateAsync();
+                dbContext.Database.MigrateAsync();
             }
 
             await CreateExampleUsersHelper.CreateExamples(dbContext);
