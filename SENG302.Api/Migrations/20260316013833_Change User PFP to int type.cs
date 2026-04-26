@@ -10,21 +10,26 @@ namespace SENG302.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(
-                @"ALTER TABLE ""Users"" 
-          ALTER COLUMN ""ProfilePicture"" TYPE INTEGER 
-          USING ""ProfilePicture""::integer"
-            );
+            migrationBuilder.AlterColumn<int>(
+                name: "ProfilePicture",
+                table: "Users",
+                type: "INTEGER",
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(
-                @"ALTER TABLE ""Users"" 
-          ALTER COLUMN ""ProfilePicture"" TYPE TEXT 
-          USING ""ProfilePicture""::text"
-            );
+            migrationBuilder.AlterColumn<string>(
+                name: "ProfilePicture",
+                table: "Users",
+                type: "TEXT",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "INTEGER");
         }
     }
 }
