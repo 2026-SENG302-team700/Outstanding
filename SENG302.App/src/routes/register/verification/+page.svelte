@@ -28,7 +28,6 @@
         email = localStorage.getItem("email") ?? "";
        
         await getCountDownTime();
-        console.log("Server time: " + serverTime);
         countDownTimer();
         if (email) {
             if (serverTime === initialSeconds) {
