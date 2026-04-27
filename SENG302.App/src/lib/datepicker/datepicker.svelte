@@ -25,6 +25,6 @@
         type="button"
         class="btn btn-outline-secondary btn-sm"
         {disabled}
-        onclick={() => (value = "")}>Clear</button
+        onclick={() => (value = new Date("9999-01-01"))}>Clear</button
     >
 </div>

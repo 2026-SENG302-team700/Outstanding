@@ -57,7 +57,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(`/api/login`, {
+            const response = await fetchWithCsrf(resolve(`/api/login`), {
                 method: "POST",
                 credentials: "include",
                 headers: {
