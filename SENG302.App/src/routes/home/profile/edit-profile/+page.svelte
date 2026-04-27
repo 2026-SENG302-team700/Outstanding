@@ -447,13 +447,17 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
+        
         clearErrors()
         imageEditor.highlightError(false);
         console.log("recieve file");
         if (!files || files.length === 0) {
             return;
         }
-        imageEditor.setImg(files[0]);
+        if (await imageEditor.validateImg(files[0])) {
+            imageEditor.setImg(files[0]);
+            pfpModal.show();
+        }
     }
     
 
@@ -525,11 +529,7 @@
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                data-bs-toggle="modal"
-                data-bs-target="#pfpInputModal"
                 on:click={() => {
-                    imageEditor.reset();
-                    clearErrors();
                     pfpInput.value = ""
                     pfpInput.click();
                 }}
@@ -752,9 +752,9 @@
                 <button
                         type="button"
                         class="btn btn-secondary w-100 py-2 mt-3"
-                        data-bs-dismiss="modal"
                         aria-label="Close"
                         on:click={() => {
+                            authModal.hide();
                             clearErrors();
                             clearPasswordFields();
                         }   
@@ -785,7 +785,7 @@
                 <button
                     type="button"
                     class="btn-close"
-                    data-bs-dismiss="modal"
+                    on:click={() => pfpModal.hide()}
                     aria-label="Close"
                 ></button>
             </div>
@@ -799,13 +799,14 @@
                             name="pfp"
                             type="file"
                             class="d-none"
-                            on:cancel={() => {pfpCancelButton.click()}}
                             on:change={async () => {
-                            await sendToEditor();
-                            // Reset the value so that if we select the same image a second time the on:change event is triggered
-                            pfpInput.value = '';
-                        }
-                    }
+                                    imageEditor.reset();
+                                    clearErrors();
+                                    await sendToEditor();
+                                    // Reset the value so that if we select the same image a second time the on:change event is triggered
+                                    pfpInput.value = '';
+                                }
+                            }
                     />
                     <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
                     {#if errors.image}
@@ -821,7 +822,7 @@
                         <button
                                 type="button"
                                 class="btn btn-secondary"
-                                data-bs-dismiss="modal"
+                                on:click={() => pfpModal.hide()}
                                 bind:this={pfpCancelButton}
                         >Cancel</button>
                     </div>

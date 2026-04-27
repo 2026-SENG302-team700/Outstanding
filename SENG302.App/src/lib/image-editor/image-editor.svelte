@@ -42,16 +42,53 @@
     ];
 
     /**
-     * Insert an image into this ImageEditor object
-     * Also calculates which side of the image is the long side,
-     * and calculates the max size the image can be
+     * Validate an image file
+     * This checks the mime type, the mime type encoded at the start of the file,
+     * and if the size of the image is over 5MB
+     * @param file the image file
+     * @returns true if valid, false if not
+     */
+    export async function validateImg(file: File) {
+        
+        var realMimeType = await getRealValidMime(file);
+
+        if (!mimeTypes.includes(file.type) || realMimeType == undefined) {
+            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp";
+            addToast(
+                imageErrors,
+                "error",
+            );
+            return false;
+        }
+
+        if (file.type != realMimeType) {
+            imageErrors = "Invalid image, file extension does not match file type";
+            addToast(
+                imageErrors,
+                "error",
+            );
+            return false;
+        }
+
+        if (file.size > 5000000) {
+            imageErrors = "Image too large, maximum file size is 5MB";
+            addToast(
+                imageErrors,
+                "error",
+            )
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check the start of the file to get the mime type
+     * and return it if it is a valid type
      * @param file the image file
      */
-    export async function setImg(file: File) {
-
+    export async function getRealValidMime(file: File) {
         const magicNumber = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-        //var textDecoder = new TextDecoder("utf-8");
-        //var magicNumberString = textDecoder.decode(magicNumber);
 
         const dict = Object.entries(mimeMagicNumbers);
 
@@ -63,37 +100,26 @@
                 var fileByteStr = magicNumber[i].toString(16);
                 var mimeByteStr = mimeMagicNumber.slice(i * 2, i * 2 + 2);
 
-                if ((fileByteStr == "" || mimeByteStr == "") || (mimeByteStr != "??" && fileByteStr != mimeByteStr)) {
+                if (mimeByteStr == "" || fileByteStr == "") break;
+
+                if (!(mimeByteStr == "??" || fileByteStr == mimeByteStr)) {
                     valid = false;
                     break;
                 }
             }
-
+            
             if (valid) {
-                console.log(dict);
+                return dict[mimeI][1];
             }
         }
-        
-        console.log(magicNumber);
-        
-       // console.log(Object.keys(mimeMagicNumbers).filter(str => magicNumberString.match(str)));
+    }
 
-
-        
-        if (!mimeTypes.includes(file.type)) {
-            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp"
-            addToast(
-                "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp",
-                "error",
-            );
-            return;
-        }
-
-        if (file.size > 5000000) {
-            imageErrors = "Image too large, maximum file size is 5MB", "error"
-            return;
-        }
-
+    /**
+     * Insert an image into this ImageEditor object
+     * Also calculates which side of the image is the long side
+     * @param file the image file
+     */
+    export async function setImg(file: File) {
         reset();
         try {
             imageFile = file;
