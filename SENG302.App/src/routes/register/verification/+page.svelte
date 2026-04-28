@@ -17,7 +17,6 @@
     let loading = $state(false);
     let buttonDisabled = $state(false);
     let codeHasBeenSent = $state(false);
-    let codeHasBeenSent = $state(false);
 
     let digit1 = $state("");
     let digit2 = $state("");
