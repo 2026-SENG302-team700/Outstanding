@@ -184,16 +184,25 @@ public class Program
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        if (isDevelopment)
+        try
         {
-            dbContext.Database.EnsureCreated();
-        }
-        else
-        {
-            dbContext.Database.Migrate();
-        }
+            if (isDevelopment)
+            {
+                dbContext.Database.EnsureCreated();
+            }
+            else
+            {
+                dbContext.Database.MigrateAsync();
+            }
 
-        await CreateExampleUsersHelper.CreateExamples(dbContext);
+            await CreateExampleUsersHelper.CreateExamples(dbContext);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error occured: ", e);
+            throw;
+        }
+        
     }
 
     protected static void RegisterServices(IServiceCollection services)

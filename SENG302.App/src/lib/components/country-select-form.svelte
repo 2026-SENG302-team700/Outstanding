@@ -8,11 +8,12 @@
 </script>
 
 <select
-    class="form-control"
+    class="form-select"
     class:country-select={!selectedCountryCode}
     class:is-invalid={error}
     bind:value={selectedCountryCode}
     disabled={loading}
+    id="country"
 >
     <option value="">Select Country *</option>
     {#each countries as country}
