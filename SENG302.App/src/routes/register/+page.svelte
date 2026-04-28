@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import PasswordForm from "$lib/components/password-form.svelte";
@@ -10,6 +11,7 @@
     import CountrySelectForm from "$lib/components/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/submit-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
+
 
     let email = $state("");
     let displayName = $state("");
@@ -45,9 +47,8 @@
             valid = false;
         }
 
-        if (displayName.trim() == "" || displayName.trim().length < 3) {
-            errors.displayName =
-                "Display name cannot be made entirely or mostly out of spaces.";
+        if (displayName.trim() == '' || displayName.trim().length < 3) {
+            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
             valid = false;
         }
 
@@ -168,21 +169,18 @@
                 // we display a toast with the badrequest response
                 // from the back end.
 
+                if (data?.errors) {
+                    errors.email = data.errors.email ?? "";
+                    errors.displayName = data.errors.displayName ?? "";
+                    errors.password = data.errors.password ?? "";
+                    errors.passwordConfirm = data.errors.passwordConfirm ?? "";
+                } else {
+                    addToast(data?.message || "Internal server error occurred.", "error");
+                }
+
                 password = "";
                 passwordConfirm = "";
 
-                switch (data.errorType) {
-                    // check for duplicate email, throws regular error rather than "something went wrong"
-                    case "DuplicateEmailException":
-                        email = "";
-                        errors.email =
-                            data?.message ||
-                            "This email address is already in use by another account.";
-                        break;
-                    default:
-                        addToast(data?.message || "An error occured.", "error");
-                        break;
-                }
                 return;
             }
             // set email in local storage for validation page
@@ -202,7 +200,7 @@
 
 <div class="container">
     <div class="mb-3">
-        <CancelButton path="."></CancelButton>
+        <CancelButton path="/" />
     </div>
     <h1 class="text-center mb-4">Register</h1>
 
@@ -220,25 +218,26 @@
         </div>
         <div class="mb-3">
             <CountrySelectForm
-                bind:selectedCountryCode
-                error={errors.country}
-                {loading}
+                    bind:selectedCountryCode
+                    error={errors.country}
+                    {loading}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                bind:password
-                error={errors.password}
-                {loading}
-                passConfirm={false}
+                    bind:password
+                    error={errors.password}
+                    {loading}
+                    passConfirm={false}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                bind:password={passwordConfirm}
-                error={errors.passwordConfirm}
-                {loading}
-                passConfirm={true}
+                    bind:password={passwordConfirm}
+                    error={errors.passwordConfirm}
+                    {loading}
+                    passConfirm={true}
+
             />
         </div>
         <div>

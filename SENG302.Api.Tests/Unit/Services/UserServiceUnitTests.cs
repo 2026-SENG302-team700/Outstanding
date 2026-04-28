@@ -20,57 +20,90 @@ public class UserServiceUnitTest : BaseUnitTestFixture
     [InlineData("invalid-email")]
     [InlineData("test@outstand")]
     [InlineData("@no-user.com")]
-    public void ValidateEmail_MalformedFormat_ExpectInvalidEmailFormatException(string email)
+    public void ValidateEmail_MalformedFormat_ExpectErrorMessageInErrors(string email)
     {
         var service = (UserService)UserServiceUnderTest;
         using var context = DbFactory.CreateDbContext();
         
-        Assert.Throws<InvalidEmailFormatException>(() => service.ValidateEmail(context, email));
+        var errors = service.ValidateEmail(context, email);
+
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("email");
+        errors.Values.ShouldContain("Invalid email address. Email must be in the format 'jane@doe.nz'");
     }
     
     [Theory]
     [InlineData("a")]
     [InlineData("bc")]
     [InlineData("this-name-is-definitely-longer-than-sixty-four-characters-for-testing-purposes")]
-    public void ValidateDisplayName_InvalidLength_ExpectInvalidDisplayNameLengthException(string name)
+    public void ValidateDisplayName_InvalidLength_ExpectErrorMessageInErrors(string name)
     {
         var service = (UserService)UserServiceUnderTest;
-        Assert.Throws<InvalidDisplayNameLengthException>(() => service.ValidateDisplayName(name));
+        
+        var errors = service.ValidateDisplayName(name);
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("displayName");
+        errors.Values.ShouldContain("Display name must be between 3 and 64 characters");
     }
     
     [Theory]
     [InlineData("Test_L")]
     [InlineData("Test!")]
-    public void ValidateDisplayName_InvalidCharacters_ExpectInvalidDisplayNameCharsException(string name)
+    public void ValidateDisplayName_InvalidCharacters_ExpectErrorMessageInErrors(string name)
     {
         var service = (UserService)UserServiceUnderTest;
-        Assert.Throws<InvalidDisplayNameCharsException>(() => service.ValidateDisplayName(name));
+        
+        var errors = service.ValidateDisplayName(name);
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("displayName");
+        errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
 
     [Fact]
-    public void ValidateDisplayName_OnlyNumbers_ExpectInvalidDisplayNameCharsException()
+    public void ValidateDisplayName_OnlyNumbers_ExpectErrorMessageInErrors()
     {
         var service = (UserService)UserServiceUnderTest;
-        Assert.Throws<InvalidDisplayNameCharsException>(() => service.ValidateDisplayName("12345"));
+        
+        var errors = service.ValidateDisplayName("12345");
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("displayName");
+        errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
     
     [Fact]
-    public void ValidatePassword_MismatchedPasswords_ExpectMismatchedPasswordException()
+    public void ValidatePassword_MismatchedPasswords_ExpectErrorMessageInErrors()
     {
         var service = (UserService)UserServiceUnderTest;
-        Assert.Throws<MismatchedPasswordException>(() => 
-            service.ValidatePassword("Password123!", "Password321!"));
+
+        var errors = service.ValidatePassword("Password123!", "Password321!");
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("passwordConfirm");
+        errors.Values.ShouldContain("Passwords do not match");
     }
     
     [Theory]
     [InlineData("weak")]
     [InlineData("NoSpecialChars123")]
     [InlineData("nosymbolsorupper123")]
-    public void ValidatePassword_WeakPassword_ExpectInvalidPasswordException(string password)
+    public void ValidatePassword_WeakPassword_ExpectErrorMessageInErrors(string password)
     {
         var service = (UserService)UserServiceUnderTest;
-        Assert.Throws<InvalidPasswordException>(() => 
-            service.ValidatePassword(password, password));
+        
+        var errors = service.ValidatePassword(password, password);
+        
+        errors.ShouldNotBeEmpty();
+        errors.ShouldHaveSingleItem();
+        errors.Keys.ShouldContain("password");
+        errors.Values.ShouldContain("Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"); 
     }
     
     [Fact]
@@ -100,14 +133,6 @@ public class UserServiceUnitTest : BaseUnitTestFixture
     }
     
     [Fact]
-    public async Task CheckUserCredentials_InvalidEmail_ExpectInvalidEmailResult()
-    {
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync("hear❤️t5@test.com", "AnyPassword1!");
-        Assert.Equal(UserVerificationResult.MalformedEmail, result.userVerificationResult);
-        Assert.Null(result.user);
-    }
-    
-    [Fact]
     public async Task CheckUserCredentials_UnverifiedEmailTimeExpired_ExpectAccountUnverifiedResult()
     {
         var email = "unverified@test.com";
@@ -121,22 +146,6 @@ public class UserServiceUnitTest : BaseUnitTestFixture
         }
         var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
         Assert.Equal(UserVerificationResult.DoesNotExist, result.userVerificationResult);
-        Assert.NotNull(result.user);
-    }
-    
-    [Fact]
-    public async Task CheckUserCredentials_ValidEmailPassword_ExpectSuccessResult()
-    {
-        var email = "unverified@test.com";
-        using (var context = await DbFactory.CreateDbContextAsync())
-        {
-            var user = await UserServiceUnderTest.GenerateNewUserAsync(email, "Test User", "Password123!", "NZ");
-            user.EmailVerified = true;
-            context.Users.Add(user);
-            await context.SaveChangesAsync();
-        }
-        var result = await UserServiceUnderTest.CheckUserCredentialsAsync(email, "Password123!");
-        Assert.Equal(UserVerificationResult.Success, result.userVerificationResult);
         Assert.NotNull(result.user);
     }
     

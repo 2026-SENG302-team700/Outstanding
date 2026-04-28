@@ -98,14 +98,13 @@ public class UserController : ControllerBase
         try
         {
             var userId = int.Parse(userIdString);
-            var oldUser = await _userService.GetUserByIdAsync(userId);
             updateUserRequest.Email = updateUserRequest.Email.ToLower();
 
             var user = await _userService.UpdateUser(
-                    userId,
-                    updateUserRequest.Email,
-                    updateUserRequest.DisplayName,
-                    updateUserRequest.Country);
+                userId,
+                updateUserRequest.Email,
+                updateUserRequest.DisplayName,
+                updateUserRequest.Country);
 
             if (user == null)
             {
@@ -134,6 +133,13 @@ public class UserController : ControllerBase
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
             return Ok(user);
+        }
+        catch (MultipleValidationException e)
+        {
+            return BadRequest(new BadRequestValidationResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {

@@ -3,7 +3,9 @@
     import { onDestroy, onMount } from "svelte";
 
     const profileSize = $state(250.0);
-
+    
+    let { imageErrors = $bindable("") } = $props()
+    
     let imageSrc = $state("");
     let imageFile = $state();
 
@@ -46,6 +48,7 @@
      */
     export async function setImg(file: File) {
         if (!mimeTypes.includes(file.type)) {
+            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp"
             addToast(
                 "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
                 "error",
@@ -54,7 +57,7 @@
         }
 
         if (file.size > 5000000) {
-            addToast("Image too large, maximum file size is 5MB", "error");
+            imageErrors = "Image too large, maximum file size is 5MB", "error"
             return;
         }
 
@@ -77,9 +80,10 @@
                 newWidth = (newHeight / height) * width;
             }
         } catch (error) {
-            console.log("image not found");
+            console.log("image not found", error);
         }
     }
+    
 
     /**
      * Get the dimensions of an image
@@ -91,7 +95,6 @@
             img.src = url;
 
             await img.decode();
-
             return {
                 width: img.naturalWidth,
                 height: img.naturalHeight,
@@ -171,6 +174,15 @@
     }
 
     /**
+     * Changes the border color manually depending on whether error has occured or not
+     * @param errorOccured - Whether an error has occured or not
+     */
+    export function highlightError(errorOccured: Boolean) {
+        const editorElement = document.getElementById("image-editor-parent");
+        editorElement.style.borderColor = errorOccured ? "#FF0000" : "#000000";
+    }
+
+    /**
      * Translate the data into a more general format, one that the backend can understand
      */
     export function exportData(): { data: PfpData; file: File } | null {
@@ -205,6 +217,7 @@
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
+        highlightError(false)
     });
 
     onDestroy(() => {
@@ -215,6 +228,7 @@
 <div class="image-editor-content">
     <div
         class="image-editor-image-parent"
+        id="image-editor-parent"
         role="button"
         tabindex="-1"
         style="width: {profileSize}px; height: {profileSize}px;"

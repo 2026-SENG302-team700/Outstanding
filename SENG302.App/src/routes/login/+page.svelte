@@ -57,7 +57,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(`/api/login`, {
+            const response = await fetchWithCsrf(resolve(`/api/login`), {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -91,7 +91,7 @@
             }
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
             addToast(`Welcome to Outstanding ${data?.message}!`);
-            goto(resolve(`/home`), { pushState: "" });
+            goto(resolve(`/home`));
         } catch (err) {
             password = "";
             error = "Failed to login user: " + (err as Error).message;

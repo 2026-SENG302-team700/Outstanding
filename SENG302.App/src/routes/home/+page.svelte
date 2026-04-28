@@ -13,6 +13,7 @@
         fetchLists();
     });
 
+
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
     // using there authorization token and updates the component state.
@@ -29,7 +30,6 @@
                 return;
             }
             taskLists = data;
-            console.log(taskLists);
         } catch (err) {
             error = "Failed to fetch task lists: " + (err as Error).message;
         } finally {
@@ -67,10 +67,10 @@
                     tabindex="0"
                     role="button"
                     style="width: 1270px;"
-                    onclick={() => goto(`/home/task-list/${taskList.id}`)}
+                    onclick={() => goto(resolve(`/home/task-list/${taskList.id}`))}
                     onkeydown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
-                            goto(`/home/task-list/${taskList.id}`);
+                            goto(resolve(`/home/task-list/${taskList.id}`));
                         }
                     }}
                 >

@@ -17,6 +17,7 @@ namespace SENG302.Api.Migrations
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "TEXT");
+
         }
 
         /// <inheritdoc />

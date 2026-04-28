@@ -88,11 +88,17 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-
-                addToast(
-                    (await response.text()) || "An error occured.",
-                    "error",
-                );
+                const data = await response.json().catch(() => null);
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
+                }
                 return;
             }
 
