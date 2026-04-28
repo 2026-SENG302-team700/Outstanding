@@ -285,6 +285,7 @@
                     email,
                     displayName,
                     country,
+                    profanityFiltering
                 }),
             });
 
