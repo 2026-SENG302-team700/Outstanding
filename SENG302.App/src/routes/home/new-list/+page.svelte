@@ -3,13 +3,10 @@
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
-    import ObjectNameForm from "$lib/components/object-name-form.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
-    import SubmitButton from "$lib/components/submit-button.svelte";
 
     let loading = $state(false);
     let error = $state("");
-    let displayName = $state("");
+    let name = $state("");
 
     /// <summary>
     /// Creates a new task list for the user with the given name. Trims and then validates the name
@@ -17,7 +14,7 @@
     /// back to the home screen. If there is an error, displays the error message.
     /// </summary>
     async function createList() {
-        const trimmedName = displayName.trim();
+        const trimmedName = name.trim();
 
         const errors = [];
 
@@ -83,14 +80,37 @@
         </h1>
     </div>
     <div class="mb-3">
-        <CancelButton path={"/home"}/>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            on:click={() => goto(resolve("/home"))}
+            >Cancel
+        </button>
     </div>
     <form on:submit={createList}>
         <div class="mb-3">
-            <ObjectNameForm bind:displayName {error} {loading} type={"tasklist"}/>
+            <input
+                type="text"
+                class="form-control"
+                class:error
+                placeholder="Name *"
+                bind:value={name}
+                disabled={loading}
+            />
+            {#if error}
+                <div class="text-danger mt-1" style="white-space: pre-wrap">
+                    {error}
+                </div>
+            {/if}
         </div>
         <div>
-        <SubmitButton buttonType={"create list"} {loading}/>
+            <button
+                type="submit"
+                class="btn btn-primary w-100"
+                disabled={loading}
+            >
+                {loading ? "Creating..." : "Create List"}
+            </button>
         </div>
     </form>
 </div>
