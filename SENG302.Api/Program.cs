@@ -192,7 +192,7 @@ public class Program
             }
             else
             {
-                dbContext.Database.MigrateAsync();
+                await dbContext.Database.MigrateAsync();
             }
 
             await CreateExampleUsersHelper.CreateExamples(dbContext);
