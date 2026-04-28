@@ -113,9 +113,15 @@
                 },
             );
 
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
             if (!response.ok) {
-                error = data.message || "Failed to update task.";
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    error = data?.message || "Failed to update task (Internal Server Error occurred).";
+                }
                 return;
             }
             taskItem = data;

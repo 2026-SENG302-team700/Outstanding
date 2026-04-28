@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 namespace SENG302.Api.Controllers;
 
@@ -52,9 +53,12 @@ public class TaskItemController : ControllerBase
             var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
             return Ok(response);
         }
-        catch (InvalidLengthException e)
+        catch (MultipleValidationException e)
         {
-            return BadRequest(e.Message);
+            return BadRequest(new BadRequestValidationResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {

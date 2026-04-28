@@ -10,7 +10,6 @@
     import CancelButton from "$lib/components/cancel-button.svelte";
     import TitleForm from "$lib/components/title-form.svelte";
     import DescriptionForm from "$lib/components/description-form.svelte";
-    import path from "node:path";
 
     let taskStatus = $state(0); // represents the value of the enum in the backend
     let loading = $state(false);
@@ -89,11 +88,17 @@
                 // in case front end form checks were tampered with,
                 // we display a toast with the badrequest response
                 // from the back end.
-
-                addToast(
-                    (await response.text()) || "An error occured.",
-                    "error",
-                );
+                const data = await response.json().catch(() => null);
+                if (data?.errors) {
+                    errors.name = data.errors.name ?? "";
+                    errors.description = data.errors.description ?? "";
+                    errors.dueDate = data.errors.dueDate ?? "";
+                } else {
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
+                }
                 return;
             }
 
@@ -143,7 +148,10 @@
 
 <div class="container">
     <div style="display: flex; flex-direction: row; ">
-        <h1 class="text-break text-center mb-4" style="flex: 1; justify-content: center; width: 1000px;">
+        <h1
+            class="text-break text-center mb-4"
+            style="flex: 1; justify-content: center; width: 1000px;"
+        >
             {listName}
         </h1>
     </div>

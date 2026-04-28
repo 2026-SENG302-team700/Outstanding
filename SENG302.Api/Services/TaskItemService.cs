@@ -29,43 +29,51 @@ public class TaskItemService : ITaskItemService
 
     /// <summary>
     /// Checks the task item name is valid, returns nothing if valid
-    /// but throws error if invalid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="name">The name being tested</param>
-    /// <exception cref="InvalidLengthException"></exception>
-    public void ValidateTaskItemName(string name)
+    public Dictionary<string, string> ValidateTaskItemName(string name)
     {
+        var errors = new Dictionary<string, string>();
         if (name.Trim().Length < 3 || name.Trim().Length > 128)
         {
-            throw new InvalidLengthException("Title is required and must be between 3 and 128 characters long");
+            errors["name"] = "Title is required and must be between 3 and 128 characters long";
         }
+        return errors;
     }
 
     /// <summary>
-    /// Checks the description is valid 
+    /// Checks the description is valid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="description">The description being tested</param>
-    /// <exception cref="InvalidLengthException"></exception>
-    public void ValidateTaskItemDescription(string description)
+    public Dictionary<string, string> ValidateTaskItemDescription(string description)
     {
+        var errors = new Dictionary<string, string>();
         if (description.Trim().Length > 2048)
         {
-            throw new InvalidLengthException("Description must be 2048 characters or less");
+            errors["description"] = "Description must be 2048 characters or less";
         }
+
+        return errors;
     }
 
     /// <summary>
     /// Checks the due date is valid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="dueDate"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public void ValidateTaskItemDueDate(DateTime? dueDate)
+    public Dictionary<string, string> ValidateTaskItemDueDate(DateTime? dueDate)
     {
+        var errors = new Dictionary<string, string>();
         DateTime currentTime = DateTime.UtcNow;
+        
         if (dueDate != null && currentTime > dueDate)
         {
-            throw new ArgumentException("Invalid due date, date must be in the future");
+            errors["dueDate"] = "Invalid due date, date must be in the future";
         }
+
+        return errors;
     }
 
     /// <summary>
@@ -109,14 +117,30 @@ public class TaskItemService : ITaskItemService
         taskItem.DueDate = taskItem.DueDate == DateTime.MinValue ? null : taskItem.DueDate;
 
         // Validation
-        ValidateTaskItemName(taskItem.Name);
-        ValidateTaskItemDescription(taskItem.Description);
-        ValidateTaskItemDueDate(taskItem.DueDate);
-
-        // Set default descriptiom
-        // removed temp for now
-        //if (taskItem.Description == "") taskItem.Description = "No Description";
-
+        var errors = new Dictionary<string, string>();
+        
+        foreach (var (key, value) in ValidateTaskItemName(taskItem.Name))
+        {
+            errors[key] = value;
+        }
+        
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
+        {
+            errors[key] = value;
+        }
+        
+        foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
+        {
+            errors[key] = value;
+        }
+        
+        ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
+        
+        if (errors.Count > 0)
+        {
+            throw new MultipleValidationException(errors);
+        }
+        
         // Add task item
         var newTask = new TaskItem()
         {
@@ -173,10 +197,29 @@ public class TaskItemService : ITaskItemService
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
         
-        ValidateTaskItemName(taskItemUpdates.Name);
-        ValidateTaskItemDescription(taskItemUpdates.Description);
-        ValidateTaskItemDueDate(taskItemUpdates.DueDate);
-        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus);
+        var errors = new Dictionary<string, string>();
+        
+        foreach (var (key, value) in ValidateTaskItemName(taskItemUpdates.Name))
+        {
+            errors[key] = value;
+        }
+        
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItemUpdates.Description))
+        {
+            errors[key] = value;
+        }
+        
+        foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
+        {
+            errors[key] = value;
+        }
+        
+        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus); // should not occur naturally, therefore handled differently.
+
+        if (errors.Count > 0)
+        {
+            throw new MultipleValidationException(errors);
+        }
         
         taskItem.Name = taskItemUpdates.Name;
         taskItem.Description = taskItemUpdates.Description;
