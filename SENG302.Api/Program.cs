@@ -33,13 +33,38 @@ public class Program
         // Add authorization service
         builder.Services.AddAuthorization();
 
-        // Configure database context with factory pattern
-        builder.Services.AddDbContextFactory<DatabaseContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
+        if (builder.Environment.IsProduction() || builder.Environment.IsStaging())
+        {
+            var dbHost = builder.Configuration["DB_HOST"];
+            var dbName = builder.Configuration["DB_NAME"];
+            var dbUser = builder.Configuration["DB_USER"];
+            var dbPass = builder.Configuration["DB_PASS"];
+
+            if (dbHost == null || dbName == null || dbUser == null || dbPass == null)
+            {
+                throw new InvalidOperationException("Missing required database environment variables.");
+            }
+            
+            // build the connection string to be used by PosgreSQL
+            var connectionString =
+                $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certificate=true";
+
+            builder.Services.AddDbContextFactory<DatabaseContext>((_, options) => 
+                options.UseNpgsql(connectionString)
+                );
+        } else
+        {
+            // Configure database context with factory pattern
+            builder.Services.AddDbContextFactory<DatabaseContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
+
+        }
+        
+        
         builder.Services.AddHttpContextAccessor();
 
-        // Register custom services
+        // Register custom services 
         RegisterServices(builder.Services);
 
         // Setup antiforgery (CSRF)
@@ -57,7 +82,7 @@ public class Program
             options.Cookie.SecurePolicy = cookiePolicy;
         });
 
-        // Configure the cookie-based authentication and set security options
+        // Configure the cookie-based authentication and set security options 
         builder.Services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
@@ -106,7 +131,7 @@ public class Program
             });
         }
 
-        InitializeDatabase(app.Services.CreateScope().ServiceProvider, app.Environment.IsDevelopment() || app.Environment.IsStaging());
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -159,16 +184,25 @@ public class Program
         var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<DatabaseContext>>();
         var dbContext = dbContextFactory.CreateDbContext();
 
-        if (isDevelopment)
+        try
         {
-            dbContext.Database.EnsureCreated();
-        }
-        else
-        {
-            dbContext.Database.Migrate();
-        }
+            if (isDevelopment)
+            {
+                dbContext.Database.EnsureCreated();
+            }
+            else
+            {
+                dbContext.Database.MigrateAsync();
+            }
 
-        await CreateExampleUsersHelper.CreateExamples(dbContext);
+            await CreateExampleUsersHelper.CreateExamples(dbContext);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error occured: ", e);
+            throw;
+        }
+        
     }
 
     protected static void RegisterServices(IServiceCollection services)
