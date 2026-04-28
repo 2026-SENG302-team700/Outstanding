@@ -10,14 +10,20 @@
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import ImageEditor from "$lib/image-editor/image-editor.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
+    import DisplayNameForm from "$lib/components/display-name-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import CountrySelectForm from "$lib/components/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
 
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
+    let modalElement: HTMLElement | undefined = $state();
     let pfpModalElement: HTMLElement | undefined = $state();
-    let modalElement: HTMLElement | undefined = $state(); 
     let authModal: Modal | undefined;
     let pfpModal: Modal | undefined;
     let resendTimer = $state(0);
@@ -35,7 +41,7 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
-    let updatingPassword = $state(false)
+    let updatingPassword = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -120,7 +126,7 @@
      * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
      */
     async function requestPasswordChange() {
-        clearModalData()
+        clearModalData();
         currentModalStep = "verify";
 
         authModal?.show();
@@ -192,7 +198,7 @@
      * returns true if all fields are valid, false otherwise
      */
     function isValid() {
-        clearErrors()
+        clearErrors();
 
         // Front end Validation
         let valid = true;
@@ -309,9 +315,9 @@
      * returns whether result is valid or not
      */
     function validateChangePasswordInputs() {
-        clearErrors()
+        clearErrors();
         var isValid = true;
-        
+
         // Check not empty
         if (!oldPassword) {
             errors.oldPassword = "field is required";
@@ -325,11 +331,11 @@
             errors.confirmPassword = "field is required";
             isValid = false;
         }
-        
+
         // checks passwords match
         if (newPassword !== confirmPassword) {
             isValid = false;
-            errors.confirmPassword = "Passwords do not match"
+            errors.confirmPassword = "Passwords do not match";
             confirmPassword = "";
         }
 
@@ -337,12 +343,13 @@
         const passwordRegex = new RegExp(regexPatterns.user.password);
         if (!passwordRegex.test(newPassword)) {
             isValid = false;
-            errors.newPassword = "Password must be at least 8 characters long including at least one of each " +
-                "uppercase, lowercase, numbers and special characters"
+            errors.newPassword =
+                "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters";
             newPassword = "";
             confirmPassword = "";
         }
-        
+
         return isValid;
     }
     /**
@@ -383,66 +390,72 @@
         }
     }
 
-        /**
-         * validates the input data and sends a request to the backend to update the users password
-         */
-        async function updatePassword() {
-            const valid = validateChangePasswordInputs();
-            
-            updatingPassword = true;
-            try {
-                const response = await fetchWithCsrf(resolve(`/api/user/password`),
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            oldPassword: oldPassword,
-                            newPassword: newPassword,
-                            newPasswordConfirm: confirmPassword
-                        })
-                    }
-                );
-                if (response.ok && valid) {
-                    addToast("New password updated successfully")
-                    authModal.hide()
-                    goto(resolve("/home/profile"));
-                    return;
-                }
-                
-                const data = await response.json().catch(() => null);
-                if (response.status === 400){
-                    switch (data.message) {
-                        case "Old password does not match password on file":
-                            if (oldPassword) {errors.oldPassword = "Old password does not match password on file";}
-                            oldPassword = "";
-                            break;
-                        case "Passwords do not match":
-                            errors.confirmPassword = "Password does not match";
-                            confirmPassword = "";
-                            break;
-                        case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
-                            errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-                            newPassword = "";
-                            confirmPassword = "";
-                            break;
-                        case "New password can't be the same as old password":
-                            errors.newPassword = "New password can't be the same as old password";
-                            newPassword = "";
-                            confirmPassword = "";
-                            break;
-                    }
-                } else {
-                    addToast("Failed to update password ");
-                }
-            } catch (err) {
-                addToast("Failed to update password");
-            } finally {
-                updatingPassword = false;
+    /**
+     * validates the input data and sends a request to the backend to update the users password
+     */
+    async function updatePassword() {
+        const valid = validateChangePasswordInputs();
+
+        updatingPassword = true;
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        oldPassword: oldPassword,
+                        newPassword: newPassword,
+                        newPasswordConfirm: confirmPassword,
+                    }),
+                },
+            );
+            if (response.ok && valid) {
+                addToast("New password updated successfully");
+                authModal.hide();
+                goto(resolve("/home/profile"));
+                return;
             }
+
+            const data = await response.json().catch(() => null);
+            if (response.status === 400) {
+                switch (data.message) {
+                    case "Old password does not match password on file":
+                        if (oldPassword) {
+                            errors.oldPassword =
+                                "Old password does not match password on file";
+                        }
+                        oldPassword = "";
+                        break;
+                    case "Passwords do not match":
+                        errors.confirmPassword = "Password does not match";
+                        confirmPassword = "";
+                        break;
+                    case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                        errors.newPassword =
+                            "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                    case "New password can't be the same as old password":
+                        errors.newPassword =
+                            "New password can't be the same as old password";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                }
+            } else {
+                addToast("Failed to update password ");
+            }
+        } catch (err) {
+            addToast("Failed to update password");
+        } finally {
+            updatingPassword = false;
         }
-    
+    }
+
     /**
      * Sends an image to the image editor
      */
@@ -456,7 +469,6 @@
         imageEditor.setImg(files[0]);
     }
     
-
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
@@ -515,119 +527,87 @@
     }
 </script>
 
-<div class="container d-flex flex-column flex-md-row">
-    <div
-        class="d-flex flex-column align-items-center justify-content-center m-3"
-    >
-        <div class="position-relative d-inline-block">
-            <ProfilePic pfpData={$user.pfpData} size="xl" />
-
-            <button
-                type="button"
-                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                data-bs-toggle="modal"
-                data-bs-target="#pfpInputModal"
-                on:click={() => {
-                    imageEditor.reset();
-                    clearErrors();
-                    pfpInput.value = ""
-                    pfpInput.click();
-                }}
-            >
-                <i class="bi bi-pencil-square fs-2"></i>
-            </button>
+<div class="display:flex; flex-direction: row;">
+    <form on:submit|preventDefault={updateUser}>
+        <div class="m-3" style="display: flex; ">
+            <CancelButton path={"/home/profile"} />
+            <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
         </div>
-    </div>
-
-    <div class="flex-grow-1 m-3">
-        <form on:submit|preventDefault={updateUser}>
-            <div class="mb-4">
-                <h5 class="text-muted mb-2">Personal Information</h5>
-                <hr class="mt-0" style="opacity: 0.15;" />
-                <div class="mb-3">
-                    <label for="displayName" class="form-label"
-                        >Display Name</label
-                    >
-                    <input
-                            type="text"
-                            class="form-control"
-                            class:is-invalid={errors.displayName}
-                            bind:value={displayName}
-                            placeholder="Display Name *"
-                            id="displayName"
-                    />
-                    {#if errors.displayName}
-                    <div class="invalid-feedback">
-                        {errors.displayName}
-                    </div>
-                    {/if}
-                </div>
-                <div class="mb-3">
-                    <label for="userEmail" class="form-label">Email</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            class:is-invalid={errors.email}
-                            id="userEmail"
-                            placeholder="Email *"
-                            bind:value={email}
-                            
-                    />
-                    {#if errors.email}
-                        <div class="invalid-feedback">
-                            {errors.email}
-                        </div>
-                    {/if}
-                </div>
-                <div class="mb-3">
-                    <label for="country" class="form-label">Country</label>
-                    <select
-                        class="form-select"
-                        class:country-select={!country}
-                        bind:value={country}
-                        id="country"
-                    >
-                        {#each countries as country}
-                            <option value={country.code}>
-                                {country.name}
-                            </option>
-                        {/each}
-                    </select>
-                </div>
-            </div>
-            <div class="mt-5 mb-4">
-                <h5 class="text-muted mb-2">Account Security</h5>
-                <hr class="mt-0" style="opacity: 0.15;" />
-                <div class="d-flex align-items-center justify-content-between">
-                    <p class="small text-secondary mb-0">
-                        Change your password to keep your account secure.
-                    </p>
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary btn-sm"
-                        on:click={requestPasswordChange}
-                    >
-                        Update Password
-                    </button>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button
+    
+        <div class="container d-flex flex-column flex-md-row">
+            <div
+                class="d-flex flex-column align-items-center justify-content-center m-3"
+            >
+                <div class="position-relative d-inline-block">
+                    <ProfilePic pfpData={$user.pfpData} size="xl" />
+    
+                <button
                     type="button"
-                    class="btn btn-secondary"
+                    class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+                    data-bs-toggle="modal"
+                    data-bs-target="#pfpInputModal"
                     on:click={() => {
-                goto(resolve("/home/profile"));
-            }}>Cancel</button>
+                        imageEditor.reset();
+                        clearErrors();
+                        pfpInput.value = ""
+                        pfpInput.click();
+                    }}
+                >
+                    <i class="bi bi-pencil-square fs-2"></i>
+                </button>
+            </div>
+        </div>
+    
+            <div class="flex-grow-1 m-3">
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-2">Personal Information</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label"
+                                >Display Name</label
+                            >
+                            <DisplayNameForm
+                                bind:displayName
+                                error={errors.displayName}
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <EmailForm bind:email error={errors.email} />
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <CountrySelectForm bind:selectedCountryCode={country} />
+                        </div>
+                    </div>
+                    <div class="mt-5 mb-4">
+                        <h5 class="text-muted mb-2">Account Security</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div
+                            class="d-flex align-items-center justify-content-between"
+                        >
+                            <p class="small text-secondary mb-0">
+                                Change your password to keep your account secure.
+                            </p>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                on:click={requestPasswordChange}
+                            >
+                                Update Password
+                            </button>
+                        </div>
+                    </div>
+            </div>
+        </div>
     </form>
-    </div>
 </div>
 
 <!-- update password modal -->
-<div
-    class="modal fade"
-    bind:this={modalElement}
-    tabindex="-1"
-    aria-hidden="true"
+<div class="modal fade"
+     bind:this={modalElement}
+     tabindex="-1"
+     aria-hidden="true"
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
@@ -645,68 +625,61 @@
                             We've sent a 6-digit verification code to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
-
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit1}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit1}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit2}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit2}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit3}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit3}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit4}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit4}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit5}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit5}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit6}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit6}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
                             />
                         </div>
 
                         {#if codeError}
                             <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+                                <i class="bi bi-exclamation-circle-fill me-1" />
+                                {codeError}
                             </div>
                         {/if}
 
-                        <button
-                            class="btn btn-link btn-sm text-decoration-none"
-                            on:click={requestPasswordChange}
-                            disabled={resendTimer > 0 || isSending}
+                        <button class="btn btn-link btn-sm text-decoration-none"
+                                on:click={requestPasswordChange}
+                                disabled={resendTimer > 0 || isSending}
                         >
                             {#if resendTimer > 0}
                                 Resend code in {resendTimer}s
@@ -720,36 +693,41 @@
                 {:else}
                     <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password *</label>
-                            <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
-                            {#if errors.oldPassword}
-                                <div class="invalid-feedback">
-                                    {errors.oldPassword}
-                                </div>
-                            {/if}
+                            <label for="oldPassword"
+                                   class="form-label small fw-bold text-secondary"
+                            >Current Password *</label>
+                            <PasswordForm bind:password={oldPassword} 
+                                          error={errors.oldPassword}
+                            />
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password *</label>
-                            <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
-                            {#if errors.newPassword}
-                                <div class="invalid-feedback">
-                                    {errors.newPassword}
-                                </div>
-                            {/if}
+                            <label for="newPassword"
+                                   class="form-label small fw-bold text-secondary"
+                            >New Password *</label>
+                            <PasswordForm bind:password={newPassword}
+                                    error={errors.newPassword}
+                            />
                         </div>
                         <div class="mb-3">
-                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password *</label>
-                            <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
-                            {#if errors.confirmPassword}
-                                <div class="invalid-feedback">
-                                    {errors.confirmPassword}
-                                </div>
-                            {/if}
+                            <label 
+                                    for="confirmPassword"
+                                    class="form-label small fw-bold text-secondary"
+                                    >Confirm New Password *</label>
+                            <PasswordForm 
+                                    bind:password={confirmPassword} 
+                                    error={errors.confirmPassword}
+                            />
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
+                        <button type="submit"
+                                class="btn btn-primary w-100 py-2 mt-3"
+                                disabled={updatingPassword}
+                                >{updatingPassword
+                                    ? "Updating..."
+                                    : "Update Password"}
+                        </button>
                     </form>
                 {/if}
-                <button
+                    <button
                         type="button"
                         class="btn btn-secondary w-100 py-2 mt-3"
                         data-bs-dismiss="modal"
@@ -757,9 +735,8 @@
                         on:click={() => {
                             clearErrors();
                             clearPasswordFields();
-                        }   
-                        }
-                >Cancel</button>
+                        }}>Cancel</button
+                    >
             </div>
         </div>
     </div>
