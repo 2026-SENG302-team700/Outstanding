@@ -1,11 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Newtonsoft.Json;
-using SENG302.Api.Models.Requests;
 using SENG302.Api.Models.Entities;
 using Shouldly;
-using System.Runtime.InteropServices;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
