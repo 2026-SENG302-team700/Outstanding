@@ -7,7 +7,12 @@
         ? loading
             ? "Registering..."
             : "Register"
+        : 
+        buttonType == "login"
+        ? loading
+            ? "Logging In..."
+            : "Login"
         : loading
-          ? "Logging In..."
-          : "Login"}
+            ? "Creating List..."
+            : "Create List"}
 </button>
