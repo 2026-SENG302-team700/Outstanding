@@ -86,7 +86,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
             DueDate = null
         };
 
-        var task = await ServiceUnderTest.CreateNewTaskItemAsync(request);
+        var task = await ServiceUnderTest.CreateNewTaskItemAsync(request, 1);
 
         task.Name.ShouldBe("New task");
         task.TaskListId.ShouldBe(1);
@@ -110,7 +110,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         };
 
         await Should.ThrowAsync<MultipleValidationException>(
-            async () => await ServiceUnderTest.CreateNewTaskItemAsync(request));
+            async () => await ServiceUnderTest.CreateNewTaskItemAsync(request, 1));
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         };
 
         await Should.ThrowAsync<MultipleValidationException>(
-            async () => await ServiceUnderTest.CreateNewTaskItemAsync(request));
+            async () => await ServiceUnderTest.CreateNewTaskItemAsync(request, 1));
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         context.TaskItems.Add(task);
         await context.SaveChangesAsync();
 
-        var result = await ServiceUnderTest.GetTaskItemAsync(task.TaskId);
+        var result = await ServiceUnderTest.GetTaskItemAsync(task.TaskId, 1);
 
         result.ShouldNotBeNull();
         result.Name.ShouldBe("Fetch me");
@@ -157,7 +157,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
     [Fact]
     public async Task GetTaskItemAsync_InvalidId_ReturnsNull()
     {
-        var result = await ServiceUnderTest.GetTaskItemAsync(-1);
+        var result = await ServiceUnderTest.GetTaskItemAsync(-1, 1);
         result.ShouldBeNull();
     }
 }
