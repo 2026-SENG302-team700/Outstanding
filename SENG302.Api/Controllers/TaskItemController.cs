@@ -5,6 +5,7 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
+using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -20,6 +21,31 @@ public class TaskItemController : ControllerBase
         _taskItemService = taskItemService;
     }
 
+    /// <summary>
+    /// Fetchs all the task items for the current user
+    /// </summary>
+    /// <returns>All tasks belonging to that user</returns>
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks()
+    {
+        // get the logged in user id
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var tasks = await _taskItemService.GetAllTaskItemsAsync(int.Parse(userIdString));
+            return Ok(tasks);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 
     /// <summary>
     /// Fetches all task items associated to the id of the given list. If
