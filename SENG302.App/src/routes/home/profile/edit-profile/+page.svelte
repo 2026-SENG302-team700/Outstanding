@@ -601,152 +601,132 @@
             </form>
         </div>
     </div>
+</div>
 
-    <!-- update password modal -->
-    <div
-        class="modal fade"
-        bind:this={modalElement}
-        tabindex="-1"
-        aria-hidden="true"
-    >
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">
-                        {currentModalStep === "verify"
-                            ? "Verify Your Identity"
-                            : "Set New Password"}
-                    </h5>
-                </div>
-                <div class="modal-body">
-                    {#if currentModalStep === "verify"}
-                        <div class="text-centre">
-                            <p class="text-secondary">
-                                We've sent a 6-digit verification code to <br />
-                                <span class="text-dark fw-bold">{email}</span>
-                            </p>
+<!-- update password modal -->
+<div class="modal fade"
+     bind:this={modalElement}
+     tabindex="-1"
+     aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    {currentModalStep === "verify"
+                        ? "Verify Your Identity"
+                        : "Set New Password"}
+                </h5>
+            </div>
+            <div class="modal-body">
+                {#if currentModalStep === "verify"}
+                    <div class="text-centre">
+                        <p class="text-secondary">
+                            We've sent a 6-digit verification code to <br />
+                            <span class="text-dark fw-bold">{email}</span>
+                        </p>
+                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit1}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit2}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit3}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit4}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit5}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                            <input type="text"
+                                   class="form-control form-control-lg text-center"
+                                   maxlength="1"
+                                   bind:value={digit6}
+                                   on:input={handleInput}
+                                   on:keydown={handleKeyDown}
+                            />
+                        </div>
 
-                            <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit1}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit2}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit3}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit4}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit5}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
-                                <input
-                                    type="text"
-                                    class="form-control form-control-lg text-center"
-                                    maxlength="1"
-                                    bind:value={digit6}
-                                    on:input={handleInput}
-                                    on:keydown={handleKeyDown}
-                                />
+                        {#if codeError}
+                            <div class="text-danger small mb-3 animate-fade-in">
+                                <i class="bi bi-exclamation-circle-fill me-1" />
+                                {codeError}
                             </div>
+                        {/if}
 
-                            {#if codeError}
-                                <div
-                                    class="text-danger small mb-3 animate-fade-in"
-                                >
-                                    <i
-                                        class="bi bi-exclamation-circle-fill me-1"
-                                    ></i>
-                                    {codeError}
-                                </div>
-                            {/if}
-
-                            <button
-                                class="btn btn-link btn-sm text-decoration-none"
+                        <button class="btn btn-link btn-sm text-decoration-none"
                                 on:click={requestPasswordChange}
                                 disabled={resendTimer > 0 || isSending}
-                            >
-                                {#if resendTimer > 0}
-                                    Resend code in {resendTimer}s
-                                {:else if isSending}
-                                    Sending...
-                                {:else}
-                                    Resend Code
-                                {/if}
-                            </button>
+                        >
+                            {#if resendTimer > 0}
+                                Resend code in {resendTimer}s
+                            {:else if isSending}
+                                Sending...
+                            {:else}
+                                Resend Code
+                            {/if}
+                        </button>
+                    </div>
+                {:else}
+                    <form on:submit|preventDefault={() => updatePassword()}>
+                        <div class="mb-3">
+                            <label for="oldPassword"
+                                   class="form-label small fw-bold text-secondary"
+                            >Current Password *</label>
+                            <PasswordForm bind:password={oldPassword} 
+                                          error={errors.oldPassword}
+                            />
                         </div>
-                    {:else}
-                        <form on:submit|preventDefault={() => updatePassword()}>
-                            <div class="mb-3">
-                                <label
-                                    for="oldPassword"
-                                    class="form-label small fw-bold text-secondary"
-                                    >Current Password *</label
-                                >
-                                <PasswordForm
-                                    bind:password={oldPassword}
-                                    error={errors.oldPassword}
-                                />
-                            </div>
-                            <div class="mb-3">
-                                <label
-                                    for="newPassword"
-                                    class="form-label small fw-bold text-secondary"
-                                    >New Password *</label
-                                >
-                                <PasswordForm
-                                    bind:password={newPassword}
+                        <div class="mb-3">
+                            <label for="newPassword"
+                                   class="form-label small fw-bold text-secondary"
+                            >New Password *</label>
+                            <PasswordForm bind:password={newPassword}
                                     error={errors.newPassword}
-                                />
-                            </div>
-                            <div class="mb-3">
-                                <label
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label 
                                     for="confirmPassword"
                                     class="form-label small fw-bold text-secondary"
-                                    >Confirm New Password *</label
-                                >
-                                <PasswordForm
-                                    bind:password={confirmPassword}
+                                    >Confirm New Password *</label>
+                            <PasswordForm 
+                                    bind:password={confirmPassword} 
                                     error={errors.confirmPassword}
-                                />
-                            </div>
-                            <button
-                                type="submit"
+                            />
+                        </div>
+                        <button type="submit"
                                 class="btn btn-primary w-100 py-2 mt-3"
                                 disabled={updatingPassword}
                                 >{updatingPassword
                                     ? "Updating..."
-                                    : "Update Password"}</button
-                            >
-                        </form>
-                    {/if}
+                                    : "Update Password"}
+                        </button>
+                    </form>
+                {/if}
                     <button
                         type="button"
                         class="btn btn-secondary w-100 py-2 mt-3"
@@ -757,10 +737,10 @@
                             clearPasswordFields();
                         }}>Cancel</button
                     >
-                </div>
             </div>
         </div>
     </div>
+</div>
 
 <!-- Modal for pfp selection -->
 <div
