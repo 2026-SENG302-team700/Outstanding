@@ -15,11 +15,7 @@
           ? loading
               ? "Updating..."
               : "Update"
-          : buttonType == "login"
-            ? loading
-                ? "Logging In..."
-                : "Login"
-            : loading
-              ? "Creating List..."
-              : "Create List"}
+          : loading
+            ? "Logging In..."
+            : "Login"}
 </button>

@@ -4,10 +4,8 @@
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-    import SubmitButton from "$lib/components/submit-button.svelte";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
-    import EmailForm from "$lib/components/email-form.svelte";
-    import PasswordForm from "$lib/components/password-form.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -17,6 +15,7 @@
     let errors = $state({
         email: "",
         password: "",
+        passwordErrorIndicator: false,
     });
 
     /**
@@ -30,6 +29,7 @@
         errors = {
             email: "",
             password: "",
+            passwordErrorIndicator: false,
         };
 
         // Check email format
@@ -74,6 +74,7 @@
             if (response.status === 404 || response.status === 401) {
                 password = "";
                 errors.email = data?.message || "Invalid email or password.";
+                errors.passwordErrorIndicator = true;
                 return;
             }
 
@@ -111,25 +112,44 @@
 
     <form on:submit|preventDefault={loginUser}>
         <div class="mb-3">
-            <EmailForm bind:email error={errors.email} {loading} />
-        </div>
-        <div class="mb-3">
-            <PasswordForm
-                bind:password
-                error={errors.password}
-                {loading}
-                passConfirm={false}
+            <input
+                type="type"
+                class="form-control"
+                class:error={errors.email}
+                class:is-invalid={errors.email || error}
+                placeholder="Email *"
+                bind:value={email}
+                disabled={loading}
             />
+            {#if errors.email}
+                <div class="text-danger mt-1">{errors.email}</div>
+            {/if}
         </div>
         <div class="mb-3">
-            <SubmitButton buttonType={"login"} />
+            <input
+                type="password"
+                class="form-control"
+                class:error={errors.password}
+                class:is-invalid={errors.password ||
+                    errors.passwordErrorIndicator ||
+                    error}
+                placeholder="Password *"
+                bind:value={password}
+                disabled={loading}
+            />
+            {#if errors.password}
+                <div class="text-danger mt-1">{errors.password}</div>
+            {/if}
+        </div>
+        <div class="mb-3">
+            <AuthenticatorButton buttonType={"login"} />
         </div>
         <div class="mb-3">
             <button
                 class="btn btn-primary w-100"
                 hidden={errors.email !=
                     "Account is not validated yet, check your emails."}
-                on:click={() => goto(resolve("/register/verification"))}
+                    on:click={() => goto(resolve("/register/verification"))}
             >
                 Verify Email
             </button>

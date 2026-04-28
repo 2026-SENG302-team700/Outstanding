@@ -5,11 +5,11 @@
     import { onMount } from "svelte";
     import { validateTaskInput } from "$lib/validity/taskValidity";
     import { formatDate } from "$lib/datepicker/formatDate";
+    import TitleForm from "$lib/components/title-form.svelte";
     import DescriptionForm from "$lib/components/description-form.svelte";
+
     import DatePicker from "$lib/datepicker/datepicker.svelte";
-    import StatusDropdown from "$lib/components/status-dropdown.svelte";
-    import ObjectNameForm from "$lib/components/object-name-form.svelte";
-    import CancelButton from "$lib/components/cancel-button.svelte";
+    import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -43,7 +43,7 @@
         try {
             loading = true;
             const response = await fetchWithCsrf(
-                resolve(`/api/taskItem/item/${params.slug}` as any),
+                resolve(`/api/taskItem/item/${params.slug}`),
                 {
                     method: "GET",
                     credentials: "include",
@@ -156,17 +156,22 @@
         class="mb-3 card-body d-flex justify-content-between align-items-center"
     >
         {#if editMode}
-            <CancelButton path={"../../.."} />
+            <button
+                type="button"
+                class="btn btn-secondary"
+                on:click={() => goto("../../..")}
+                >Cancel
+            </button>
         {:else}
             <button
                 type="button"
                 class="btn btn-secondary"
-                onclick={() => goto("..")}
+                on:click={() => goto("..")}
                 >Back
             </button>
         {/if}
 
-        <button type="button" class="btn btn-primary" onclick={toggleEditMode}>
+        <button type="button" class="btn btn-primary" on:click={toggleEditMode}>
             {#if editMode}
                 Update
             {:else}
@@ -180,15 +185,13 @@
         <div style="display: flex; flex-direction: column;" class="mb-4">
             {#if editMode}
                 <strong>Title:</strong>
-                <ObjectNameForm
-                    bind:displayName={editedTask.editedName}
-                    error={errors.name}
-                    {loading}
+                <TitleForm
+                        bind:name={editedTask.editedName}
+                        error={errors.name}
+                        loading={loading}
                 />
             {:else}
-                <h1 class="text-break text-center mb-4" style="width: 1250px;">
-                    {taskItem.name}
-                </h1>
+                <h1 class="text-break text-center mb-4" style="width: 1250px;">{taskItem.name}</h1>
             {/if}
 
             <div class="mb-2">
@@ -197,8 +200,8 @@
                     <DescriptionForm
                         bind:description={editedTask.editedDesc}
                         error={errors.description}
-                        {loading}
-                    />
+                        loading={loading}
+                    />    
                 {:else}
                     <strong>Description:</strong>
                     <div class="text-break" style="width: 1250px;">
