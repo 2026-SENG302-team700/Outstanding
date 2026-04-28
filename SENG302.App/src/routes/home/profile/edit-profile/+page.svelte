@@ -23,6 +23,7 @@
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
     let modalElement: HTMLElement | undefined = $state();
+    let pfpModalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let pfpModal: Modal | undefined;
     let resendTimer = $state(0);
@@ -484,16 +485,16 @@
             }
         }
         errors.image = imageError;
-
+        
         if (imageError) {
             imageEditor.highlightError(true)
             return;
         }
-
-
+        
+        
         let imageData = data.data
         let imageFile = data.file
-
+        
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -529,79 +530,94 @@
 </script>
 
 <div class="display:flex; flex-direction: row;">
-    <div class="m-3" style="display: flex; ">
-        <CancelButton path={"/home/profile"} />
-        <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
-    </div>
-
-    <div class="container d-flex flex-column flex-md-row">
-        <div
+    <form on:submit|preventDefault={updateUser}>
+        <div class="m-3" style="display: flex; ">
+            <CancelButton path={"/home/profile"} />
+            <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
+        </div>
+    
+        <div class="container d-flex flex-column flex-md-row">
+            <div
                 class="d-flex flex-column align-items-center justify-content-center m-3"
-        >
-            <div class="position-relative d-inline-block">
-                <ProfilePic pfpData={$user.pfpData} size="xl" />
-
+            >
+                <div class="position-relative d-inline-block">
+                    <ProfilePic pfpData={$user.pfpData} size="xl" />
+    
                 <button
-                        type="button"
-                        class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                        data-bs-toggle="modal"
-                        data-bs-target="#pfpInputModal"
-                        on:click={() => {
-                    imageEditor.reset();
-                    clearErrors();
-                    pfpInput.value = ""
-                    pfpInput.click();
-                }}
+                    type="button"
+                    class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+                    data-bs-toggle="modal"
+                    data-bs-target="#pfpInputModal"
+                    on:click={() => {
+                        imageEditor.reset();
+                        clearErrors();
+                        pfpInput.value = ""
+                        pfpInput.click();
+                    }}
                 >
                     <i class="bi bi-pencil-square fs-2"></i>
                 </button>
             </div>
         </div>
-
-        <div class="flex-grow-1 m-3">
-            <form on:submit|preventDefault={updateUser}>
-                <div class="mb-4">
-                    <h5 class="text-muted mb-2">Personal Information</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div class="mb-3">
-                        <label for="displayName" class="form-label"
-                        >Display Name</label
-                        >
-                        <DisplayNameForm
+    
+            <div class="flex-grow-1 m-3">
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-2">Personal Information</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label"
+                                >Display Name</label
+                            >
+                            <DisplayNameForm
                                 bind:displayName
                                 error={errors.displayName}
-                        />
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <EmailForm bind:email error={errors.email} />
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <CountrySelectForm bind:selectedCountryCode={country} />
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label for="userEmail" class="form-label">Email</label>
-                        <EmailForm bind:email error={errors.email} />
+                        <label for="profanityFiltering" class="form-label">Profanity Filtering</label>
+                        <div class = "form-check form-switch">
+                            <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    id="profanityFiltering"
+                                    bind:checked={profanityFiltering}
+                            />
+                            <label class="form-check-label" for="profanityFiltering">
+                                {profanityFiltering ? "On" : "Off"}
+                            </label>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        <CountrySelectForm bind:selectedCountryCode={country} />
-                    </div>
-                </div>
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Account Security</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
+                    <div class="mt-5 mb-4">
+                        <h5 class="text-muted mb-2">Account Security</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div
                             class="d-flex align-items-center justify-content-between"
-                    >
-                        <p class="small text-secondary mb-0">
-                            Change your password to keep your account secure.
-                        </p>
-                        <button
+                        >
+                            <p class="small text-secondary mb-0">
+                                Change your password to keep your account secure.
+                            </p>
+                            <button
                                 type="button"
                                 class="btn btn-outline-primary btn-sm"
                                 on:click={requestPasswordChange}
-                        >
-                            Update Password
-                        </button>
+                            >
+                                Update Password
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <!-- update password modal -->
@@ -697,7 +713,7 @@
                             <label for="oldPassword"
                                    class="form-label small fw-bold text-secondary"
                             >Current Password *</label>
-                            <PasswordForm bind:password={oldPassword}
+                            <PasswordForm bind:password={oldPassword} 
                                           error={errors.oldPassword}
                             />
                         </div>
@@ -706,29 +722,29 @@
                                    class="form-label small fw-bold text-secondary"
                             >New Password *</label>
                             <PasswordForm bind:password={newPassword}
-                                          error={errors.newPassword}
+                                    error={errors.newPassword}
                             />
                         </div>
                         <div class="mb-3">
-                            <label
+                            <label 
                                     for="confirmPassword"
                                     class="form-label small fw-bold text-secondary"
-                            >Confirm New Password *</label>
-                            <PasswordForm
-                                    bind:password={confirmPassword}
+                                    >Confirm New Password *</label>
+                            <PasswordForm 
+                                    bind:password={confirmPassword} 
                                     error={errors.confirmPassword}
                             />
                         </div>
                         <button type="submit"
                                 class="btn btn-primary w-100 py-2 mt-3"
                                 disabled={updatingPassword}
-                        >{updatingPassword
-                            ? "Updating..."
-                            : "Update Password"}
+                                >{updatingPassword
+                                    ? "Updating..."
+                                    : "Update Password"}
                         </button>
                     </form>
                 {/if}
-                <button
+                    <button
                         type="button"
                         class="btn btn-secondary w-100 py-2 mt-3"
                         data-bs-dismiss="modal"
@@ -737,7 +753,7 @@
                             clearErrors();
                             clearPasswordFields();
                         }}>Cancel</button
-                >
+                    >
             </div>
         </div>
     </div>
@@ -745,14 +761,14 @@
 
 <!-- Modal for pfp selection -->
 <div
-        class="modal fade"
-        id="pfpInputModal"
-        data-bs-backdrop="static"
-        data-bs-keyboard="false"
-        tabindex="-1"
-        bind:this={pfpModalElement}
-        aria-labelledby="pfpInputModalLabel"
-        aria-hidden="true"
+    class="modal fade"
+    id="pfpInputModal"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
+    tabindex="-1"
+    bind:this={pfpModalElement}
+    aria-labelledby="pfpInputModalLabel"
+    aria-hidden="true"
 >
     <div class="modal-dialog">
         <div class="modal-content">
@@ -761,10 +777,10 @@
                     Edit Profile Picture
                 </h1>
                 <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
                 ></button>
             </div>
             <div class="modal-body">
