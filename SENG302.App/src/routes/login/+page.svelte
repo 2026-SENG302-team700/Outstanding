@@ -353,6 +353,7 @@
                                     class="form-control"
                                     placeholder="Email *"
                                     bind:value={resetEmail}
+                                    on:keydown={(e) => e.key === 'Enter' && sendVerificationCode()}
                             >
                         </div>
                         {#if errors.resetEmail}
