@@ -198,7 +198,6 @@
                     },
                     body: JSON.stringify({
                         email: resetEmail,
-                        resendingCode: false
                     }),
                 },
             );
