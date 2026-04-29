@@ -9,6 +9,7 @@ namespace SENG302.Api.Services;
 
 public interface ITaskItemService
 {
+    Task<IEnumerable<TaskItem>> GetAllTaskItemsAsync(int userId);
     Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
     Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
     Task<TaskItem?> GetTaskItemAsync(int id);
@@ -59,6 +60,19 @@ public class TaskItemService : ITaskItemService
     }
 
     /// <summary>
+    /// Get all the tasks from all the lists
+    /// </summary>
+    /// <returns> a list of all the tasks </returns>
+    public async Task<IEnumerable<TaskItem>> GetAllTaskItemsAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        return await context.Set<TaskItem>()
+        .Where(t => context.Set<TaskList>()
+            .Any(l => l.Id == t.TaskListId && l.UserId == userId))
+        .ToListAsync();
+    }
+
+    /// <summary>
     /// Checks the due date is valid
     /// adds error to dictionary when error occurs.
     /// </summary>
@@ -67,7 +81,7 @@ public class TaskItemService : ITaskItemService
     {
         var errors = new Dictionary<string, string>();
         DateTime currentTime = DateTime.UtcNow;
-        
+
         if (dueDate != null && currentTime > dueDate)
         {
             errors["dueDate"] = "Invalid due date, date must be in the future";
@@ -118,29 +132,29 @@ public class TaskItemService : ITaskItemService
 
         // Validation
         var errors = new Dictionary<string, string>();
-        
+
         foreach (var (key, value) in ValidateTaskItemName(taskItem.Name))
         {
             errors[key] = value;
         }
-        
+
         foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
         {
             errors[key] = value;
         }
-        
+
         foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
         {
             errors[key] = value;
         }
-        
+
         ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
-        
+
         if (errors.Count > 0)
         {
             throw new MultipleValidationException(errors);
         }
-        
+
         // Add task item
         var newTask = new TaskItem()
         {
@@ -175,7 +189,7 @@ public class TaskItemService : ITaskItemService
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.TaskId == id);
         return taskItem;
     }
-    
+
     /// <summary>
     /// Brings in an update task item request from the controller
     /// Strips the name and modifies the due date to be valid
@@ -192,41 +206,41 @@ public class TaskItemService : ITaskItemService
         {
             return null;
         }
-        
+
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
-        
+
         var errors = new Dictionary<string, string>();
-        
+
         foreach (var (key, value) in ValidateTaskItemName(taskItemUpdates.Name))
         {
             errors[key] = value;
         }
-        
+
         foreach (var (key, value) in ValidateTaskItemDescription(taskItemUpdates.Description))
         {
             errors[key] = value;
         }
-        
+
         foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
         {
             errors[key] = value;
         }
-        
+
         ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus); // should not occur naturally, therefore handled differently.
 
         if (errors.Count > 0)
         {
             throw new MultipleValidationException(errors);
         }
-        
+
         taskItem.Name = taskItemUpdates.Name;
         taskItem.Description = taskItemUpdates.Description;
         taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
         taskItem.DueDate = taskItemUpdates.DueDate;
         taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
-        
+
         context.TaskItems.Update(taskItem);
         await context.SaveChangesAsync();
         return taskItem;
