@@ -594,7 +594,7 @@
                         <div
                                 class="d-flex align-items-center justify-content-between"
                         >
-                            <label for="profanityFiltering" class="form-label">Profanity Filtering</label>
+                            <label for="profanityFiltering" class="form-label">Profanity Censor</label>
                             <ToggleForm id={profanityFiltering} bind:checked={profanityFiltering} />
                         </div>
                     </div>
