@@ -22,7 +22,7 @@
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
-    let timeRemainingText = $state(30);
+    let timeRemaining = $state(300);
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
@@ -47,6 +47,14 @@
             authModal = new BootstrapModal(modalElement);
         }
     })
+    
+    function startTimerCountdown() {
+        timeRemaining = 300
+        const interval = setInterval(() => {
+            timeRemaining--;
+            if (timeRemaining <= 0) clearInterval(interval)
+        }, 1000)
+    }
     
     /**
      * Handles user login by sending a POST request to the server with the user's email and password.
@@ -195,6 +203,8 @@
         currentModalStep = "verify";
 
         authModal?.show();
+        
+        startTimerCountdown()
 
         try {
             const response = await fetchWithCsrf(
@@ -278,7 +288,7 @@
     <div class="mb-3 mt-3">
         <button
                 class="btn btn-link btn-sm text-decoration-none"
-                on:click={requestNewPassword()}
+                on:click={requestNewPassword}
         >Forgot Password?</button>
     </div>
 </div>
@@ -309,7 +319,7 @@
                         <p class="small">
                             Please check your inbox and enter the verification code
                             below to verify your email address. The code will expire in <strong
-                        >{timeRemainingText}</strong>
+                        >{timeRemaining}</strong>
                         </p>
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
                             <input
