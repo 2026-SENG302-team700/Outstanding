@@ -11,7 +11,7 @@ namespace SENG302.Api;
 
 public class Program
 {
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -45,23 +45,24 @@ public class Program
             {
                 throw new InvalidOperationException("Missing required database environment variables.");
             }
-            
+
             // build the connection string to be used by PosgreSQL
             var connectionString =
                 $"Host={dbHost};Database={dbName};Username={dbUser};Password={dbPass};SSL Mode=Require;Trust Server Certificate=true";
 
-            builder.Services.AddDbContextFactory<DatabaseContext>((_, options) => 
+            builder.Services.AddDbContextFactory<DatabaseContext>((_, options) =>
                 options.UseNpgsql(connectionString)
                 );
-        } else
+        }
+        else
         {
             // Configure database context with factory pattern
             builder.Services.AddDbContextFactory<DatabaseContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db"));
 
         }
-        
-        
+
+
         builder.Services.AddHttpContextAccessor();
 
         // Register custom services 
@@ -116,7 +117,7 @@ public class Program
         builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        //builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 
@@ -131,7 +132,7 @@ public class Program
             });
         }
 
-        await InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
+        InitializeDatabase(app.Services.CreateScope().ServiceProvider, !(app.Environment.IsProduction() || app.Environment.IsStaging()));
 
         var pathBase = app.Configuration["PathBase"];
         if (!string.IsNullOrEmpty(pathBase))
@@ -202,7 +203,7 @@ public class Program
             Console.WriteLine("Error occured: ", e);
             throw;
         }
-        
+
     }
 
     protected static void RegisterServices(IServiceCollection services)
