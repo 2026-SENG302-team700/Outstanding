@@ -261,9 +261,10 @@ public class UserController : ControllerBase
         }
 
         string oneTimeCode = _codeService.GenerateOneTimeCode();
+        long codeGenerationTime = _codeService.GetEpochTime();
         if (oneTimeCode.Length != 6) return Problem();
 
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, codeGenerationTime, false);
         if (userUpdated == null) return Problem();
 
         // Create a dictionary of important values to send in the email, then call function to send email
@@ -278,7 +279,7 @@ public class UserController : ControllerBase
     }
     /// <summary>
     /// Gets the user object from the database and compares the code the user has entered compared to the one generated
-    /// to verify them. Doesnt worry about the time as this was not included in the AC.
+    /// to verify them. Doesn't worry about the time as this was not included in the AC.
     /// </summary>
     /// <param name="validationRequest"></param> Validation Request contain the user email which is used for querying
     /// the database and the code which the user entered on the frontend
@@ -299,8 +300,27 @@ public class UserController : ControllerBase
         User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return NotFound(new { message = "User not found" });
 
-        bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
-        if (!correctCode) return BadRequest(new { message = "Invalid Code" });
+        // bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
+        // if (!correctCode) return BadRequest(new { message = "Invalid Code" });
+        
+        CodeVerificationResult codeVerificationResult =
+            _codeService.VerfiyCode(user, _codeService.GetEpochTime(), validationRequest.Code);
+        
+        if (codeVerificationResult == CodeVerificationResult.CodeExpired && validationRequest.TimeLimitExists)
+        {
+            return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
+        }
+
+        if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
+        {
+            return BadRequest(new { message = "Invalid Code" });
+        }
+
+        if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
+        {
+            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            if (userUpdated == null) return Problem();
+        }
 
         return Ok();
 

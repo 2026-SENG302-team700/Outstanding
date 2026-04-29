@@ -126,6 +126,7 @@ public class RegistrationController : ControllerBase
     [HttpPut("code/generation")]
     public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
     {
+        Console.WriteLine("\n\n Does it reach backend \n\n");
         if (string.IsNullOrWhiteSpace(codeRequest.Email))
         {
             return BadRequest(new { message = "User email is missing", });

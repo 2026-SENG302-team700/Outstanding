@@ -24,8 +24,6 @@
     let digit6 = $state("");
     let timeRemaining = $state(300);
     let timeRemainingText = $state("0");
-    let resendTime = $state(0);
-    let isSending = $state(false);
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
@@ -70,15 +68,6 @@
         }, 1000);
     }
     
-    function resendTimer() {
-        resendTime = 30;
-        clearInterval();
-
-        let resendInterval = setInterval(() => {
-            resendTime--;
-            if (resendTime <= 0) clearInterval(resendInterval);
-        }, 1000);
-    }
 
     /**
      * Clears input fields containing digits if code is resent
@@ -231,6 +220,8 @@
                     "#code-input input",
                 ) as HTMLInputElement;
                 firstInput?.focus();
+                clearInterval(interval)
+                timeRemainingText = '0:00'
             } else {
                 currentModalStep = "update";
                 // Remove before merging
@@ -246,19 +237,15 @@
      * Called when the forgot password is clicked, opens the modal
      * for the one time code, starts the timer and sends the one time code to the users email
      */
-    async function requestNewPassword(passwordResetCodeResending: Boolean) {
+    async function requestNewPassword() {
         currentModalStep = "verify";
         
         authModal?.show();
-        
-        if (!passwordResetCodeResending) {
-            startTimerCountdown();
-            clearResetCodeModalFields();
-        }
-        resendTimer()
+
+        startTimerCountdown();
+        clearResetCodeModalFields();
 
         try {
-            isSending = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/generation`),
                 {
@@ -276,13 +263,13 @@
                 addToast("Verification code sent!", "success");
             } else {
                 const data = await response.json().catch(() => null);
+                console.log(data)
+                console.log(data.message)
                 errors.codeError = data?.message || "Failed to send code.";
             }
         } catch (err) {
             errors.codeError = "Failed to send email: " + (err as Error).message;
-        } finally {
-            isSending = false;
-        }
+        } 
     }
 </script>
 
@@ -436,17 +423,6 @@
                                 {errors.codeError}
                             </div>
                         {/if}
-                        <button
-                                class="btn btn-link btn-sm text-decoration-none"
-                                onclick={() => requestNewPassword(true)}
-                                disabled={resendTime > 0 || isSending}
-                        >
-                            {#if resendTime <= 0}
-                                Resend Code
-                            {:else if isSending}
-                                Sending...
-                            {/if}
-                        </button>
                     </div>
                 {:else}{/if}
             </div>

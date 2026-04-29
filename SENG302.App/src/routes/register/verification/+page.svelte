@@ -213,7 +213,7 @@
                     ResendingCode: false,
                 });
             }
-
+            console.log("Does it reach here")
             const response = await fetchWithCsrf(
                 resolve(`/api/register/code/generation`),
                 {

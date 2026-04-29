@@ -238,7 +238,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
             });
             await context.SaveChangesAsync();
         }
-        var request = new { Email = email, Code = secretCode };
+        var request = new { Email = email, Code = secretCode, TimeLimitExists = false, };
 
         var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
 
