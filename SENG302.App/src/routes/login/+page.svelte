@@ -14,6 +14,7 @@
     let loading = $state(false);
     let error = $state("");
     
+    let sendingResetCode = $state(false)
     let currentModalStep = $state("verify");
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
@@ -188,7 +189,9 @@
         }
         
         // Send email to backend for further validation and sending of code
+        
         try {
+            sendingResetCode = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/generation`),
                 {
@@ -212,6 +215,8 @@
             }
         } catch (err) {
             errors.resetEmail = "Failed to send email: " + (err as Error).message;
+        } finally {
+            sendingResetCode = false;
         }
     }
     
@@ -357,7 +362,7 @@
                         <button 
                                 class="btn btn-primary w-100"
                                 on:click={sendVerificationCode}>
-                            Send confirmation code
+                            {sendingResetCode ? 'Sending...' : 'Send confirmation code'}
                         </button>
                     </div>
                     {/if}
