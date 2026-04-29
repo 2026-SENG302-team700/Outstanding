@@ -363,14 +363,14 @@
                         <button 
                                 class="btn btn-primary w-100"
                                 on:click={sendVerificationCode}>
-                            {sendingResetCode ? 'Sending...' : 'Send confirmation code'}
+                            {sendingResetCode ? 'Sending...' : 'Get reset code'}
                         </button>
                     </div>
                     {/if}
                 {#if currentModalStep === "verify"}
                     <div class="text-centre">
                         <p class="text-secondary">
-                            We've sent a 6 digit verification code to <br />
+                            Password reset email sent to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
                         <p class="small">

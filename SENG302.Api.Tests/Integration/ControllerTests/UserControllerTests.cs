@@ -211,13 +211,13 @@ public class UserControllerTests : BaseIntegrationTestFixture
     }
     
     [Fact]
-    public async Task InitiateOneTimeCode_UserNotFound_ReturnsProblem()
+    public async Task InitiateOneTimeCode_UserNotFound_NotFound()
     {
         var request = new { Email = "nonexistent@example.com" };
 
         var response = await HttpClient.PutAsJsonAsync("/api/user/password/code/generation", request);
         
-        response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
     
     [Fact]
