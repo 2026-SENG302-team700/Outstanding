@@ -161,7 +161,7 @@ public class UserServiceUnitTest : BaseUnitTestFixture
             userId = user.Id;
         }
 
-        var updatedUser = await UserServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU");
+        var updatedUser = await UserServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU", false);
 
         Assert.NotNull(updatedUser);
         Assert.Equal("new@test.com", updatedUser.Email);

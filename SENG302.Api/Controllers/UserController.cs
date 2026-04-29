@@ -104,7 +104,8 @@ public class UserController : ControllerBase
                 userId,
                 updateUserRequest.Email,
                 updateUserRequest.DisplayName,
-                updateUserRequest.Country);
+                updateUserRequest.Country,
+                updateUserRequest.ProfanityFiltering);
 
             if (user == null)
             {
