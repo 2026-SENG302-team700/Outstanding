@@ -3,34 +3,24 @@ using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Reqnroll;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
-using SENG302.Api.Services;
 using SENG302.Api.Tests.Acceptance.Setup;
 using Shouldly;
 
-namespace SENG302.Api.Tests.Acceptance.StepDefinitions;
-
-public class FakeEmailService : IEmailService
+namespace SENG302.Api.Tests.Acceptance.StepDefinitions
 {
-    public Task SendEmailAsync(string email, EmailTemplate template, Dictionary<string, string> data)
-    {
-        return Task.CompletedTask;
-    }
-}
-
     [Binding]
     public class StepDefinitions
     {
         private readonly AcceptanceTestFixture _fixture;
         private HttpResponseMessage? _lastResponse;
         private DbContext _context;
-      
+
         public StepDefinitions(AcceptanceTestFixture fixture)
         {
             _fixture = fixture;
             _context = _fixture.DbContextFactory.CreateDbContext();
         }
-        
+
         // AC 2
         [Given("I am on forgot password form and have a registered account")]
         public void GivenIAmOnForgotPasswordFormAndHaveARegisteredAccount()
@@ -42,19 +32,20 @@ public class FakeEmailService : IEmailService
                 DisplayName = "Test",
                 PasswordKey = "Team700!",
             };
-            
+
             _context.Add(user);
             _context.SaveChanges();
 
         }
-              
+
         [When("I click send")]
         public async Task WhenIClickSend()
         {
-            _lastResponse =  await _fixture.HttpClient.PutAsJsonAsync("/api/user/password/code/generation", new {Email = "test@example.com"});
-            
+            _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("/api/user/password/code/generation",
+                new { Email = "test@example.com" });
+
         }
-              
+
         [Then("I am send a one time code")]
         public void ThenIAmSendAOneTimeCode()
         {
@@ -62,3 +53,4 @@ public class FakeEmailService : IEmailService
             _lastResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
     }
+}
