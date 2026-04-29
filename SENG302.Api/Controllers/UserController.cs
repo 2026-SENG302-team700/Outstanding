@@ -264,7 +264,7 @@ public class UserController : ControllerBase
         if (oneTimeCode.Length != 6) return Problem();
 
         User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
-        if (userUpdated == null) return Problem();
+        if (userUpdated == null) return NotFound(new { message = "No user with that email is registered" });
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>

@@ -188,19 +188,34 @@
         }
         
         // Send email to backend for further validation and sending of code
-        const response = await fetchWithCsrf(
-            resolve(`/api/users/forgot-password`),
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/generation`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: resetEmail,
+                        resendingCode: false
+                    }),
                 },
-                body: JSON.stringify({
-                    email: resetEmail,
-                })
+            );
+
+            if (response.ok) {
+                currentModalStep = "verify"
+                addToast("Verification code sent!", "success");
+                startResendCountdown();
+            } else {
+                const data = await response.json().catch(() => null);
+                errors.resetEmail = data?.message || "Failed to send code.";
             }
-        )
+        } catch (err) {
+            errors.resetEmail = "Failed to send email: " + (err as Error).message;
+        }
     }
+    
     async function checkCode() {
         if (userCode.length === 6) {return;}
         try {
@@ -238,38 +253,10 @@
     async function requestNewPassword() {
         // reset errors
         errors.resetEmail = "";
-        
+
         currentModalStep = "emailInput";
-
         authModal?.show();
-        /*
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/generation`),
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                    }),
-                },
-            );
-
-            if (response.ok) {
-                addToast("Verification code sent!", "success");
-                startResendCountdown();
-            } else {
-                const data = await response.json().catch(() => null);
-                codeError = data?.message || "Failed to send code.";
-            }
-        } catch (err) {
-            codeError = "Failed to send email: " + (err as Error).message;
-        }
-        
-         */
-    }    
+    }
     
 </script>
 
