@@ -24,6 +24,8 @@
     let digit6 = $state("");
     let timeRemaining = $state(300);
     let timeRemainingText = $state("0");
+    let resendTime = $state(0);
+    let isSending = $state(false);
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
@@ -34,12 +36,6 @@
         password: "",
         codeError: "",
         passwordErrorIndicator: false,
-    });
-
-    $effect(() => {
-        if (userCode.length === 6) {
-            checkCode();
-        }
     });
 
     onMount(async () => {
@@ -60,6 +56,9 @@
         return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
 
+    /**
+     * Starts the countdown for the timer
+     */
     function startTimerCountdown() {
         timeRemaining = 300;
         clearInterval(interval);
@@ -69,6 +68,24 @@
             timeRemainingText = formatTime(timeRemaining);
             if (timeRemaining <= 0) clearInterval(interval);
         }, 1000);
+    }
+    
+    function resendTimer() {
+        resendTime = 30;
+        clearInterval();
+
+        let resendInterval = setInterval(() => {
+            resendTime--;
+            if (resendTime <= 0) clearInterval(resendInterval);
+        }, 1000);
+    }
+
+    /**
+     * Clears input fields containing digits if code is resent
+     */
+    function clearResetCodeModalFields() {
+        digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+        errors.codeError = "";
     }
 
     /**
@@ -180,12 +197,15 @@
         }
     }
 
+    /**
+     * Function that is called when all digits are entered.
+     * 
+     * Checks that the code is valid
+     */
     async function checkCode() {
-        if (userCode.length === 6) {
-            return;
-        }
         try {
             errors.codeError = "";
+            
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/validation`),
                 {
@@ -199,10 +219,12 @@
                     }),
                 },
             );
-
+            
+            
+            const data = await response.json().catch(() => null);
+            
             if (!response.ok) {
-                const data = await response.json.catch(() => null);
-                codeError =
+                errors.codeError =
                     data?.message || `Error ${response.status}: Invalid Code.`;
                 digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
                 const firstInput = document.querySelector(
@@ -211,20 +233,32 @@
                 firstInput?.focus();
             } else {
                 currentModalStep = "update";
+                // Remove before merging
+                authModal.hide();
             }
         } catch (err) {
-            codeError = "Connection error. Please try again later.";
+            console.log(err)
+            errors.codeError = "Connection error. Please try again later.";
         }
     }
 
-    async function requestNewPassword() {
+    /**
+     * Called when the forgot password is clicked, opens the modal
+     * for the one time code, starts the timer and sends the one time code to the users email
+     */
+    async function requestNewPassword(passwordResetCodeResending: Boolean) {
         currentModalStep = "verify";
-
+        
         authModal?.show();
-
-        startTimerCountdown();
+        
+        if (!passwordResetCodeResending) {
+            startTimerCountdown();
+            clearResetCodeModalFields();
+        }
+        resendTimer()
 
         try {
+            isSending = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/generation`),
                 {
@@ -240,13 +274,14 @@
 
             if (response.ok) {
                 addToast("Verification code sent!", "success");
-                startResendCountdown();
             } else {
                 const data = await response.json().catch(() => null);
-                codeError = data?.message || "Failed to send code.";
+                errors.codeError = data?.message || "Failed to send code.";
             }
         } catch (err) {
-            codeError = "Failed to send email: " + (err as Error).message;
+            errors.codeError = "Failed to send email: " + (err as Error).message;
+        } finally {
+            isSending = false;
         }
     }
 </script>
@@ -310,7 +345,7 @@
     <div class="mb-3 mt-3">
         <button
             class="btn btn-link btn-sm text-decoration-none"
-            onclick={requestNewPassword}>Forgot Password?</button
+            onclick={() => requestNewPassword(false)}>Forgot Password?</button
         >
     </div>
 </div>
@@ -398,11 +433,29 @@
                             <div class="text-danger small mb-3 animate-fade-in">
                                 <i class="bi bi-exclamation-circle-fill me-1"
                                 ></i>
-                                {codeError}
+                                {errors.codeError}
                             </div>
                         {/if}
+                        <button
+                                class="btn btn-link btn-sm text-decoration-none"
+                                onclick={() => requestNewPassword(true)}
+                                disabled={resendTime > 0 || isSending}
+                        >
+                            {#if resendTime <= 0}
+                                Resend Code
+                            {:else if isSending}
+                                Sending...
+                            {/if}
+                        </button>
                     </div>
                 {:else}{/if}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary w-100" onclick={checkCode}>
+                    {#if currentModalStep === "verify"}
+                        Reset Password
+                    {/if}    
+                </button>
             </div>
         </div>
     </div>
