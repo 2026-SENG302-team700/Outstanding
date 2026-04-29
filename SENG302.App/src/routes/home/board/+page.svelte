@@ -5,13 +5,44 @@
   import { resolve } from "$app/paths";
   import { goto } from "$app/navigation";
 
+  import {
+    DragDropProvider,
+    PointerSensor,
+    KeyboardSensor,
+  } from "@dnd-kit/svelte";
+  import { defaultPreset } from "@dnd-kit/dom";
+  import { move } from "@dnd-kit/helpers";
+  //import "../styles.css";
+  //import SortableColumn from "../SortableColumn.svelte";
+
   let tasks = $state([]);
   let loading = $state(false);
   let error = $state("");
+  
+  const COLORS: Record<string, string> = {
+    
+  }
+  
+  let initialTasks: Record<string, string[]> = {
+    column: tasks.map((task) => `${task.TaskId}`),
+  }
+  let tasksForSnapshot = $state<Record<string, string[]>>(initialTasks)
+  let snapshot = $state(structuredClone(initialTasks));
+  
 
   onMount(() => {
     fetchAllTasks();
+    
   });
+
+  const sensors = [
+    PointerSensor.configure({
+      activatorElements(source) {
+        return [source.element, source.handle];
+      },
+    }),
+    KeyboardSensor,
+  ];
 
   async function fetchAllTasks() {
     try {
@@ -37,7 +68,26 @@
     if (!text) return "No description";
     if (text.length <= length) return text;
     return text.slice(0, length) + "...";
+    tasksForSnapshot = move
   }
+  
+  function onDragStart() {
+    snapshot = structuredClone(tasksForSnapshot);
+  }
+  
+  function onDragOver(event: any) {
+    const { source } = event.operation;
+    if (source && source.type==="column") return;
+    tasksForSnapshot = move(tasksForSnapshot, event)
+  }
+  
+  function onDragEnd(event: any) {
+    const {source} = event.operation;
+    if (event.cancelled) {
+      tasksForSnapshot = snapshot;
+    }
+  }
+  
 </script>
 
 <div class="container">
@@ -50,22 +100,29 @@
   {:else if tasks.length === 0}
     <div class="text-center text-muted py-4">No tasks found.</div>
   {:else}
-    <div class="board-columns">
-      <!-- todo column -->
-      <div class="board-column">
-        <div class="column-header status-todo-header">Todo</div>
-        {#each tasks.filter((t) => t.currentStatus === 0) as task}
-          <div
-            class="task-card-small status-todo"
-            tabindex="0"
-            role="button"
-            on:click={() =>
+    <DragDropProvider
+            plugins={defaultPreset.plugins}
+            {sensors}
+            {onDragStart}
+            {onDragOver}
+            {onDragEnd}
+    >
+      <div class="board-columns">
+        <!-- todo column -->
+        <div class="board-column">
+          <div class="column-header status-todo-header">Todo</div>
+          {#each tasks.filter((t) => t.currentStatus === 0) as task}
+            <div
+                    class="task-card-small status-todo"
+                    tabindex="0"
+                    role="button"
+                    on:click={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+                    on:keydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(
@@ -73,34 +130,34 @@
                   ),
                 );
             }}
-          >
-            <div class="task-card-header">
-              <span class="task-title">{task.name}</span>
-            </div>
-            <p class="task-description">{shortenDesc(task.description, 30)}</p>
-            <span class="due-date"
-              >🗓 {task.dueDate === null
-                ? "No due date"
-                : formatDate(task.dueDate)}</span
             >
-          </div>
-        {/each}
-      </div>
-      <!-- in progress column -->
-      <div class="board-column">
-        <div class="column-header status-inprogress-header">In Progress</div>
-        {#each tasks.filter((t) => t.currentStatus === 1) as task}
-          <div
-            class="task-card-small status-inprogress"
-            tabindex="0"
-            role="button"
-            on:click={() =>
+              <div class="task-card-header">
+                <span class="task-title">{task.name}</span>
+              </div>
+              <p class="task-description">{shortenDesc(task.description, 30)}</p>
+              <span class="due-date"
+              >🗓 {task.dueDate === null
+                      ? "No due date"
+                      : formatDate(task.dueDate)}</span
+              >
+            </div>
+          {/each}
+        </div>
+        <!-- in progress column -->
+        <div class="board-column">
+          <div class="column-header status-inprogress-header">In Progress</div>
+          {#each tasks.filter((t) => t.currentStatus === 1) as task}
+            <div
+                    class="task-card-small status-inprogress"
+                    tabindex="0"
+                    role="button"
+                    on:click={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+                    on:keydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(
@@ -108,34 +165,34 @@
                   ),
                 );
             }}
-          >
-            <div class="task-card-header">
-              <span class="task-title">{task.name}</span>
-            </div>
-            <p class="task-description">{shortenDesc(task.description, 30)}</p>
-            <span class="due-date"
-              >🗓 {task.dueDate === null
-                ? "No due date"
-                : formatDate(task.dueDate)}</span
             >
-          </div>
-        {/each}
-      </div>
-      <!-- done column -->
-      <div class="board-column">
-        <div class="column-header status-done-header">Done</div>
-        {#each tasks.filter((t) => t.currentStatus === 2) as task}
-          <div
-            class="task-card-small status-done"
-            tabindex="0"
-            role="button"
-            on:click={() =>
+              <div class="task-card-header">
+                <span class="task-title">{task.name}</span>
+              </div>
+              <p class="task-description">{shortenDesc(task.description, 30)}</p>
+              <span class="due-date"
+              >🗓 {task.dueDate === null
+                      ? "No due date"
+                      : formatDate(task.dueDate)}</span
+              >
+            </div>
+          {/each}
+        </div>
+        <!-- done column -->
+        <div class="board-column">
+          <div class="column-header status-done-header">Done</div>
+          {#each tasks.filter((t) => t.currentStatus === 2) as task}
+            <div
+                    class="task-card-small status-done"
+                    tabindex="0"
+                    role="button"
+                    on:click={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+                    on:keydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(
@@ -143,20 +200,22 @@
                   ),
                 );
             }}
-          >
-            <div class="task-card-header">
-              <span class="task-title">{task.name}</span>
-            </div>
-            <p class="task-description">{shortenDesc(task.description, 30)}</p>
-            <span class="due-date"
-              >🗓 {task.dueDate === null
-                ? "No due date"
-                : formatDate(task.dueDate)}</span
             >
-          </div>
-        {/each}
+              <div class="task-card-header">
+                <span class="task-title">{task.name}</span>
+              </div>
+              <p class="task-description">{shortenDesc(task.description, 30)}</p>
+              <span class="due-date"
+              >🗓 {task.dueDate === null
+                      ? "No due date"
+                      : formatDate(task.dueDate)}</span
+              >
+            </div>
+          {/each}
+        </div>
       </div>
-    </div>
+    </DragDropProvider>
+    
   {/if}
 </div>
 
