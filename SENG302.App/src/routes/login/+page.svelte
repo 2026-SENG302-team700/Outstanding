@@ -23,9 +23,11 @@
     let digit5 = $state("");
     let digit6 = $state("");
     let timeRemaining = $state(300);
+    let timeRemainingText = $state("0");
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
+    let interval;
 
     let errors = $state({
         email: "",
@@ -48,10 +50,23 @@
         }
     });
 
+    /**
+     * Format a given number of seconds into a user friendly readable time for the countdown timer
+     * @param seconds
+     */
+    function formatTime(seconds: number) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+
     function startTimerCountdown() {
         timeRemaining = 300;
-        const interval = setInterval(() => {
+        clearInterval(interval);
+
+        interval = setInterval(() => {
             timeRemaining--;
+            timeRemainingText = formatTime(timeRemaining);
             if (timeRemaining <= 0) clearInterval(interval);
         }, 1000);
     }
@@ -306,6 +321,7 @@
     bind:this={modalElement}
     tabindex="-1"
     aria-hidden="true"
+    id="resetCodeModal"
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
@@ -326,7 +342,7 @@
                         <p class="small">
                             Please check your inbox and enter the verification
                             code below to verify your email address. The code
-                            will expire in <strong>{timeRemaining}</strong>
+                            will expire in <strong>{timeRemainingText}</strong>
                         </p>
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
                             <input
@@ -334,48 +350,48 @@
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit1}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit2}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit3}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit4}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit5}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                             <input
                                 type="text"
                                 class="form-control form-control-lg text-center"
                                 maxlength="1"
                                 bind:value={digit6}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                                oninput={handleInput}
+                                onkeydown={handleKeyDown}
                             />
                         </div>
                         {#if errors.codeError}
