@@ -16,6 +16,7 @@
     import CountrySelectForm from "$lib/components/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import PasswordForm from "$lib/components/password-form.svelte";
+    import ToggleForm from "$lib/components/toggle-form.svelte"
 
     let displayName = $state("");
     let email = $state("");
@@ -42,6 +43,8 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
+    
+    let profanityFiltering = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -184,6 +187,7 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            profanityFiltering = data.profanityFiltering;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -265,16 +269,6 @@
         }
     }
 
-    /**
-     * Format a given number of seconds into a user friendly readable time for the countdown timer
-     * @param seconds
-     */
-    function formatTime(seconds: number) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-
     /// <summary>
     /// Updates the users information with the provided information
     /// </summary>
@@ -293,6 +287,7 @@
                     email,
                     displayName,
                     country,
+                    profanityFiltering
                 }),
             });
 
@@ -482,7 +477,7 @@
         }
         imageEditor.setImg(files[0]);
     }
-
+    
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
@@ -490,14 +485,14 @@
      */
     async function updatePfp() {
         const data = imageEditor.exportData();
-
+        
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected";
             }
         }
         errors.image = imageError;
-
+        
         if (imageError) {
             imageEditor.highlightError(true);
             return;
@@ -548,7 +543,7 @@
                 <AuthenticatorButton buttonType={"update"} />
             </div>
         </div>
-
+    
         <div class="container d-flex flex-column flex-md-row">
             <div
                 class="d-flex flex-column align-items-center justify-content-center m-3"
@@ -574,45 +569,59 @@
             </div>
 
             <div class="flex-grow-1 m-3">
-                <div class="mb-4">
-                    <h5 class="text-muted mb-2">Personal Information</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-2">Personal Information</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label"
+                                >Display Name</label
+                            >
+                            <DisplayNameForm
+                                bind:displayName
+                                error={errors.displayName}
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email</label>
+                            <EmailForm bind:email error={errors.email} />
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <CountrySelectForm bind:selectedCountryCode={country} />
+                        </div>
+                    </div>
                     <div class="mb-3">
-                        <label for="displayName" class="form-label"
-                            >Display Name</label
+
+                    </div>
+                    <div class="mt-5 mb-4">
+                        <h5 class="text-muted mb-2">Preferences</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div
+                                class="d-flex align-items-center justify-content-between"
                         >
-                        <DisplayNameForm
-                            bind:displayName
-                            error={errors.displayName}
-                        />
+                            <label for="profanityFiltering" class="form-label">Profanity Censor</label>
+                            <ToggleForm id={profanityFiltering} bind:checked={profanityFiltering} />
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="userEmail" class="form-label">Email</label>
-                        <EmailForm bind:email error={errors.email} />
-                    </div>
-                    <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        <CountrySelectForm bind:selectedCountryCode={country} />
-                    </div>
-                </div>
-                <div class="mt-5 mb-4">
-                    <h5 class="text-muted mb-2">Account Security</h5>
-                    <hr class="mt-0" style="opacity: 0.15;" />
-                    <div
-                        class="d-flex align-items-center justify-content-between"
-                    >
-                        <p class="small text-secondary mb-0">
-                            Change your password to keep your account secure.
-                        </p>
-                        <button
-                            type="button"
-                            class="btn btn-outline-primary btn-sm"
-                            on:click={requestPasswordChange}
+                
+                    <div class="mt-5 mb-4">
+                        <h5 class="text-muted mb-2">Account Security</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div
+                            class="d-flex align-items-center justify-content-between"
                         >
-                            Update Password
-                        </button>
+                            <p class="small text-secondary mb-0">
+                                Change your password to keep your account secure.
+                            </p>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm"
+                                on:click={requestPasswordChange}
+                            >
+                                Update Password
+                            </button>
+                        </div>
                     </div>
-                </div>
             </div>
         </div>
     </form>

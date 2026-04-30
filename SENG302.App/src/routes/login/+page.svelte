@@ -16,6 +16,7 @@
     let currentModalStep = $state("verify");
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
+    let resetEmail = $state("");
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
@@ -29,12 +30,13 @@
     );
     let interval;
 
-    let errors = $state({
-        email: "",
-        password: "",
-        codeError: "",
-        passwordErrorIndicator: false,
-    });
+  let errors = $state({
+    email: "",
+    password: "",
+    codeError: "",  
+    passwordErrorIndicator: false,
+    resetEmail: "",  
+  });
 
     onMount(async () => {
         const { Modal: BootstrapModal } = await import("bootstrap");
@@ -187,14 +189,79 @@
     }
 
     /**
+     * Send the email for one time code to the backend and starts the timer
+     * Code will be sent to the email if it is valid and the
+     * modal will progress to the next stage
+     * shows relavent errors otherwise
+     */
+    async function sendVerificationCode() {
+        // reset error
+        errors.resetEmail = "";
+
+        // Validate email on front end
+        let valid = true;
+
+        if (!resetEmail) {
+            errors.resetEmail = "Email is required.";
+            valid = false;
+        }
+
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (resetEmail && !emailRegex.test(resetEmail)) {
+            errors.resetEmail =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+            valid = false;
+        }
+
+        if (!valid) {
+            return;
+        }
+
+        // Send email to backend for further validation and sending of code
+        currentModalStep = "verify";
+
+        startTimerCountdown();
+        clearResetCodeModalFields();
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/generation`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                    }),
+                },
+            );
+
+            if (response.ok) {
+                addToast("Verification code sent!", "success");
+            } else {
+                const data = await response.json().catch(() => null);
+                errors.codeError = data?.message || "Failed to send code.";
+            }
+        } catch (err) {
+            /*
+             * This won't be displayed as we have already moved to the verify step
+             * However if we wait for confirmation that the email sent, then time taken
+             * can be used to work out what emails have accounts which we are trying to avoid
+             */
+            errors.codeError = "Failed to send code " + (err as Error).message;
+        }
+    }
+
+    /**
      * Function that is called when all digits are entered.
-     * 
+     *
      * Checks that the code is valid
      */
     async function checkCode() {
         try {
             errors.codeError = "";
-            
+
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/validation`),
                 {
@@ -208,10 +275,10 @@
                     }),
                 },
             );
-            
-            
+
+
             const data = await response.json().catch(() => null);
-            
+
             if (!response.ok) {
                 errors.codeError =
                     data?.message || `Error ${response.status}: Invalid Code.`;
@@ -235,41 +302,12 @@
 
     /**
      * Called when the forgot password is clicked, opens the modal
-     * for the one time code, starts the timer and sends the one time code to the users email
+     * for entering the email.
      */
     async function requestNewPassword() {
-        currentModalStep = "verify";
-        
+        errors.resetEmail = "";
+        currentModalStep = "emailInput";
         authModal?.show();
-
-        startTimerCountdown();
-        clearResetCodeModalFields();
-
-        try {
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/generation`),
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                    }),
-                },
-            );
-
-            if (response.ok) {
-                addToast("Verification code sent!", "success");
-            } else {
-                const data = await response.json().catch(() => null);
-                console.log(data)
-                console.log(data.message)
-                errors.codeError = data?.message || "Failed to send code.";
-            }
-        } catch (err) {
-            errors.codeError = "Failed to send email: " + (err as Error).message;
-        } 
     }
 </script>
 
@@ -279,12 +317,7 @@
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
-    <form
-        onsubmit={(e) => {
-            e.preventDefault();
-            loginUser();
-        }}
-    >
+    <form onsubmit|preventDefault={loginUser}>
         <div class="mb-3">
             <input
                 type="type"
@@ -332,7 +365,7 @@
     <div class="mb-3 mt-3">
         <button
             class="btn btn-link btn-sm text-decoration-none"
-            onclick={() => requestNewPassword(false)}>Forgot Password?</button
+            onclick={requestNewPassword}>Forgot Password?</button
         >
     </div>
 </div>
@@ -343,7 +376,6 @@
     bind:this={modalElement}
     tabindex="-1"
     aria-hidden="true"
-    id="resetCodeModal"
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
@@ -355,11 +387,42 @@
                 </h5>
             </div>
             <div class="modal-body">
+                {#if currentModalStep === "emailInput"}
+                    <div class="text-center">
+                        <p class="text-secondary">
+                            We'll send a verification code to your email
+                        </p>
+
+                        <div class="mb-3 text-start">
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-control"
+                                placeholder="Email *"
+                                bind:value={resetEmail}
+                                onkeydown={(e) =>
+                                    e.key === "Enter" && sendVerificationCode()}
+                            />
+                        </div>
+                        {#if errors.resetEmail}
+                            <div class="text-danger mt-1">
+                                {errors.resetEmail}
+                            </div>
+                        {/if}
+
+                        <button
+                            class="btn btn-primary w-100"
+                            onclick={sendVerificationCode}
+                        >
+                            Get reset code
+                        </button>
+                    </div>
+                {/if}
                 {#if currentModalStep === "verify"}
                     <div class="text-centre">
                         <p class="text-secondary">
-                            We've sent a 6 digit verification code to <br />
-                            <span class="text-dark fw-bold">{email}</span>
+                            Password reset email sent to <br />
+                            <span class="text-dark fw-bold">{resetEmail}</span>
                         </p>
                         <p class="small">
                             Please check your inbox and enter the verification
@@ -420,18 +483,16 @@
                             <div class="text-danger small mb-3 animate-fade-in">
                                 <i class="bi bi-exclamation-circle-fill me-1"
                                 ></i>
-                                {errors.codeError}
+                                {codeError}
                             </div>
                         {/if}
+                        <button class="btn btn-primary w-100" onclick={checkCode}>
+                            {#if currentModalStep === "verify"}
+                                Reset Password
+                            {/if}
+                        </button>
                     </div>
-                {:else}{/if}
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary w-100" onclick={checkCode}>
-                    {#if currentModalStep === "verify"}
-                        Reset Password
-                    {/if}    
-                </button>
+                {/if}
             </div>
         </div>
     </div>

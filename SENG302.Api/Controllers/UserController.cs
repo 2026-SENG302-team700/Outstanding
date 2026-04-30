@@ -104,7 +104,8 @@ public class UserController : ControllerBase
                 userId,
                 updateUserRequest.Email,
                 updateUserRequest.DisplayName,
-                updateUserRequest.Country);
+                updateUserRequest.Country,
+                updateUserRequest.ProfanityFiltering);
 
             if (user == null)
             {
@@ -265,7 +266,7 @@ public class UserController : ControllerBase
         if (oneTimeCode.Length != 6) return Problem();
 
         User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, codeGenerationTime, false);
-        if (userUpdated == null) return Problem();
+        if (userUpdated == null) return NotFound(new { message = "No user with that email is registered" });;
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -279,7 +280,7 @@ public class UserController : ControllerBase
     }
     /// <summary>
     /// Gets the user object from the database and compares the code the user has entered compared to the one generated
-    /// to verify them. Doesn't worry about the time as this was not included in the AC.
+    /// to verify them. Doesnt worry about the time as this was not included in the AC.
     /// </summary>
     /// <param name="validationRequest"></param> Validation Request contain the user email which is used for querying
     /// the database and the code which the user entered on the frontend
