@@ -161,12 +161,13 @@ public class UserServiceUnitTest : BaseUnitTestFixture
             userId = user.Id;
         }
 
-        var updatedUser = await UserServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU", false);
+        var updatedUser = await UserServiceUnderTest.UpdateUser(userId, "new@test.com", "New Name", "AU", true);
 
         Assert.NotNull(updatedUser);
         Assert.Equal("new@test.com", updatedUser.Email);
         Assert.Equal("New Name", updatedUser.DisplayName);
         Assert.Equal("AU", updatedUser.Country);
+        Assert.True(updatedUser.ProfanityFiltering);
     }
 
     [Fact]
@@ -252,5 +253,18 @@ public class UserServiceUnitTest : BaseUnitTestFixture
 
         Should.Throw<ArgumentException>(() =>
             UserServiceUnderTest.ValidateUpdatePasswordRequest(user, "Team700!", "Team700!", "Team700!"));
+    }
+
+    [Fact]
+    public void ValidateProfanityFilterDisabled_NewAccount_ExpectProfanityFilterFalse()
+    {
+        var user = new User
+        {
+            Email = "hello@example.com",
+            DisplayName = "Hello",
+            Country = "NZ",
+        };
+        
+        Assert.False(user.ProfanityFiltering);
     }
 }

@@ -16,6 +16,7 @@
     import CountrySelectForm from "$lib/components/country-select-form.svelte";
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import PasswordForm from "$lib/components/password-form.svelte";
+    import ToggleForm from "$lib/components/toggle-form.svelte"
 
     let displayName = $state("");
     let email = $state("");
@@ -186,6 +187,7 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            profanityFiltering = data.profanityFiltering;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -584,20 +586,19 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="profanityFiltering" class="form-label">Profanity Filtering</label>
-                        <div class = "form-check form-switch">
-                            <input
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    role="switch"
-                                    id="profanityFiltering"
-                                    bind:checked={profanityFiltering}
-                            />
-                            <label class="form-check-label" for="profanityFiltering">
-                                {profanityFiltering ? "On" : "Off"}
-                            </label>
+
+                    </div>
+                    <div class="mt-5 mb-4">
+                        <h5 class="text-muted mb-2">Preferences</h5>
+                        <hr class="mt-0" style="opacity: 0.15;" />
+                        <div
+                                class="d-flex align-items-center justify-content-between"
+                        >
+                            <label for="profanityFiltering" class="form-label">Profanity Censor</label>
+                            <ToggleForm id={profanityFiltering} bind:checked={profanityFiltering} />
                         </div>
                     </div>
+                
                     <div class="mt-5 mb-4">
                         <h5 class="text-muted mb-2">Account Security</h5>
                         <hr class="mt-0" style="opacity: 0.15;" />
