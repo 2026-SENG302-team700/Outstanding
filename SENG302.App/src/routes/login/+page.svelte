@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
+    import type { Modal } from "bootstrap";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
@@ -12,10 +14,41 @@
     let loading = $state(false);
     let error = $state("");
 
+    let currentModalStep = $state("emailInput");
+    let modalElement: HTMLElement | undefined = $state();
+    let authModal: Modal | undefined;
+    let resetEmail = $state("");
+    let digit1 = $state("");
+    let digit2 = $state("");
+    let digit3 = $state("");
+    let digit4 = $state("");
+    let digit5 = $state("");
+    let digit6 = $state("");
+    let timeRemainingText = $state(30);
+    let userCode = $derived(
+        digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
+    );
+
     let errors = $state({
         email: "",
         password: "",
+        codeError: "",
         passwordErrorIndicator: false,
+        resetEmail: "",
+    });
+
+    $effect(() => {
+        if (userCode.length === 6) {
+            checkCode();
+        }
+    });
+
+    onMount(async () => {
+        const { Modal: BootstrapModal } = await import("bootstrap");
+
+        if (modalElement) {
+            authModal = new BootstrapModal(modalElement);
+        }
     });
 
     /**
@@ -26,11 +59,9 @@
     async function loginUser() {
         let valid = true;
         // Reset errors
-        errors = {
-            email: "",
-            password: "",
-            passwordErrorIndicator: false,
-        };
+        errors.email = "";
+        errors.password = "";
+        errors.passwordErrorIndicator = false;
 
         // Check email format
         const emailRegex = new RegExp(regexPatterns.user.email);
@@ -102,6 +133,131 @@
             loading = false;
         }
     }
+
+    /// <summary>
+    /// Automatically refocus on the next input box
+    /// </summary>
+    function handleInput(e: Event) {
+        const input = e.target as HTMLInputElement;
+        if (input.value && input.nextElementSibling) {
+            (input.nextElementSibling as HTMLInputElement).focus();
+        }
+    }
+
+    /// <summary>
+    /// Move the focus back one box when backspace is clicked and the input box is empty
+    /// </summary>
+    function handleKeyDown(e: KeyboardEvent) {
+        const input = e.target as HTMLInputElement;
+        if (
+            e.key === "Backspace" &&
+            !input.value &&
+            input.previousElementSibling
+        ) {
+            (input.previousElementSibling as HTMLInputElement).focus();
+        }
+    }
+
+    /**
+     * Send the email to the backend
+     * if the email belongs to a valid user a code will be sent to the users email and the
+     * modal will progress to the next stage
+     * shows relavent errors otherwise
+     */
+    async function sendVerificationCode() {
+        // reset error
+        errors.resetEmail = "";
+
+        // Validate email on front end
+        let valid = true;
+
+        if (!resetEmail) {
+            errors.resetEmail = "Email is required.";
+            valid = false;
+        }
+
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (resetEmail && !emailRegex.test(resetEmail)) {
+            errors.resetEmail =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+            valid = false;
+        }
+
+        if (!valid) {
+            return;
+        }
+
+        // Send email to backend for further validation and sending of code
+        try {
+            currentModalStep = "verify";
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/generation`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: resetEmail,
+                    }),
+                },
+            );
+        } catch (err) {
+            /*
+             * This won't be displayed as we have already moved to the verify step
+             * However if we wait for confirmation that the email sent, then time taken
+             * can be used to work out what emails have accounts which we are trying to avoid
+             */
+            errors.resetEmail = "Failed to send code";
+        }
+    }
+
+    /**
+     * Sends the code to the backend to ensure that the code that the user inputted aligns with the code generated
+     * by the backend.
+     */
+    async function checkCode() {
+        if (userCode.length === 6) {
+            return;
+        }
+        try {
+            errors.codeError = "";
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/code/validation`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        Email: email,
+                        Code: userCode,
+                    }),
+                },
+            );
+
+            if (!response.ok) {
+                const data = await response.json.catch(() => null);
+                codeError =
+                    data?.message || `Error ${response.status}: Invalid Code.`;
+                digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+                const firstInput = document.querySelector(
+                    "#code-input input",
+                ) as HTMLInputElement;
+                firstInput?.focus();
+            } else {
+                currentModalStep = "update";
+            }
+        } catch (err) {
+            codeError = "Connection error. Please try again later.";
+        }
+    }
+
+    async function requestNewPassword() {
+        errors.resetEmail = "";
+        currentModalStep = "emailInput";
+        authModal?.show();
+    }
 </script>
 
 <div class="container">
@@ -149,12 +305,141 @@
                 class="btn btn-primary w-100"
                 hidden={errors.email !=
                     "Account is not validated yet, check your emails."}
-                    on:click={() => goto(resolve("/register/verification"))}
+                on:click={() => goto(resolve("/register/verification"))}
             >
                 Verify Email
             </button>
         </div>
     </form>
+    <div class="mb-3 mt-3">
+        <button
+            class="btn btn-link btn-sm text-decoration-none"
+            on:click={requestNewPassword}>Forgot Password?</button
+        >
+    </div>
+</div>
+
+<!-- Reset password modal -->
+<div
+    class="modal fade"
+    bind:this={modalElement}
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    {currentModalStep === "verify"
+                        ? "Verify Your Identity"
+                        : "Set New Password"}
+                </h5>
+            </div>
+            <div class="modal-body">
+                {#if currentModalStep === "emailInput"}
+                    <div class="text-center">
+                        <p class="text-secondary">
+                            We'll send a verification code to your email
+                        </p>
+
+                        <div class="mb-3 text-start">
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-control"
+                                placeholder="Email *"
+                                bind:value={resetEmail}
+                                on:keydown={(e) =>
+                                    e.key === "Enter" && sendVerificationCode()}
+                            />
+                        </div>
+                        {#if errors.resetEmail}
+                            <div class="text-danger mt-1">
+                                {errors.resetEmail}
+                            </div>
+                        {/if}
+
+                        <button
+                            class="btn btn-primary w-100"
+                            on:click={sendVerificationCode}
+                        >
+                            Get reset code
+                        </button>
+                    </div>
+                {/if}
+                {#if currentModalStep === "verify"}
+                    <div class="text-centre">
+                        <p class="text-secondary">
+                            Password reset email sent to <br />
+                            <span class="text-dark fw-bold">{resetEmail}</span>
+                        </p>
+                        <p class="small">
+                            Please check your inbox and enter the verification
+                            code below to verify your email address. The code
+                            will expire in <strong>{timeRemainingText}</strong>
+                        </p>
+                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit1}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit2}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit3}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit4}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit5}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit6}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
+                            />
+                        </div>
+                        {#if errors.codeError}
+                            <div class="text-danger small mb-3 animate-fade-in">
+                                <i class="bi bi-exclamation-circle-fill me-1"
+                                ></i>
+                                {codeError}
+                            </div>
+                        {/if}
+                    </div>
+                {:else}{/if}
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>

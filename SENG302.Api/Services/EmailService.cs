@@ -27,13 +27,13 @@ public class EmailService : IEmailService
 {
     private readonly EmailSettings _settings;
     private readonly ISmtpClientWrapper _smtpClient;
-    
+
     public EmailService(IOptions<EmailSettings> options, ISmtpClientWrapper smtpClient)
     {
         _settings = options.Value;
         _smtpClient = smtpClient;
     }
-    
+
     /// <summary>
     /// This method is the main method for sending emails to users. I takes a html template, an email address and a dictionary that includes
     /// key information to about the email being sent.
@@ -45,7 +45,7 @@ public class EmailService : IEmailService
     public async Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model)
     {
         var (subject, htmlBody) = await RenderAsync(template, model);
-        
+
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
         message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
@@ -56,7 +56,7 @@ public class EmailService : IEmailService
             HtmlBody = htmlBody,
             TextBody = StripHtml(htmlBody)
         }.ToMessageBody();
-        
+
         await _smtpClient.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
         await _smtpClient.AuthenticateAsync(_settings.FromEmail, _settings.Password);
         await _smtpClient.SendAsync(message);
@@ -138,8 +138,8 @@ public class EmailService : IEmailService
 /// </summary>
 public class EmailSettings
 {
-    public string Host = Environment.GetEnvironmentVariable("EMAIL_HOST");
-    public int Port = 587;
-    public string FromEmail = Environment.GetEnvironmentVariable("EMAIL");
-    public string Password = Environment.GetEnvironmentVariable("EMAIL_PASS");
+    public string Host { get; set; } = Environment.GetEnvironmentVariable("EMAIL_HOST");
+    public int Port { get; set; } = 587;
+    public string FromEmail { get; set; } = Environment.GetEnvironmentVariable("EMAIL");
+    public string Password { get; set; } = Environment.GetEnvironmentVariable("EMAIL_PASS");
 }
