@@ -1,6 +1,5 @@
 <script lang="ts">
     import { createSortable } from "@dnd-kit/svelte/sortable";
-    import "./styles.css";
     let {
         id,
         column,

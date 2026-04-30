@@ -1,7 +1,6 @@
 <script lang="ts">
     import { CollisionPriority } from "@dnd-kit/abstract";
     import { createSortable } from "@dnd-kit/svelte/sortable";
-    import "./styles.css";
     import SortableItem from "./SortableItem.svelte";
 
     let {
@@ -29,7 +28,11 @@
     });
 </script>
 
-<div class="container">
+<div
+    class="container"
+    {@attach sortable.attach}
+    data-shadow={sortable.isDragging ? "true" : undefined}
+>
     <h2>
         {id}
     </h2>
