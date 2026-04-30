@@ -14,8 +14,7 @@
     let loading = $state(false);
     let error = $state("");
     
-    let sendingResetCode = $state(false)
-    let currentModalStep = $state("verify");
+    let currentModalStep = $state("emailInput");
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
@@ -189,9 +188,8 @@
         }
         
         // Send email to backend for further validation and sending of code
-        
         try {
-            sendingResetCode = true;
+            currentModalStep = "verify"
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/code/generation`),
                 {
@@ -204,20 +202,14 @@
                     }),
                 },
             );
-
-            if (response.ok) {
-                currentModalStep = "verify"
-                addToast("Verification code sent!", "success");
-                startResendCountdown();
-            } else {
-                const data = await response.json().catch(() => null);
-                errors.resetEmail = data?.message || "Failed to send code.";
-            }
         } catch (err) {
-            errors.resetEmail = "Failed to send email: " + (err as Error).message;
-        } finally {
-            sendingResetCode = false;
-        }
+            /* 
+            * This won't be displayed as we have already moved to the verify step
+            * However if we wait for confirmation that the email sent, then time taken
+            * can be used to work out what emails have accounts which we are trying to avoid
+            */
+            errors.resetEmail = "Failed to send code" 
+        } 
     }
     
     async function checkCode() {
@@ -255,9 +247,7 @@
     }
     
     async function requestNewPassword() {
-        // reset errors
         errors.resetEmail = "";
-
         currentModalStep = "emailInput";
         authModal?.show();
     }
@@ -363,7 +353,7 @@
                         <button 
                                 class="btn btn-primary w-100"
                                 on:click={sendVerificationCode}>
-                            {sendingResetCode ? 'Sending...' : 'Get reset code'}
+                            Get reset code
                         </button>
                     </div>
                     {/if}
@@ -371,7 +361,7 @@
                     <div class="text-centre">
                         <p class="text-secondary">
                             Password reset email sent to <br />
-                            <span class="text-dark fw-bold">{email}</span>
+                            <span class="text-dark fw-bold">{resetEmail}</span>
                         </p>
                         <p class="small">
                             Please check your inbox and enter the verification code
