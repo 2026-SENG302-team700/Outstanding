@@ -224,15 +224,16 @@
         clearResetCodeModalFields();
 
         try {
+            console.log(email)
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/generation`),
+                resolve(`/api/user/password/reset/code/generation`),
                 {
-                    method: "PUT",
+                    method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        email: email,
+                        email: resetEmail,
                     }),
                 },
             );
@@ -263,14 +264,14 @@
             errors.codeError = "";
 
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/reset/code/validation`),
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Email: email,
+                        Email: resetEmail,
                         Code: userCode,
                     }),
                 },
@@ -317,7 +318,12 @@
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
-    <form onsubmit|preventDefault={loginUser}>
+    <form 
+        onsubmit={(e) => {
+            e.preventDefault();
+            loginUser();
+        }}
+    >
         <div class="mb-3">
             <input
                 type="type"
@@ -409,16 +415,8 @@
                                 {errors.resetEmail}
                             </div>
                         {/if}
-
-                        <button
-                            class="btn btn-primary w-100"
-                            onclick={sendVerificationCode}
-                        >
-                            Get reset code
-                        </button>
                     </div>
-                {/if}
-                {#if currentModalStep === "verify"}
+                {:else if currentModalStep === "verify"}
                     <div class="text-centre">
                         <p class="text-secondary">
                             Password reset email sent to <br />
@@ -483,16 +481,31 @@
                             <div class="text-danger small mb-3 animate-fade-in">
                                 <i class="bi bi-exclamation-circle-fill me-1"
                                 ></i>
-                                {codeError}
+                                {errors.codeError}
                             </div>
                         {/if}
-                        <button class="btn btn-primary w-100" onclick={checkCode}>
-                            {#if currentModalStep === "verify"}
-                                Reset Password
-                            {/if}
-                        </button>
                     </div>
                 {/if}
+            </div>
+            <div class="modal-footer">
+                <button
+                        class="btn btn-primary w-100"
+                        onclick={() => {
+                            if (currentModalStep === "emailInput") {
+                                sendVerificationCode();
+                            } else if (currentModalStep === "verify") {
+                                checkCode();
+                            } else {
+                                authModal?.hide();
+                            }
+                        }}
+                >
+                   {#if currentModalStep === "verify"}
+                        Reset Password
+                   {:else if  currentModalStep === "emailInput"}
+                        Get reset code
+                   {/if}
+                </button>
             </div>
         </div>
     </div>

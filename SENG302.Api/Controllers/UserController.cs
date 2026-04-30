@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Services;
 using SENG302.Api.Models.Entities;
@@ -252,7 +253,6 @@ public class UserController : ControllerBase
     /// Returns an HTTP OK 200 request if everything succeeds and a Bad Request if the email field is empty
     /// or an error occurs
     /// </returns>
-    [AllowAnonymous]
     [HttpPut("password/code/generation")]
     public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
     {
@@ -262,11 +262,10 @@ public class UserController : ControllerBase
         }
 
         string oneTimeCode = _codeService.GenerateOneTimeCode();
-        long codeGenerationTime = _codeService.GetEpochTime();
         if (oneTimeCode.Length != 6) return Problem();
 
-        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, codeGenerationTime, false);
-        if (userUpdated == null) return NotFound(new { message = "No user with that email is registered" });;
+        User? userUpdated = await _userService.UpdateUserOneTimeCode(codeRequest.Email, oneTimeCode, 0, false);
+        if (userUpdated == null) return NotFound(new { message = "No user with that email is registered" });
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -289,7 +288,6 @@ public class UserController : ControllerBase
     /// If not, then a Bad Request is returned. If an internal server error occurs, a Problem is returned and if
     /// the User object is not found, an NotFound http error is returned. 
     /// </returns>
-    [AllowAnonymous]
     [HttpPost("password/code/validation")]
     public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
@@ -301,30 +299,93 @@ public class UserController : ControllerBase
         User? user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
         if (user == null) return NotFound(new { message = "User not found" });
 
-        // bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
-        // if (!correctCode) return BadRequest(new { message = "Invalid Code" });
-        
-        CodeVerificationResult codeVerificationResult =
-            _codeService.VerfiyCode(user, _codeService.GetEpochTime(), validationRequest.Code);
-        
-        if (codeVerificationResult == CodeVerificationResult.CodeExpired && validationRequest.TimeLimitExists)
+        bool correctCode = _codeService.CompareCodes(validationRequest.Code, user.OneTimeCode);
+        if (!correctCode) return BadRequest(new { message = "Invalid Code" });
+
+        return Ok();
+    }
+
+    [AllowAnonymous]
+    [HttpPost("password/reset/code/validation")]
+    public async Task<ActionResult<bool>> validateResetPasswordCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
+    {
+        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        if (!result.Succeeded)
         {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            // return some message
+            return BadRequest(new { message = "Invalid Code or Email 1" });
+        }
+        // check email and code in body
+        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
+        var code = result.Principal.FindFirstValue(ClaimTypes.PostalCode);
+        var expireAt = result.Principal.FindFirstValue(ClaimTypes.Expiration);
+        Console.WriteLine("\n\n\n" + email + "\n\n\n" + validationRequest.Email);
+        if (email != validationRequest.Email)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            // return some message
+            return BadRequest(new { message = "Invalid Code or Email 2" });
+        }
+
+        if (code != validationRequest.Code)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            // return some message
+            return BadRequest(new { message = "Invalid Code or Email 3" });
+        }
+
+        if (_codeService.GetEpochTime() > int.Parse(expireAt))
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
 
-        if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
-        {
-            return BadRequest(new { message = "Invalid Code" });
-        }
-
-        if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
-        {
-            User? userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
-            if (userUpdated == null) return Problem();
-        }
-
         return Ok();
+    }
 
+    [AllowAnonymous]
+    [HttpPost("password/reset/code/generation")]
+    public async Task<ActionResult<int>> generateResetPasswordCode(
+        [FromBody] NewOneTimeCodeRequest newOneTimeCodeRequest)
+    {
+        long codeExpirationTime = _codeService.GetEpochTime() + 300;
+        string code = _codeService.GenerateOneTimeCode();
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Email, newOneTimeCodeRequest.Email),
+            new Claim(ClaimTypes.Expiration, codeExpirationTime.ToString()),
+            new Claim(ClaimTypes.PostalCode, code)
+        };
+
+        var principle = new ClaimsPrincipal(
+            new ClaimsPrincipal(
+                new ClaimsIdentity(claims, "PasswordResetScheme")
+            )
+        );
+
+        await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
+        {
+            IsPersistent = false,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
+        });
+        
+        // Create a dictionary of important values to send in the email, then call function to send email
+        var emailDictionary = new Dictionary<string, string>
+        {
+            {"MINUTES", "5"},
+            {"CODE", code}
+        };
+        
+        // check if email in db
+        var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
+        if (user != null)
+        {
+            await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+        }
+        
+        // return ok no matter if there is a user or not
+        return Ok();
     }
 
     
