@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { TaskItem } from "$lib/types"
+    import type { TaskItem } from "../types"
     import { createSortable } from "@dnd-kit/svelte/sortable";
     let {
         task,
@@ -17,14 +17,23 @@
             return index;
         },
     });
+
+    /**
+     * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
+     * @param text the description to shorten
+     * @param length length of description to cut down too
+     */
+    function shortenDesc(text: string | null, length: number) {
+        if (!text) return "No Description";
+        if (text.length <= length) return text;
+        return text.slice(0, length) + "...";
+    }
 </script>
 
 <li
         {@attach sortable.attach}
         class="item"
         data-shadow={sortable.isDragging ? "true" : undefined}
-        data-accent-color={column}
-        style:--accent-color={accentColor}
 >
     <div
             class="task-card"

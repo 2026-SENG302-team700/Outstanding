@@ -4,7 +4,7 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
-  import TaskItem from "$lib/components/task-item"
+  import TaskItem from "$lib/components/task-item.svelte"
   import {move} from "@dnd-kit/helpers";
   import {DragDropProvider} from '@dnd-kit/svelte';
 
@@ -96,16 +96,7 @@
     }
   }
 
-  /**
-   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
-   * @param text the description to shorten
-   * @param length length of description to cut down too
-   */
-  function shortenDesc(text: string | null, length: number) {
-    if (!text) return "No Description";
-    if (text.length <= length) return text;
-    return text.slice(0, length) + "...";
-  }
+  
 </script>
 
 <div class="container">
