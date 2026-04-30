@@ -7,4 +7,6 @@ public class UpdateUserRequest
     public string DisplayName { get; set; } = string.Empty;
 
     public string Country { get; set; } = string.Empty;
+    
+    public bool ProfanityFiltering { get; set; }
 }
