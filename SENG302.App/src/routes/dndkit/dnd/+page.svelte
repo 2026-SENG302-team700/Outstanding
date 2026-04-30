@@ -11,6 +11,9 @@
 
     const todoItems = ["buy milk", "make bed", "look for jobs", "go to sleep"];
 
+    /**
+     * defines colours based on column name
+     */
     const COLORS: Record<string, string> = {
         column: "#FF851B",
     };
@@ -30,13 +33,23 @@
         KeyboardSensor,
     ];
 
+    /**
+     * maps the column to it's initial items
+     */
     const initialItems: Record<string, string[]> = {
         column: todoItems.map((id) => `${id}`),
     };
 
+    /**
+     * converts the initial items into a reactive dictionary
+     */
     let items = $state<Record<string, string[]>>(initialItems);
 
+    /**
+     * Record is stored as a key value pair, and this creates an array of all the columns
+     */
     const columns = Object.keys(initialItems);
+
     let snapshot = $state(structuredClone(initialItems));
 
     function onDragStart() {
