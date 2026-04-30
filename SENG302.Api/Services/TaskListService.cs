@@ -7,7 +7,7 @@ namespace SENG302.Api.Services;
 public interface ITaskListService
 {
     Task<TaskList> CreateNewTaskListAsync(string name, int userId);
-    Task<TaskList> GetTaskListByIdAsync(int id);
+    Task<TaskList> GetTaskListByIdAsync(int id, int userId);
     Task<IEnumerable<TaskList>> GetTaskListsByUserIdAsync(int userId);
 }
 
@@ -23,7 +23,7 @@ public class TaskListService : ITaskListService
     }
 
     /// <summary>
-    /// Gets all task lists associated with a user's email.
+    /// Gets all task lists associated with a user's email and checks for profanity if applicable
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
@@ -33,6 +33,15 @@ public class TaskListService : ITaskListService
 
         var taskLists = await context.Set<TaskList>().Where(t => t.UserId == userId).ToListAsync();
 
+        var user = await context.Users.FindAsync(userId);
+        // check for profanity filtering
+        if (user?.ProfanityFiltering != true) return taskLists;
+
+        var profanityFiltering = new ProfanityFilter.ProfanityFilter();
+        foreach (TaskList taskList in taskLists)
+        {
+            taskList.Name = profanityFiltering.CensorString(taskList.Name);
+        }
         return taskLists;
     }
 
@@ -86,7 +95,7 @@ public class TaskListService : ITaskListService
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<TaskList> GetTaskListByIdAsync(int id)
+    public async Task<TaskList> GetTaskListByIdAsync(int id, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
@@ -95,7 +104,12 @@ public class TaskListService : ITaskListService
         {
             return null;
         }
+        var user = await context.Users.FindAsync(userId);
+        // check for profanity censor
+        if (user?.ProfanityFiltering != true) return taskList;
 
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        taskList.Name = profanityFilter.CensorString(taskList.Name);
         return taskList;
     }
 

@@ -337,7 +337,8 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user;
     }
 
     /// <summary>
@@ -362,6 +363,7 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+
         return user;
     }
 
