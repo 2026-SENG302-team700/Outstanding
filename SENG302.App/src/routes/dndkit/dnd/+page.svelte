@@ -15,6 +15,12 @@
         column: "#FF851B",
     };
 
+    /**
+     * sensors are used to detect user input via mouse, touch and keyboard.
+     * PointerSensor is for mouse, keyboard and stylus, KeyboardSensor is self explanatory.
+     * activatorElements are the objects that the Pointer can initiate a drag operation with. (in our case, its
+     * the grab handles on the task.)
+     */
     const sensors = [
         PointerSensor.configure({
             activatorElements(source) {
