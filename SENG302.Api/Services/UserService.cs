@@ -17,7 +17,7 @@ public interface IUserService
     Task<int?> GetUserIdFromEmailAsync(string email);
     Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country, bool profanityFiltering);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
@@ -455,7 +455,8 @@ public class UserService : IUserService
     public async Task<User?> UpdateUser(int userId,
         string newEmail,
         string newDisplayName,
-        string newCountry
+        string newCountry,
+        bool profanityFiltering
         )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -484,6 +485,7 @@ public class UserService : IUserService
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
+        user.ProfanityFiltering = profanityFiltering;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();

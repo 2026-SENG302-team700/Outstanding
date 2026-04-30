@@ -42,6 +42,8 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let updatingPassword = $state(false);
+    
+    let profanityFiltering = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
@@ -283,6 +285,7 @@
                     email,
                     displayName,
                     country,
+                    profanityFiltering
                 }),
             });
 
@@ -468,7 +471,7 @@
         }
         imageEditor.setImg(files[0]);
     }
-    
+
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
@@ -476,7 +479,7 @@
      */
     async function updatePfp() {
         const data = imageEditor.exportData();
-        
+
         if (!data) {
             if (!imageError) {
                 imageError = "No file Selected"
@@ -578,6 +581,21 @@
                         <div class="mb-3">
                             <label for="country" class="form-label">Country</label>
                             <CountrySelectForm bind:selectedCountryCode={country} />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="profanityFiltering" class="form-label">Profanity Filtering</label>
+                        <div class = "form-check form-switch">
+                            <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    role="switch"
+                                    id="profanityFiltering"
+                                    bind:checked={profanityFiltering}
+                            />
+                            <label class="form-check-label" for="profanityFiltering">
+                                {profanityFiltering ? "On" : "Off"}
+                            </label>
                         </div>
                     </div>
                     <div class="mt-5 mb-4">

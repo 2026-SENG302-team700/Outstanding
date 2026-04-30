@@ -35,3 +35,6 @@ SENG302.Api/appsettings.Local.json
 
 # User Uploads File
 /UserUploads
+
+# Test Results
+SENG302.Api.Tests/TestResults
