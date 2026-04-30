@@ -3,33 +3,18 @@
     import { createSortable } from "@dnd-kit/svelte/sortable";
     let {
         task,
-        column,
         index,
-        accentColor,
-        
     }: {
         task: TaskItem
-        id: string;
-        column: string;
         index: number;
-        accentColor: string;
     } = $props();
 
     const sortable = createSortable({
         get id() {
-            return id;
+            return task.taskId;
         },
         get index() {
             return index;
-        },
-        get group() {
-            return column;
-        },
-        accept: "item",
-        type: "item",
-        feedback: "clone",
-        get data() {
-            return { group: column };
         },
     });
 </script>
@@ -69,11 +54,106 @@
               {:else}Done{/if}
             </span>
         </div>
-    </div>    
+
+        <p class="task-description">{shortenDesc(task.description, 50)}</p>
+
+        <div class="task-footer">
+            <span class="due-date">
+              🗓 {task.dueDate === null
+                ? "No Due Date"
+                : formatDate(task.dueDate)}
+            </span>
+        </div>
+    </div>   
     <button
             {@attach sortable.attachHandle}
             class="handle"
             aria-label="Drag handle"
     ></button>
 </li>
+
+<style>
+    .task-card {
+        background: white;
+        border: 1px solid lightgrey;
+        border-left: 4px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        box-shadow: 0px 0px 5px lightgrey;
+        transition:
+                box-shadow 0.2s ease,
+                transform 0.1s ease;
+    }
+
+    .task-card:hover {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .task-card:focus-visible {
+        box-shadow: 0 0 0 3px #4a90e2;
+    }
+
+    .status-todo {
+        border-left-color: darkgray;
+    }
+    .status-inprogress {
+        border-left-color: blue;
+    }
+    .status-done {
+        border-left-color: lightgreen;
+    }
+
+    .task-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .task-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: black;
+    }
+
+    .task-description {
+        color: grey;
+        font-size: 0.875rem;
+        margin-bottom: 10px;
+    }
+
+    .task-footer {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .due-date {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+
+    /* Status badges */
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 999px;
+    }
+
+    .badge-todo {
+        background: white;
+        color: darkgray;
+    }
+    .badge-inprogress {
+        background: white;
+        color: blue;
+    }
+    .badge-done {
+        background: white;
+        color: lightgreen;
+    }
+</style>
 

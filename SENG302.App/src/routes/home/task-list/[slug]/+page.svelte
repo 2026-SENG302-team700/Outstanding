@@ -4,17 +4,38 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskItem from "$lib/components/task-item"
+  import {move} from "@dnd-kit/helpers";
+  import {DragDropProvider} from '@dnd-kit/svelte';
 
   let loading = $state(false);
   let listName = $state();
-  let tasks = $state([]);
+  let tasks: TaskItem[] = $state([]);
   let error = $state("");
   let { params } = $props();
+  
+  
+  let snapshot: TaskItem[] = [];
 
   onMount(() => {
     GetList();
     GetTasks();
   });
+
+  function onDragStart() {
+    snapshot = tasks.slice();
+  }
+  
+
+  function onDragOver(event: any) {
+    tasks = move(items, event)
+  }
+
+  function onDragEnd(event: any) {
+    if (event.canceled) {
+      tasks = snapshot;
+    }
+  }
 
   /// <Summary>
   /// Fetches tasks of the certain task list from the backend
@@ -112,49 +133,15 @@
       No tasks yet. Create your first task above!
     </div>
   {:else}
-    <div class="mb-3">
-      {#each tasks as task}
-        <div
-          class="task-card"
-          class:status-todo={task.currentStatus === 0}
-          class:status-inprogress={task.currentStatus === 1}
-          class:status-done={task.currentStatus === 2}
-          tabindex="0"
-          role="button"
-          on:click={() =>
-            goto(`/home/task-list/${params.slug}/task/${task.taskId}`)}
-          on:keydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              goto(`/home/task-list/${params.slug}/task/${task.taskId}`);
-            }
-          }}
-        >
-          <div class="task-card-header">
-            <span class="task-title">{task.name}</span>
-            <span
-              class="status-badge"
-              class:badge-todo={task.currentStatus === 0}
-              class:badge-inprogress={task.currentStatus === 1}
-              class:badge-done={task.currentStatus === 2}
-            >
-              {#if task.currentStatus == 0}ToDo
-              {:else if task.currentStatus === 1}In Progress
-              {:else}Done{/if}
-            </span>
-          </div>
-
-          <p class="task-description">{shortenDesc(task.description, 50)}</p>
-
-          <div class="task-footer">
-            <span class="due-date">
-              🗓 {task.dueDate === null
-                ? "No Due Date"
-                : formatDate(task.dueDate)}
-            </span>
-          </div>
-        </div>
-      {/each}
-    </div>
+    <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+      <div class="mb-3">
+        <ul class="list">
+          {#each tasks as task, index (task)}
+            <TaskItem {task} {index} />
+          {/each}
+        </ul>
+      </div>
+    </DragDropProvider>
   {/if}
 </div>
 
