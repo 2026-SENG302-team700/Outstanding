@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Tests.Integration;
 using Reqnroll;
 using System.Data;
