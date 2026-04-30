@@ -11,9 +11,7 @@
 
     const todoItems = ["buy milk", "make bed", "look for jobs", "go to sleep"];
 
-    /**
-     * defines colours based on column name
-     */
+    //defines colours based on column name
     const COLORS: Record<string, string> = {
         column: "#FF851B",
     };
@@ -33,35 +31,43 @@
         KeyboardSensor,
     ];
 
-    /**
-     * maps the column to it's initial items
-     */
+    //maps the column to it's initial items
     const initialItems: Record<string, string[]> = {
         column: todoItems.map((id) => `${id}`),
     };
 
-    /**
-     * converts the initial items into a reactive dictionary
-     */
+    //converts the initial items into a reactive dictionary
     let items = $state<Record<string, string[]>>(initialItems);
 
-    /**
-     * Record is stored as a key value pair, and this creates an array of all the columns
-     */
+    //Record is stored as a key value pair, and this creates an array of all the columns
     const columns = Object.keys(initialItems);
 
+    //creates a copy of the board before any movements have been made
     let snapshot = $state(structuredClone(initialItems));
 
+    /**
+     * creates a new copy of the snapshot every time a task item is dragged
+     */
     function onDragStart() {
         snapshot = structuredClone(items);
     }
 
+    /**
+     * takes an event (drag operation). then checks what it is dragging,
+     * if it is a column nothing happens, but calls the "move" function
+     * if it is an item.
+     * @param event
+     */
     function onDragOver(event: any) {
         const { source } = event.operation;
         if (source && source.type === "column") return;
         items = move(items, event);
     }
 
+    /**
+     * if the drag event is cancelled, then revert back to the original copy
+     * @param event
+     */
     function onDragEnd(event: any) {
         if (event.canceled) {
             items = snapshot;
