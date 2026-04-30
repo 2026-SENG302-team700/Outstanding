@@ -40,7 +40,7 @@ public class TaskItemServiceTests
     [InlineData("Tēst")] // macron
     public void ValidateName_ValidName_ReturnsNothing(string name)
     {
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemName(name));
+        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemName(name, false));
     }
 
     [Theory]
@@ -50,7 +50,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemName(name))
+        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemName(name, false))
         {
             errors[key] = value;
         }        
