@@ -10,9 +10,9 @@
     import SortableColumn from "../SortableColumn.svelte";
 
     const COLORS: Record<string, string> = {
-        todo: "#FF851B",
-        inProgress: "#7193f1",
-        done: "#2ECC40",
+        "To Do": "#FF851B",
+        "In Progress": "#7193f1",
+        Done: "#2ECC40",
     };
 
     const sensors = [
@@ -29,9 +29,9 @@
     const doneItems = ["do nothing", "complete sprint 2", "complete sprint 1"];
 
     const initialItems: Record<string, string[]> = {
-        todo: todoItems.map((id) => `${id}`),
-        inProgress: progressItems.map((id) => `${id}`),
-        done: doneItems.map((id) => `${id}`),
+        "To Do": todoItems.map((id) => `${id}`),
+        "In Progress": progressItems.map((id) => `${id}`),
+        Done: doneItems.map((id) => `${id}`),
     };
 
     let items = $state<Record<string, string[]>>(initialItems);
