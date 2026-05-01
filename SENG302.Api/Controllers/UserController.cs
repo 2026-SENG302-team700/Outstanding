@@ -309,36 +309,38 @@ public class UserController : ControllerBase
     [HttpPost("password/reset/code/validation")]
     public async Task<ActionResult<bool>> validateResetPasswordCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
+        if (validationRequest.Email == null)
+        {
+            return BadRequest(new { message = "An email is required" });
+        }
         var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+
+        if (result.Principal == null)
+        {
+            return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
+        }
+        // check email and code in body
+        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
+        if (email != validationRequest.Email || email == null)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            // return some message
+            return BadRequest(new { message = "Emails do not match" });
+        }
+
+        var code = result.Principal.FindFirstValue(ClaimTypes.PostalCode);
+        if (code != validationRequest.Code)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            // return some message
+            return BadRequest(new { message = "Incorrect code" });
+        }
+
         if (!result.Succeeded)
         {
             await HttpContext.SignOutAsync("PasswordResetScheme");
             // return some message
             return BadRequest(new { message = "Invalid Code or Email 1" });
-        }
-        // check email and code in body
-        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
-        var code = result.Principal.FindFirstValue(ClaimTypes.PostalCode);
-        var expireAt = result.Principal.FindFirstValue(ClaimTypes.Expiration);
-        Console.WriteLine("\n\n\n" + email + "\n\n\n" + validationRequest.Email);
-        if (email != validationRequest.Email)
-        {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
-            // return some message
-            return BadRequest(new { message = "Invalid Code or Email 2" });
-        }
-
-        if (code != validationRequest.Code)
-        {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
-            // return some message
-            return BadRequest(new { message = "Invalid Code or Email 3" });
-        }
-
-        if (_codeService.GetEpochTime() > int.Parse(expireAt))
-        {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
-            return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
 
         return Ok();
@@ -369,26 +371,26 @@ public class UserController : ControllerBase
             IsPersistent = false,
             ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
         });
-        
+
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
         {
             {"MINUTES", "5"},
             {"CODE", code}
         };
-        
+
         // check if email in db
         var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
         if (user != null)
         {
             await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
         }
-        
+
         // return ok no matter if there is a user or not
         return Ok();
     }
 
-    
+
     /// <summary>
     /// Sends a request to update the users email
     /// </summary>
@@ -401,9 +403,9 @@ public class UserController : ControllerBase
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userDisplayName = User.FindFirstValue(ClaimTypes.Name);
-            var userEmail =  User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userIdString) ||  
-                string.IsNullOrEmpty(userDisplayName) || 
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(userIdString) ||
+                string.IsNullOrEmpty(userDisplayName) ||
                 string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { message = "Unable to find user from cookie" });
@@ -414,7 +416,7 @@ public class UserController : ControllerBase
                 updatePasswordRequest.OldPassword,
                 updatePasswordRequest.NewPassword,
                 updatePasswordRequest.NewPasswordConfirm);
-            
+
             // Create a dictionary of important values to send in the email, then call function to send email
             var emailDictionary = new Dictionary<string, string>
             {

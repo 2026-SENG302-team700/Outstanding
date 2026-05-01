@@ -28,7 +28,7 @@
     let digit5 = $state("");
     let digit6 = $state("");
     let timeRemaining = $state(300);
-    let timeRemainingText = $state("0");
+    let timeRemainingText = $state("05:00");
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
@@ -250,7 +250,7 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Email: resetEmail,
+                        Email: confirmResetEmail,
                         Code: userCode,
                     }),
                 },
@@ -259,8 +259,7 @@
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                errors.codeError =
-                    data?.message || `Error ${response.status}: Invalid Code.`;
+                errors.codeError = data?.message;
                 digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
                 const firstInput = document.querySelector(
                     "#code-input input",
