@@ -4,6 +4,7 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskBoard from "$lib/components/task-board/task-board.svelte"
 
   let loading = $state(false);
   let boardView = $state(false);
@@ -130,113 +131,7 @@
   {:else}
     <div class="mb-3">
       {#if boardView}
-        <div class="board-columns">
-          <!-- todo column -->
-          <div class="board-column">
-            <div class="column-header status-todo-header">Todo</div>
-            {#each tasks.filter((t) => t.currentStatus === 0) as task}
-              <div
-                      class="board-task-card board-status-todo"
-                      tabindex="0"
-                      role="button"
-                      on:click={() =>
-              goto(
-                resolve(
-                  `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                ),
-              )}
-                      on:keydown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                goto(
-                  resolve(
-                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                  ),
-                );
-            }}
-              >
-                <div class="task-card-header">
-                  <span class="task-title">{task.name}</span>
-                </div>
-                <p class="task-description">{shortenDesc(task.description, 30)}</p>
-                <span class="due-date"
-                >🗓 {task.dueDate === null
-                        ? "No due date"
-                        : formatDate(task.dueDate)}</span
-                >
-              </div>
-            {/each}
-          </div>
-          <!-- in progress column -->
-          <div class="board-column">
-            <div class="column-header status-inprogress-header">In Progress</div>
-            {#each tasks.filter((t) => t.currentStatus === 1) as task}
-              <div
-                      class="board-task-card board-status-inprogress"
-                      tabindex="0"
-                      role="button"
-                      on:click={() =>
-              goto(
-                resolve(
-                  `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                ),
-              )}
-                      on:keydown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                goto(
-                  resolve(
-                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                  ),
-                );
-            }}
-              >
-                <div class="task-card-header">
-                  <span class="task-title">{task.name}</span>
-                </div>
-                <p class="task-description">{shortenDesc(task.description, 30)}</p>
-                <span class="due-date"
-                >🗓 {task.dueDate === null
-                        ? "No due date"
-                        : formatDate(task.dueDate)}</span
-                >
-              </div>
-            {/each}
-          </div>
-          <!-- done column -->
-          <div class="board-column">
-            <div class="column-header status-done-header">Done</div>
-            {#each tasks.filter((t) => t.currentStatus === 2) as task}
-              <div
-                      class="board-task-card board-status-done"
-                      tabindex="0"
-                      role="button"
-                      on:click={() =>
-              goto(
-                resolve(
-                  `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                ),
-              )}
-                      on:keydown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                goto(
-                  resolve(
-                    `/home/task-list/${task.taskListId}/task/${task.taskId}`,
-                  ),
-                );
-            }}
-              >
-                <div class="task-card-header">
-                  <span class="task-title">{task.name}</span>
-                </div>
-                <p class="task-description">{shortenDesc(task.description, 30)}</p>
-                <span class="due-date"
-                >🗓 {task.dueDate === null
-                        ? "No due date"
-                        : formatDate(task.dueDate)}</span
-                >
-              </div>
-            {/each}
-          </div>
-        </div>
+        <TaskBoard tasks="{tasks}" />
       {:else}
         {#each tasks as task}
           <div
