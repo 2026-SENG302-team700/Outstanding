@@ -287,6 +287,8 @@
         errors.resetEmail = "";
         currentModalStep = "emailInput";
         authModal?.show();
+        resetEmail = "";
+        confirmResetEmail = "";
     }
 </script>
 
