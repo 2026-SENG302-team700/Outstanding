@@ -8,6 +8,9 @@
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import CodeForm from "$lib/components/code-form.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -17,6 +20,7 @@
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
+    let confirmResetEmail = $state("");
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
@@ -30,13 +34,13 @@
     );
     let interval;
 
-  let errors = $state({
-    email: "",
-    password: "",
-    codeError: "",  
-    passwordErrorIndicator: false,
-    resetEmail: "",  
-  });
+    let errors = $state({
+        email: "",
+        password: "",
+        codeError: "",
+        passwordErrorIndicator: false,
+        resetEmail: "",
+    });
 
     onMount(async () => {
         const { Modal: BootstrapModal } = await import("bootstrap");
@@ -69,7 +73,6 @@
             if (timeRemaining <= 0) clearInterval(interval);
         }, 1000);
     }
-    
 
     /**
      * Clears input fields containing digits if code is resent
@@ -164,30 +167,6 @@
         }
     }
 
-    /// <summary>
-    /// Automatically refocus on the next input box
-    /// </summary>
-    function handleInput(e: Event) {
-        const input = e.target as HTMLInputElement;
-        if (input.value && input.nextElementSibling) {
-            (input.nextElementSibling as HTMLInputElement).focus();
-        }
-    }
-
-    /// <summary>
-    /// Move the focus back one box when backspace is clicked and the input box is empty
-    /// </summary>
-    function handleKeyDown(e: KeyboardEvent) {
-        const input = e.target as HTMLInputElement;
-        if (
-            e.key === "Backspace" &&
-            !input.value &&
-            input.previousElementSibling
-        ) {
-            (input.previousElementSibling as HTMLInputElement).focus();
-        }
-    }
-
     /**
      * Send the email for one time code to the backend and starts the timer
      * Code will be sent to the email if it is valid and the
@@ -224,7 +203,7 @@
         clearResetCodeModalFields();
 
         try {
-            console.log(email)
+            console.log(email);
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset/code/generation`),
                 {
@@ -277,7 +256,6 @@
                 },
             );
 
-
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
@@ -288,15 +266,15 @@
                     "#code-input input",
                 ) as HTMLInputElement;
                 firstInput?.focus();
-                clearInterval(interval)
-                timeRemainingText = '0:00'
+                clearInterval(interval);
+                timeRemainingText = "0:00";
             } else {
                 currentModalStep = "update";
                 // Remove before merging
                 authModal.hide();
             }
         } catch (err) {
-            console.log(err)
+            console.log(err);
             errors.codeError = "Connection error. Please try again later.";
         }
     }
@@ -318,41 +296,17 @@
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
-    <form 
+    <form
         onsubmit={(e) => {
             e.preventDefault();
             loginUser();
         }}
     >
         <div class="mb-3">
-            <input
-                type="type"
-                class="form-control"
-                class:error={errors.email}
-                class:is-invalid={errors.email || error}
-                placeholder="Email *"
-                bind:value={email}
-                disabled={loading}
-            />
-            {#if errors.email}
-                <div class="text-danger mt-1">{errors.email}</div>
-            {/if}
+            <EmailForm error={errors.email} {loading} bind:email />
         </div>
         <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                class:error={errors.password}
-                class:is-invalid={errors.password ||
-                    errors.passwordErrorIndicator ||
-                    error}
-                placeholder="Password *"
-                bind:value={password}
-                disabled={loading}
-            />
-            {#if errors.password}
-                <div class="text-danger mt-1">{errors.password}</div>
-            {/if}
+            <PasswordForm bind:password error={errors.password} {loading} />
         </div>
         <div class="mb-3">
             <AuthenticatorButton buttonType={"login"} />
@@ -418,93 +372,56 @@
                     </div>
                 {:else if currentModalStep === "verify"}
                     <div class="text-centre">
-                        <p class="text-secondary">
-                            Password reset email sent to <br />
-                            <span class="text-dark fw-bold">{resetEmail}</span>
-                        </p>
                         <p class="small">
                             Please check your inbox and enter the verification
                             code below to verify your email address. The code
                             will expire in <strong>{timeRemainingText}</strong>
                         </p>
-                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit1}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit2}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit3}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit4}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit5}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit6}
-                                oninput={handleInput}
-                                onkeydown={handleKeyDown}
+                        <div>
+                            <p class="mb-2 small">
+                                Please re-enter your email here:
+                            </p>
+                            <EmailForm
+                                {loading}
+                                error={errors.email}
+                                bind:email={confirmResetEmail}
                             />
                         </div>
-                        {#if errors.codeError}
-                            <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"
-                                ></i>
-                                {errors.codeError}
-                            </div>
-                        {/if}
+                        <div>
+                            <p class="m-0 small">
+                                Please enter the verification code here:
+                            </p>
+                            <CodeForm
+                                bind:digit1
+                                bind:digit2
+                                bind:digit3
+                                bind:digit4
+                                bind:digit5
+                                bind:digit6
+                                error={errors.codeError}
+                            />
+                        </div>
                     </div>
                 {/if}
             </div>
             <div class="modal-footer">
                 <button
-                        class="btn btn-primary w-100"
-                        onclick={() => {
-                            if (currentModalStep === "emailInput") {
-                                sendVerificationCode();
-                            } else if (currentModalStep === "verify") {
-                                checkCode();
-                            } else {
-                                authModal?.hide();
-                            }
-                        }}
+                    class="btn btn-primary w-100"
+                    onclick={() => {
+                        if (currentModalStep === "emailInput") {
+                            sendVerificationCode();
+                        } else if (currentModalStep === "verify") {
+                            checkCode();
+                        } else {
+                            authModal?.hide();
+                        }
+                    }}
                 >
-                   {#if currentModalStep === "verify"}
+                    {#if currentModalStep === "verify"}
                         Reset Password
-                   {:else if  currentModalStep === "emailInput"}
+                    {:else if currentModalStep === "emailInput"}
                         Get reset code
-                   {/if}
+                    {/if}
                 </button>
             </div>
         </div>
