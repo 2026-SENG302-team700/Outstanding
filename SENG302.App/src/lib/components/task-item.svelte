@@ -1,17 +1,20 @@
 <script lang="ts">
-    import type { TaskItem } from "../types"
+    import { goto } from "$app/navigation";
+    import type { TaskItem } from "../types";
     import { createSortable } from "@dnd-kit/svelte/sortable";
     let {
-        task,
+        id,
         index,
+        task,
     }: {
-        task: TaskItem
+        id: number;
         index: number;
+        task: TaskItem;
     } = $props();
 
     const sortable = createSortable({
         get id() {
-            return task.taskId;
+            return id;
         },
         get index() {
             return index;
@@ -30,59 +33,53 @@
     }
 </script>
 
-<li
-        {@attach sortable.attach}
-        class="item"
-        data-shadow={sortable.isDragging ? "true" : undefined}
+<div
+    {@attach sortable.attach}
+    class="task-card"
+    data-shadow={sortable.isDragging ? "true" : undefined}
+    class:status-todo={task.currentStatus === 0}
+    class:status-inprogress={task.currentStatus === 1}
+    class:status-done={task.currentStatus === 2}
+    tabindex="0"
+    role="button"
+    onclick={() =>
+        goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`)}
+    onkeydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`);
+        }
+    }}
 >
-    <div
-            class="task-card"
-            class:status-todo={task.currentStatus === 0}
-            class:status-inprogress={task.currentStatus === 1}
-            class:status-done={task.currentStatus === 2}
-            tabindex="0"
-            role="button"
-            on:click={() =>
-            goto(`/home/task-list/${params.slug}/task/${task.taskId}`)}
-            on:keydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              goto(`/home/task-list/${params.slug}/task/${task.taskId}`);
-            }
-          }}
-    >
-        <div class="task-card-header">
-            <span class="task-title">{task.name}</span>
-            <span
-                    class="status-badge"
-                    class:badge-todo={task.currentStatus === 0}
-                    class:badge-inprogress={task.currentStatus === 1}
-                    class:badge-done={task.currentStatus === 2}
-            >
-              {#if task.currentStatus == 0}ToDo
-              {:else if task.currentStatus === 1}In Progress
-              {:else}Done{/if}
-            </span>
-        </div>
+    <div class="task-card-header">
+        <span class="task-title">{task.name}</span>
+        <span
+            class="status-badge"
+            class:badge-todo={task.currentStatus === 0}
+            class:badge-inprogress={task.currentStatus === 1}
+            class:badge-done={task.currentStatus === 2}
+        >
+            {#if task.currentStatus == 0}To Do
+            {:else if task.currentStatus === 1}In Progress
+            {:else}Done{/if}
+        </span>
+    </div>
 
-        <p class="task-description">{shortenDesc(task.description, 50)}</p>
+    <!-- <button {@attach sortable.attachHandle}>Handle</button> -->
 
-        <div class="task-footer">
-            <span class="due-date">
-              🗓 {task.dueDate === null
+    <p class="task-description">{shortenDesc(task.description, 50)}</p>
+
+    <div class="task-footer">
+        <span class="due-date">
+            🗓 {task.dueDate === null
                 ? "No Due Date"
                 : formatDate(task.dueDate)}
-            </span>
-        </div>
-    </div>   
-    <button
-            {@attach sortable.attachHandle}
-            class="handle"
-            aria-label="Drag handle"
-    ></button>
-</li>
+        </span>
+    </div>
+</div>
 
 <style>
     .task-card {
+        display: inherit;
         background: white;
         border: 1px solid lightgrey;
         border-left: 4px solid #e5e7eb;
@@ -92,8 +89,17 @@
         cursor: pointer;
         box-shadow: 0px 0px 5px lightgrey;
         transition:
-                box-shadow 0.2s ease,
-                transform 0.1s ease;
+            box-shadow 0.2s ease,
+            transform 0.1s ease;
+    }
+
+    .handle {
+        border: 5px solid lightgrey;
+        background: white;
+        border-radius: 10px;
+        width: 30px;
+        height: 50px;
+        position: absolute;
     }
 
     .task-card:hover {
@@ -165,4 +171,3 @@
         color: lightgreen;
     }
 </style>
-

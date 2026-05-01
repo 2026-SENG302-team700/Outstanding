@@ -3,19 +3,19 @@
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
-  import { formatDate } from "$lib/datepicker/formatDate";
-  import TaskItem from "$lib/components/task-item.svelte"
-  import {move} from "@dnd-kit/helpers";
-  import {DragDropProvider} from '@dnd-kit/svelte';
+  import TaskItemComponent from "$lib/components/task-item.svelte";
+  import { move } from "@dnd-kit/helpers";
+  import { DragDropProvider } from "@dnd-kit/svelte";
+  import type { TaskItem } from "$lib/types.js";
 
   let loading = $state(false);
   let listName = $state();
+  let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
   let error = $state("");
   let { params } = $props();
-  
-  
-  let snapshot: TaskItem[] = [];
+
+  let snapshot: number[] = [];
 
   onMount(() => {
     GetList();
@@ -23,31 +23,29 @@
   });
 
   function onDragStart() {
-    snapshot = tasks.slice();
+    snapshot = taskRefs.slice();
   }
-  
 
   function onDragOver(event: any) {
-    tasks = move(items, event)
+    taskRefs = move(taskRefs, event);
   }
 
   function onDragEnd(event: any) {
     if (event.canceled) {
-      tasks = snapshot;
+      taskRefs = snapshot;
     }
   }
 
   /// <Summary>
   /// Fetches tasks of the certain task list from the backend
   /// and stores them in the frontend as an array of objects
-  ///
   /// <Summary>
   async function GetTasks() {
     try {
       loading = true;
       error = "";
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/${params.slug}` as any),
+        resolve(`/api/taskItem/${params.slug}`),
         {
           method: "GET",
           credentials: "include",
@@ -59,6 +57,7 @@
         return;
       }
       tasks = data;
+      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -95,8 +94,6 @@
       loading = false;
     }
   }
-
-  
 </script>
 
 <div class="container">
@@ -117,22 +114,22 @@
       >Add Task
     </button>
   </div>
-  {#if loading && tasks.length === 0}
+  {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
-  {:else if tasks.length === 0}
+  {:else if Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">
       No tasks yet. Create your first task above!
     </div>
   {:else}
-    <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-      <div class="mb-3">
+    <div class="mb-3">
+      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
-          {#each tasks as task, index (task)}
-            <TaskItem {task} {index} />
+          {#each taskRefs as taskRef, index (taskRef)}
+            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
           {/each}
         </ul>
-      </div>
-    </DragDropProvider>
+      </DragDropProvider>
+    </div>
   {/if}
 </div>
 

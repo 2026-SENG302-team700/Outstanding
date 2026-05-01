@@ -5,12 +5,13 @@ export interface Book {
 	year: number;
 }
 
-export interface TaskItem {
+export type TaskItem = {
+	taskIndex: number;
 	taskId: number;
 	taskListId: number;
 	name: string;
 	description: string;
 	dueDate: Date;
-	currentTaskStatus: number;
+	currentStatus: number;
 	creationTime: Date;
 }
