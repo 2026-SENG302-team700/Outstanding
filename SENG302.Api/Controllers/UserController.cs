@@ -309,7 +309,7 @@ public class UserController : ControllerBase
 
     
     /// <summary>
-    /// Sends a request to update the users email
+    /// Sends a request to update the users email 
     /// </summary>
     /// <param name="updatePasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
