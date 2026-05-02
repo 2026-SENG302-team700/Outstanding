@@ -7,6 +7,7 @@
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { saveSnapshot, retrieveSnapshot } from "$lib/snapshot-handling/snapshot-handler";
 
   let loading = $state(false);
   let listName = $state();
@@ -34,6 +35,7 @@
     if (event.canceled) {
       taskRefs = snapshot;
     }
+    saveSnapshot(snapshot);
   }
 
   /// <Summary>
@@ -57,7 +59,7 @@
         return;
       }
       tasks = data;
-      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
+      taskRefs = data.map(task => task.taskId);
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -93,6 +95,7 @@
     } finally {
       loading = false;
     }
+    
   }
 </script>
 
@@ -125,7 +128,7 @@
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
           {/each}
         </ul>
       </DragDropProvider>
