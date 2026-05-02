@@ -8,6 +8,7 @@
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
   import { saveSnapshot, retrieveSnapshot } from "$lib/snapshot-handling/snapshot-handler";
+  import { addToast, toasts } from "$lib/toast/toast.js";
 
   let loading = $state(false);
   let listName = $state();
@@ -38,6 +39,24 @@
     saveSnapshot(snapshot);
   }
 
+  /**
+   * get the past history and show the corrosponding toast depending on the situation 
+   */
+  function handleUndo() {
+    let retrievedSnapshot = retrieveSnapshot();
+    if (retrievedSnapshot.snapshot.length === 0) { 
+      if (retrievedSnapshot.snapshotFlag === false) {
+        addToast("No sorting to undo", "error")
+        return;
+      }
+      if (retrievedSnapshot.snapshotFlag === true) {
+        addToast("Cannot undo more than 5 sorting", "error")
+        return;
+      }
+    }
+    taskRefs = retrievedSnapshot.snapshot;
+  }
+
   /// <Summary>
   /// Fetches tasks of the certain task list from the backend
   /// and stores them in the frontend as an array of objects
@@ -66,6 +85,8 @@
       loading = false;
     }
   }
+
+
 
   /// <summary>
   /// Creates a new task list for the user with the given name. Validates the name
@@ -108,7 +129,7 @@
       {listName}
     </h1>
   </div>
-  <div class="mb-3">
+  <div class="mb-3 card-body d-flex justify-content-between align-items-center">
     <button
       type="button"
       class="btn btn-primary"
@@ -116,7 +137,14 @@
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
       >Add Task
     </button>
+    <button type="button"
+            class="btn btn-secondary"
+            on:click={handleUndo}
+    >
+      Undo Last Sorting
+    </button>
   </div>
+
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
   {:else if Object.keys(tasks).length === 0}
