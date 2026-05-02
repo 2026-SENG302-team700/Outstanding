@@ -3,30 +3,49 @@
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
-  import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskItemComponent from "$lib/components/task-item.svelte";
+  import { move } from "@dnd-kit/helpers";
+  import { DragDropProvider } from "@dnd-kit/svelte";
+  import type { TaskItem } from "$lib/types.js";
 
   let loading = $state(false);
   let listName = $state();
-  let tasks = $state([]);
+  let taskRefs: number[] = $state([]);
+  let tasks: TaskItem[] = $state([]);
   let error = $state("");
   let { params } = $props();
+
+  let snapshot: number[] = [];
 
   onMount(() => {
     GetList();
     GetTasks();
   });
 
+  function onDragStart() {
+    snapshot = taskRefs.slice();
+  }
+
+  function onDragOver(event: any) {
+    taskRefs = move(taskRefs, event);
+  }
+
+  function onDragEnd(event: any) {
+    if (event.canceled) {
+      taskRefs = snapshot;
+    }
+  }
+
   /// <Summary>
   /// Fetches tasks of the certain task list from the backend
   /// and stores them in the frontend as an array of objects
-  ///
   /// <Summary>
   async function GetTasks() {
     try {
       loading = true;
       error = "";
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/${params.slug}` as any),
+        resolve(`/api/taskItem/${params.slug}`),
         {
           method: "GET",
           credentials: "include",
@@ -38,6 +57,7 @@
         return;
       }
       tasks = data;
+      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -74,17 +94,6 @@
       loading = false;
     }
   }
-
-  /**
-   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
-   * @param text the description to shorten
-   * @param length length of description to cut down too
-   */
-  function shortenDesc(text: string | null, length: number) {
-    if (!text) return "No Description";
-    if (text.length <= length) return text;
-    return text.slice(0, length) + "...";
-  }
 </script>
 
 <div class="container">
@@ -105,55 +114,21 @@
       >Add Task
     </button>
   </div>
-  {#if loading && tasks.length === 0}
+  {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
-  {:else if tasks.length === 0}
+  {:else if Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">
       No tasks yet. Create your first task above!
     </div>
   {:else}
     <div class="mb-3">
-      {#each tasks as task}
-        <div
-          class="task-card"
-          class:status-todo={task.currentStatus === 0}
-          class:status-inprogress={task.currentStatus === 1}
-          class:status-done={task.currentStatus === 2}
-          tabindex="0"
-          role="button"
-          on:click={() =>
-            goto(`/home/task-list/${params.slug}/task/${task.taskId}`)}
-          on:keydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              goto(`/home/task-list/${params.slug}/task/${task.taskId}`);
-            }
-          }}
-        >
-          <div class="task-card-header">
-            <span class="task-title">{task.name}</span>
-            <span
-              class="status-badge"
-              class:badge-todo={task.currentStatus === 0}
-              class:badge-inprogress={task.currentStatus === 1}
-              class:badge-done={task.currentStatus === 2}
-            >
-              {#if task.currentStatus == 0}ToDo
-              {:else if task.currentStatus === 1}In Progress
-              {:else}Done{/if}
-            </span>
-          </div>
-
-          <p class="task-description">{shortenDesc(task.description, 50)}</p>
-
-          <div class="task-footer">
-            <span class="due-date">
-              🗓 {task.dueDate === null
-                ? "No Due Date"
-                : formatDate(task.dueDate)}
-            </span>
-          </div>
-        </div>
-      {/each}
+      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+        <ul class="list">
+          {#each taskRefs as taskRef, index (taskRef)}
+            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+          {/each}
+        </ul>
+      </DragDropProvider>
     </div>
   {/if}
 </div>
