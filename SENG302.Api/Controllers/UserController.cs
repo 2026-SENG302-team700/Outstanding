@@ -254,7 +254,7 @@ public class UserController : ControllerBase
     /// or an error occurs
     /// </returns>
     [HttpPut("password/code/generation")]
-    public async Task<ActionResult<int>> initiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
+    public async Task<ActionResult<int>> InitiateOneTimeCode([FromBody] NewOneTimeCodeRequest codeRequest)
     {
         if (string.IsNullOrWhiteSpace(codeRequest.Email))
         {
@@ -289,7 +289,7 @@ public class UserController : ControllerBase
     /// the User object is not found, an NotFound http error is returned. 
     /// </returns>
     [HttpPost("password/code/validation")]
-    public async Task<ActionResult<bool>> validateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
+    public async Task<ActionResult<bool>> ValidateOneTimeCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
         if (string.IsNullOrWhiteSpace(validationRequest.Email))
         {
@@ -307,7 +307,7 @@ public class UserController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("password/reset/code/validation")]
-    public async Task<ActionResult<bool>> validateResetPasswordCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
+    public async Task<ActionResult<bool>> ValidateResetPasswordCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
         if (validationRequest.Email == null)
         {
@@ -348,7 +348,7 @@ public class UserController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("password/reset/code/generation")]
-    public async Task<ActionResult<int>> generateResetPasswordCode(
+    public async Task<ActionResult<int>> GenerateResetPasswordCode(
         [FromBody] NewOneTimeCodeRequest newOneTimeCodeRequest)
     {
         long codeExpirationTime = _codeService.GetEpochTime() + 300;

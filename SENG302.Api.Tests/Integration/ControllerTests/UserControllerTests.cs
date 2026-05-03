@@ -12,6 +12,7 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
