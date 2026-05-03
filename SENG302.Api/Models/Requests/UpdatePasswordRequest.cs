@@ -11,7 +11,7 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class UpdatePasswordRequest
 {
-    public string OldPassword { get; set; }
+    public string OldPassword { get; set; } = "";
     public required string NewPassword { get; set; }
     public required string NewPasswordConfirm { get; set; }
 }
