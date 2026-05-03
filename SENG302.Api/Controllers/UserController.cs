@@ -313,7 +313,7 @@ public class UserController : ControllerBase
     /// </summary>
     /// <param name="updatePasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
-    [HttpPut("password")]
+    [HttpPut("password/update")]
     public async Task<ActionResult> updatePassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
     {
         try
@@ -363,4 +363,61 @@ public class UserController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+    
+    /// <summary>
+    /// Sends a request to update the users email
+    /// </summary>
+    /// <param name="updatePasswordRequest"></param>
+    /// <returns>response to frontend based on status of request</returns>
+    [HttpPut("password/reset")]
+    public async Task<ActionResult> resetPassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userDisplayName = User.FindFirstValue(ClaimTypes.Name);
+            var userEmail =  User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(userIdString) ||  
+                string.IsNullOrEmpty(userDisplayName) || 
+                string.IsNullOrEmpty(userEmail))
+            {
+                return Unauthorized(new { message = "Unable to find user from cookie" });
+            }
+
+            await _userService.ResetPasswordAsync(
+                int.Parse(userIdString),
+                updatePasswordRequest.NewPassword,
+                updatePasswordRequest.NewPasswordConfirm);
+            
+            // Create a dictionary of important values to send in the email, then call function to send email
+            var emailDictionary = new Dictionary<string, string>
+            {
+                {"DISPLAY_NAME", userDisplayName}
+            };
+            await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
+            return Ok();
+        }
+        catch (UnauthorizedAccessException e)
+        {
+            return Unauthorized(new { message = e.Message });
+        }
+        catch (MismatchedPasswordException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (InvalidPasswordException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (ArgumentException e)
+        {
+            return BadRequest(new { message = e.Message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Internal server error");
+        }
+    }
+    
+    
 }

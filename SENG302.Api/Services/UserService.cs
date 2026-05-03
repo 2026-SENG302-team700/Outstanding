@@ -22,6 +22,7 @@ public interface IUserService
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
+    Task ResetPasswordAsync(int userId, string newPassword, string confirmPassword);
 }
 
 public enum UserVerificationResult
@@ -646,6 +647,55 @@ public class UserService : IUserService
         
         // validate inputs
         if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
+        
+        // Perform update
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Validates the inputs and throws exceptions with relevant error messages
+    /// </summary>
+    /// <param name="newPassword"></param>
+    /// <param name="newPasswordConfirm"></param>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public void ValidateResetPasswordRequest(string newPassword, string newPasswordConfirm)
+    {
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+    }
+    
+    /// <summary>
+    /// Validates and performs the request to reset the users password
+    /// </summary>
+    /// <param name="userId">The users id</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task ResetPasswordAsync(int userId, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserByIdAsync(userId);
+        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        
+        // validate inputs
+        ValidateResetPasswordRequest(newPassword, newPasswordConfirm);
         
         // Perform update
         PasswordHasher<User> passwordHasher = new();

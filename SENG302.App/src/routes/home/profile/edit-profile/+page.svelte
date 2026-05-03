@@ -404,7 +404,7 @@
         updatingPassword = true;
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password`),
+                resolve(`/api/user/password/update`),
                 {
                     method: "PUT",
                     headers: {

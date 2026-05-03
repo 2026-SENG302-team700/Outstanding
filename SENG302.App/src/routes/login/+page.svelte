@@ -8,6 +8,7 @@
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
 
     let email = $state("");
     let password = $state("");
@@ -28,13 +29,19 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
+    
+    let newPassword = $state("");
+    let confirmPassword = $state("");
+    let updatingPassword = $state(false);
 
     let errors = $state({
         email: "",
         password: "",
         codeError: "",
         passwordErrorIndicator: false,
-        resetEmail: ""
+        resetEmail: "",
+        newPassword: "",
+        confirmPassword: "",
     });
 
     $effect(() => {
@@ -248,8 +255,98 @@
     
     async function requestNewPassword() {
         errors.resetEmail = "";
-        currentModalStep = "emailInput";
+        currentModalStep = "resetPassword";
         authModal?.show();
+    }
+
+    /**
+     * Checks passwords match and are strong
+     */
+    function validateUpdatePasswordInputs() {
+        var isValid = true;
+        
+        // checks feilds are filled
+        if (!newPassword) {
+            errors.newPassword = "field is required";
+            isValid = false;
+        }
+        if (!confirmPassword) {
+            errors.confirmPassword = "field is required";
+            isValid = false;
+        }
+        // checks passwords match
+        if (newPassword !== confirmPassword) {
+            isValid = false;
+            errors.confirmPassword = "Passwords do not match";
+            confirmPassword = "";
+        }
+
+        // check password is valid
+        const passwordRegex = new RegExp(regexPatterns.user.password);
+        if (!passwordRegex.test(newPassword)) {
+            isValid = false;
+            errors.newPassword =
+                "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters";
+            newPassword = "";
+            confirmPassword = "";
+        }
+        return isValid;
+    }
+    
+    /**
+     * Validates and performs the update to the users password
+     */
+    async function resetPassword() {
+        errors.newPassword = "";
+        errors.confirmPassword = "";
+        
+        if (!validateUpdatePasswordInputs()) {
+            return;
+        }
+
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/reset`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        newPassword: newPassword,
+                        newPasswordConfirm: confirmPassword,
+                    }),
+                },
+            );
+            if (response.ok && valid) {
+                addToast("New password updated successfully");
+                authModal.hide();
+                return;
+            }
+
+            const data = await response.json().catch(() => null);
+            if (response.status === 400) {
+                switch (data.message) {
+                    case "Passwords do not match":
+                        errors.confirmPassword = "Password does not match";
+                        confirmPassword = "";
+                        break;
+                    case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                        errors.newPassword =
+                            "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                }
+            } else {
+                addToast("Failed to update password ");
+            }
+        } catch (err) {
+            addToast("Failed to update password");
+        } finally {
+            updatingPassword = false;
+        }
     }
     
 </script>
@@ -425,7 +522,31 @@
                         {/if}
                     </div>
                 {:else}
-                
+                    <form on:submit|preventDefault={() => resetPassword()}>
+                        <div class="mb-3">
+                            <label for="newPassword"
+                                   class="form-label small fw-bold text-secondary"
+                            >New Password *</label>
+                            <PasswordForm bind:password={newPassword}
+                                          error={errors.newPassword}
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPasswordRepeat"
+                                   class="form-label small fw-bold text-secondary"
+                            >Confirm New Password *</label>
+                            <PasswordForm bind:password={confirmPassword}
+                                          error={errors.confirmPassword}
+                            />
+                        </div>
+                        <button type="submit"
+                                class="btn btn-primary w-100 py-2 mt-3"
+                                disabled={updatingPassword}
+                        >{updatingPassword
+                            ? "Updating..."
+                            : "Update Password"}
+                        </button>
+                    </form>
                 {/if}    
             </div>
         </div>
