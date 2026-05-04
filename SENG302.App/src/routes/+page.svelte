@@ -12,13 +12,13 @@
     <h1 class="text-center mb-4">Welcome to OUTSTANDING</h1>
     <button
         class="btn btn-primary w-100 mb-3"
-        on:click={() => goto(resolve("/register"))}
+        onclick={() => goto(resolve("/register"))}
     >
         Register
     </button>
     <button
         class="btn btn-primary w-100"
-        on:click={() => goto(resolve("/login"))}
+        onclick={() => goto(resolve("/login"))}
     >
         Login
     </button>

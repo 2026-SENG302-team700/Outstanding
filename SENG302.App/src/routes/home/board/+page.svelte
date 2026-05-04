@@ -59,13 +59,13 @@
             class="task-card-small status-todo"
             tabindex="0"
             role="button"
-            on:click={() =>
+            onclick={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+            onkeydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(
@@ -94,13 +94,13 @@
             class="task-card-small status-inprogress"
             tabindex="0"
             role="button"
-            on:click={() =>
+            onclick={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+            onkeydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(
@@ -129,13 +129,13 @@
             class="task-card-small status-done"
             tabindex="0"
             role="button"
-            on:click={() =>
+            onclick={() =>
               goto(
                 resolve(
                   `/home/task-list/${task.taskListId}/task/${task.taskId}`,
                 ),
               )}
-            on:keydown={(e) => {
+            onkeydown={(e) => {
               if (e.key === "Enter" || e.key === " ")
                 goto(
                   resolve(

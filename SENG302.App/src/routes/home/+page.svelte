@@ -47,7 +47,7 @@
         <h5 class="card-title mb-0">Your Task Lists</h5>
         <button
             class="btn btn-primary"
-            on:click={() => goto(resolve("/home/new-list"))}
+            onclick={() => goto(resolve("/home/new-list"))}
         >
             Add Task List
         </button>
@@ -70,9 +70,9 @@
                     tabindex="0"
                     role="button"
                     style="width: 1270px;"
-                    on:click={() =>
+                    onclick={() =>
                         goto(resolve(`/home/task-list/${taskList.id}`))}
-                    on:keydown={(e) => {
+                    onkeydown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                             goto(resolve(`/home/task-list/${taskList.id}`));
                         }

@@ -4,10 +4,10 @@
 
 <div class="dropdown">
     <button
-            type="button"
-            class="btn dropdown-toggle btn-primary"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
+        type="button"
+        class="btn dropdown-toggle btn-primary"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
     >
         {#if value == 0}
             Todo
@@ -21,25 +21,15 @@
     </button>
     <ul class="dropdown-menu">
         <li>
-            <a 
-                    class="dropdown-item"
-                    on:click={() => (value = 0)}>
-                Todo
-            </a>
+            <a class="dropdown-item" onclick={() => (value = 0)}> Todo </a>
         </li>
         <li>
-            <a 
-                    class="dropdown-item" 
-                    on:click={() => (value = 1)}>
+            <a class="dropdown-item" onclick={() => (value = 1)}>
                 In Progress
             </a>
         </li>
         <li>
-            <a 
-                    class="dropdown-item"
-                    on:click={() => (value = 2)}>
-                Done
-            </a>
+            <a class="dropdown-item" onclick={() => (value = 2)}> Done </a>
         </li>
     </ul>
 </div>

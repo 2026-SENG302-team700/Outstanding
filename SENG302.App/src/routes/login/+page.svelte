@@ -32,7 +32,7 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
-    let interval;
+    let interval: any;
 
     let errors = $state({
         email: "",
@@ -94,7 +94,10 @@
         errors = {
             email: "",
             password: "",
+            codeError: "",
             passwordErrorIndicator: false,
+            resetEmail: "",
+            codeFormEmail: "",
         };
 
         // Check email format
@@ -122,17 +125,18 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(`/api/login`, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email,
-                    passwordString: password,
-                }),
-            });
+            // const response = await fetchWithCsrf(`/api/login`, {
+            //     method: "POST",
+            //     credentials: "include",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            //     body: JSON.stringify({
+            //         email,
+            //         passwordString: password,
+            //     }),
+            // });
+            const response = new Response();
 
             const data = await response.json().catch(() => null);
 
