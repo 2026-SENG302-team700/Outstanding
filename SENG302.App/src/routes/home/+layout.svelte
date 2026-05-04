@@ -111,7 +111,7 @@
 
   <footer class="footerBar">
     <div class="footerContent">
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/about"))}>
+      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/content-policy"))}>
         Content Policy
       </button>
     </div>
