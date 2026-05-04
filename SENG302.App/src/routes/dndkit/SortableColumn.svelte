@@ -37,6 +37,7 @@
         {id}
     </h2>
     <ul>
+        <!--populates the column with it's items.-->
         {#each rows as itemId, itemIndex (itemId)}
             <SortableItem
                 id={itemId}
