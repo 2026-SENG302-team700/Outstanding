@@ -40,6 +40,7 @@
         codeError: "",
         passwordErrorIndicator: false,
         resetEmail: "",
+        codeFormEmail: "",
     });
 
     onMount(async () => {
@@ -218,7 +219,7 @@
             );
 
             if (response.ok) {
-                addToast("Verification code sent!", "success");
+                addToast("Password reset email sent", "success");
             } else {
                 const data = await response.json().catch(() => null);
                 errors.codeError = data?.message || "Failed to send code.";
@@ -265,8 +266,6 @@
                     "#code-input input",
                 ) as HTMLInputElement;
                 firstInput?.focus();
-                clearInterval(interval);
-                timeRemainingText = "0:00";
             } else {
                 currentModalStep = "update";
                 // Remove before merging
@@ -288,6 +287,7 @@
         authModal?.show();
         resetEmail = "";
         confirmResetEmail = "";
+        errors.codeFormEmail = "";
     }
 </script>
 
@@ -384,7 +384,7 @@
                             </p>
                             <EmailForm
                                 {loading}
-                                error={errors.email}
+                                error={errors.codeFormEmail}
                                 bind:email={confirmResetEmail}
                             />
                         </div>

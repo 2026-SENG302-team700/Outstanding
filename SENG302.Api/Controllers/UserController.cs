@@ -305,11 +305,21 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Validates the code entered by the user on the reset password forms. Retrieves the users session tokens and compares
+    /// the entered email and code to what is stored on the token, verifying it. If the session token does not exist,
+    /// then it is assumed it got deleted as more than 5 minutes have past.
+    /// </summary>
+    /// <param name="validationRequest">A validationRequest object consisting of the users entered code and email</param>
+    /// <returns>Returns an OK object result if the code and email are correct and less than 5 minutes have passed.
+    /// Otherwise, if the email does not match, if the code is not correct or more than 5 minutes have passed,
+    /// a Bad Request object is returned
+    /// </returns>
     [AllowAnonymous]
     [HttpPost("password/reset/code/validation")]
     public async Task<ActionResult<bool>> ValidateResetPasswordCode([FromBody] ValidateOneTimeCodeRequest validationRequest)
     {
-        if (validationRequest.Email == null)
+        if (string.IsNullOrWhiteSpace(validationRequest.Email))
         {
             return BadRequest(new { message = "An email is required" });
         }
@@ -317,13 +327,13 @@ public class UserController : ControllerBase
 
         if (result.Principal == null)
         {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
         // check email and code in body
         var email = result.Principal.FindFirstValue(ClaimTypes.Email);
-        if (email != validationRequest.Email || email == null)
+        if (email != validationRequest.Email)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
             // return some message
             return BadRequest(new { message = "Emails do not match" });
         }
@@ -331,21 +341,28 @@ public class UserController : ControllerBase
         var code = result.Principal.FindFirstValue(ClaimTypes.PostalCode);
         if (code != validationRequest.Code)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
             // return some message
             return BadRequest(new { message = "Incorrect code" });
         }
 
         if (!result.Succeeded)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
             // return some message
-            return BadRequest(new { message = "Invalid Code or Email 1" });
+            return BadRequest(new { message = "Invalid Code or Email" });
         }
 
         return Ok();
     }
 
+    /// <summary>
+    /// The endpoint called for generating the code for resetting the password. The code is sent to the user
+    /// via email. A new session cookie is created consisting of a 5 minute expiration timer (expires after 5 mins),
+    /// code generation time, user email and code which will be used to verify the user code. 
+    /// </summary>
+    /// <param name="newOneTimeCodeRequest">A request object consisting of the users email</param>
+    /// <returns>
+    /// An OK object result if the email is valid.
+    /// </returns>
     [AllowAnonymous]
     [HttpPost("password/reset/code/generation")]
     public async Task<ActionResult<int>> GenerateResetPasswordCode(
