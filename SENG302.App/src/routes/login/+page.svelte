@@ -242,6 +242,12 @@
     async function checkCode() {
         try {
             errors.codeError = "";
+            errors.codeFormEmail = ""
+            
+            if (resetEmail !== confirmResetEmail) {
+                errors.codeFormEmail = "Emails do not match";
+                return;
+            }
 
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset/code/validation`),
