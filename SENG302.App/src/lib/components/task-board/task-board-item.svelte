@@ -15,6 +15,9 @@
         }
     } = $props();
 
+    /**
+     * Turns taskStatus number to string to representing a CSS stylesheet class.
+     * **/
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -27,6 +30,9 @@
         }
     }
 
+    /** 
+     * Shortens description down for the item.
+     * **/
     function shortenDesc(text: string | null, length: number) {
         if (!text) return "No description";
         if (text.length <= length) return text;

@@ -7,6 +7,9 @@
         children: Snippet
     } = $props();
     
+    /** 
+     * Turns taskStatus number to string to be displayed as a column header
+     * **/
     function taskStatusToString(taskStatus: number): string {
         if (taskStatus == 0) {
             return "Todo";
@@ -18,7 +21,10 @@
             return "Done";
         }
     }
-    
+
+    /**
+     * Turns taskStatus number to string to representing a CSS stylesheet class.
+     * **/
     function columnHeaderStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo-header";
