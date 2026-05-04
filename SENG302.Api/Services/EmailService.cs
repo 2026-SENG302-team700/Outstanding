@@ -48,7 +48,16 @@ public class EmailService : IEmailService
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
-        message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
+        // check for display name
+        if (model.ContainsKey("DISPLAY_NAME"))
+        {
+            message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
+        }
+        else
+        {
+            message.To.Add(new MailboxAddress("Outstanding User", toEmail));
+        }
+        
         message.Subject = subject;
 
         message.Body = new BodyBuilder
