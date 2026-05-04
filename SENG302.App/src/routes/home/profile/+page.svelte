@@ -34,7 +34,7 @@
     /// </>summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/user`), {
+            const response = await fetchWithCsrf(`/api/user`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -62,7 +62,7 @@
      */
     async function logoutUser() {
         try {
-            const response = await fetchWithCsrf(resolve(`/api/logout`), {
+            const response = await fetchWithCsrf(`/api/logout`, {
                 method: "DELETE",
                 credentials: "include",
             });

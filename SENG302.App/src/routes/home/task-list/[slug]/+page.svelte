@@ -25,13 +25,10 @@
     try {
       loading = true;
       error = "";
-      const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/${params.slug}` as any),
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+      const response = await fetchWithCsrf(`/api/taskItem/${params.slug}`, {
+        method: "GET",
+        credentials: "include",
+      });
       const data = await response.json();
       if (!response.ok) {
         error = data;
@@ -54,13 +51,10 @@
     try {
       loading = true;
       error = "";
-      const response = await fetchWithCsrf(
-        resolve(`/api/taskList/${params.slug}` as any),
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
+      const response = await fetchWithCsrf(`/api/taskList/${params.slug}`, {
+        method: "GET",
+        credentials: "include",
+      });
 
       const data = await response.json();
       if (!response.ok) {

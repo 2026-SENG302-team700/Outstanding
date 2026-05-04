@@ -1,6 +1,5 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
     let { path = "/" } = $props();
 </script>
 

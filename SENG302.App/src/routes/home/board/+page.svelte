@@ -16,7 +16,7 @@
   async function fetchAllTasks() {
     try {
       loading = true;
-      const response = await fetchWithCsrf(resolve(`/api/taskitem`), {
+      const response = await fetchWithCsrf(`/api/taskitem`, {
         method: "GET",
         credentials: "include",
       });

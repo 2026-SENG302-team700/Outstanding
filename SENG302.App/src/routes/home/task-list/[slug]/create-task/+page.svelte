@@ -66,23 +66,20 @@
 
         try {
             loading = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/taskItem` as any),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        taskListId: params.slug,
-                        name: name.trim(),
-                        description: description.trim(),
-                        DueDate: dueDate,
-                        currentStatus: taskStatus,
-                    }),
-                    credentials: "include",
+            const response = await fetchWithCsrf(`/api/taskItem`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            );
+                body: JSON.stringify({
+                    taskListId: params.slug,
+                    name: name.trim(),
+                    description: description.trim(),
+                    DueDate: dueDate,
+                    currentStatus: taskStatus,
+                }),
+                credentials: "include",
+            });
 
             if (!response.ok) {
                 // in case front end form checks were tampered with,
@@ -125,7 +122,7 @@
             loading = true;
             error = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/taskList/${params.slug}` as any),
+                `/api/taskList/${params.slug}`,
                 {
                     method: "GET",
                     credentials: "include",

@@ -122,7 +122,7 @@
         try {
             loading = true;
             error = "";
-            const response = await fetchWithCsrf(resolve(`/api/login`), {
+            const response = await fetchWithCsrf(`/api/login`, {
                 method: "POST",
                 credentials: "include",
                 headers: {
@@ -206,7 +206,7 @@
         try {
             console.log(email);
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/reset/code/generation`),
+                `/api/user/password/reset/code/generation`,
                 {
                     method: "POST",
                     headers: {
@@ -242,15 +242,15 @@
     async function checkCode() {
         try {
             errors.codeError = "";
-            errors.codeFormEmail = ""
-            
+            errors.codeFormEmail = "";
+
             if (resetEmail !== confirmResetEmail) {
                 errors.codeFormEmail = "Emails do not match";
                 return;
             }
 
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/reset/code/validation`),
+                `/api/user/password/reset/code/validation`,
                 {
                     method: "POST",
                     headers: {

@@ -43,7 +43,7 @@
     try {
       loading = true;
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/item/${params.slug}`),
+        `/api/taskItem/item/${params.slug}`,
         {
           method: "GET",
           credentials: "include",
@@ -96,7 +96,7 @@
       const taskId = taskItem.taskId;
 
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/item/${params.slug}` as any),
+        `/api/taskItem/item/${params.slug}`,
         {
           method: "PUT",
           credentials: "include",

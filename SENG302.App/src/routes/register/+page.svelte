@@ -12,7 +12,6 @@
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
 
-
     let email = $state("");
     let displayName = $state("");
     let selectedCountryCode = $state("");
@@ -47,8 +46,9 @@
             valid = false;
         }
 
-        if (displayName.trim() == '' || displayName.trim().length < 3) {
-            errors.displayName = "Display name cannot be made entirely or mostly out of spaces."
+        if (displayName.trim() == "" || displayName.trim().length < 3) {
+            errors.displayName =
+                "Display name cannot be made entirely or mostly out of spaces.";
             valid = false;
         }
 
@@ -75,8 +75,6 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
-
-
 
         // Check for empty fields
         if (!email) {
@@ -150,7 +148,7 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(resolve(`/api/register`), {
+            const response = await fetchWithCsrf(`/api/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -177,7 +175,10 @@
                     errors.password = data.errors.password ?? "";
                     errors.passwordConfirm = data.errors.passwordConfirm ?? "";
                 } else {
-                    addToast(data?.message || "Internal server error occurred.", "error");
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
                 }
 
                 password = "";
@@ -212,33 +213,32 @@
         </div>
         <div class="mb-3">
             <DisplayNameForm
-                    bind:displayName
-                    error={errors.displayName}
-                    {loading}
+                bind:displayName
+                error={errors.displayName}
+                {loading}
             />
         </div>
         <div class="mb-3">
             <CountrySelectForm
-                    bind:selectedCountryCode
-                    error={errors.country}
-                    {loading}
+                bind:selectedCountryCode
+                error={errors.country}
+                {loading}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password
-                    error={errors.password}
-                    {loading}
-                    passConfirm={false}
+                bind:password
+                error={errors.password}
+                {loading}
+                passConfirm={false}
             />
         </div>
         <div class="mb-3">
             <PasswordForm
-                    bind:password={passwordConfirm}
-                    error={errors.passwordConfirm}
-                    {loading}
-                    passConfirm={true}
-
+                bind:password={passwordConfirm}
+                error={errors.passwordConfirm}
+                {loading}
+                passConfirm={true}
             />
         </div>
         <div>

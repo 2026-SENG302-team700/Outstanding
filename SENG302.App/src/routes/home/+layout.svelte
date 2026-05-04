@@ -22,7 +22,7 @@
    */
   async function retrieveUser() {
     try {
-      const response = await fetchWithCsrf(resolve(`/api/user`), {
+      const response = await fetchWithCsrf(`/api/user`, {
         method: "GET",
         credentials: "include",
       });
@@ -36,7 +36,7 @@
       user.set(data);
 
       if (data.profilePicture !== 0) {
-        const pfpResponse = await fetchWithCsrf(resolve("/api/user/pfp"), {
+        const pfpResponse = await fetchWithCsrf("/api/user/pfp", {
           method: "GET",
           credentials: "include",
         });
@@ -111,7 +111,10 @@
 
   <footer class="footerBar">
     <div class="footerContent">
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/content-policy"))}>
+      <button
+        class="btn btn-secondary"
+        onclick={() => goto(resolve("/home/content-policy"))}
+      >
         Content Policy
       </button>
     </div>
@@ -171,7 +174,7 @@
   }
 
   .page-wrapper {
-    min-height: 85vh; 
+    min-height: 85vh;
     display: flex;
     flex-direction: column;
   }

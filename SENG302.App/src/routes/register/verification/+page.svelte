@@ -9,7 +9,7 @@
     let serverTime = $state(0);
     let initialSeconds = 300;
     let remainingSeconds = $state(initialSeconds);
-    let intervalId;
+    let intervalId: any;
     let timeRemainingText = $state("");
     let errorMessage = $state("");
     let resendLinkVisible = $state(false);
@@ -66,18 +66,15 @@
         try {
             loading = true;
 
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/countdown`),
-                {
-                    method: "Post",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        email,
-                    }),
+            const response = await fetchWithCsrf(`/api/user/countdown`, {
+                method: "Post",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            );
+                body: JSON.stringify({
+                    email,
+                }),
+            });
 
             const data = await response.json();
             serverTime = data;
@@ -214,7 +211,7 @@
                 });
             }
             const response = await fetchWithCsrf(
-                resolve(`/api/register/code/generation`),
+                `/api/register/code/generation`,
                 {
                     method: "PUT",
                     headers: {
@@ -258,7 +255,7 @@
             let userCode = digit1 + digit2 + digit3 + digit4 + digit5 + digit6;
 
             const response = await fetchWithCsrf(
-                resolve(`/api/register/code/validation`),
+                `/api/register/code/validation`,
                 {
                     method: "POST",
                     headers: {
