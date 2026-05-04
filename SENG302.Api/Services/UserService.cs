@@ -22,7 +22,7 @@ public interface IUserService
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
-    Task ResetPasswordAsync(int userId, string newPassword, string confirmPassword);
+    Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
 }
 
 public enum UserVerificationResult
@@ -688,11 +688,11 @@ public class UserService : IUserService
     /// <param name="newPassword">The password the user wishes to change to</param>
     /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
     /// <returns>true on successful update</returns>
-    public async Task ResetPasswordAsync(int userId, string newPassword, string newPasswordConfirm)
+    public async Task ResetPasswordAsync(string userEmail, string newPassword, string newPasswordConfirm)
     {
         // Get user from Id
-        User? user = await GetUserByIdAsync(userId);
-        if  (user == null) throw new UnauthorizedAccessException("Id didn't match any user");
+        User? user = await GetUserFromEmailAsync(userEmail);
+        if  (user == null) throw new UnauthorizedAccessException("email didn't match any user");
         
         // validate inputs
         ValidateResetPasswordRequest(newPassword, newPasswordConfirm);

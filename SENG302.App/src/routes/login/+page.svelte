@@ -351,6 +351,7 @@
         }
 
         try {
+            updatingPassword = true;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset`),
                 {
@@ -364,7 +365,7 @@
                     }),
                 },
             );
-            if (response.ok && valid) {
+            if (response.ok) {
                 addToast("New password updated successfully");
                 authModal.hide();
                 return;
@@ -445,125 +446,139 @@
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">
-                    {currentModalStep === "emailInput"
-                        ? "Request Reset Code"
-                        : currentModalStep === "verify"
-                            ? "Verify Your Identity"
-                            : "Reset Password"}
-                </h5>
-            </div>
-            <div class="modal-body">
-                {#if currentModalStep === "emailInput"}
-                    <div class="text-center">
-                        <p class="text-secondary">
-                            We'll send a verification code to your email
-                        </p>
+            <form
+                    onsubmit={() => {
+            if (currentModalStep === "emailInput") {
+                sendVerificationCode();
+            } else if (currentModalStep === "verify") {
+                checkCode();
+            } else if (currentModalStep === "resetPassword") {
+                resetPassword();
+            }
+        }}
+            >
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">
+                        {currentModalStep === "emailInput"
+                            ? "Request Reset Code"
+                            : currentModalStep === "verify"
+                                ? "Verify Your Identity"
+                                : "Reset Password"}
+                    </h5>
+                </div>
 
-                        <div class="mb-3 text-start">
-                            <input
-                                type="email"
-                                id="email"
-                                class="form-control"
-                                placeholder="Email *"
-                                bind:value={resetEmail}
-                                onkeydown={(e) =>
-                                    e.key === "Enter" && sendVerificationCode()}
-                            />
-                        </div>
-                        {#if errors.resetEmail}
-                            <div class="text-danger mt-1">
-                                {errors.resetEmail}
-                            </div>
-                        {/if}
-                    </div>
-                {:else if currentModalStep === "verify"}
-                    <div class="text-centre">
-                        <p class="small">
-                            Please check your inbox and enter the verification
-                            code below to verify your email address. The code
-                            will expire in <strong>{timeRemainingText}</strong>
-                        </p>
-                        <div>
-                            <p class="mb-2 small">
-                                Please re-enter your email here:
+                <div class="modal-body">
+                    {#if currentModalStep === "emailInput"}
+                        <div class="text-center">
+                            <p class="text-secondary">
+                                We'll send a verification code to your email
                             </p>
-                            <EmailForm
-                                {loading}
-                                error={errors.codeFormEmail}
-                                bind:email={confirmResetEmail}
-                            />
-                        </div>
-                        <div>
-                            <p class="m-0 small">
-                                Please enter the verification code here:
-                            </p>
-                            <CodeForm
-                                bind:digit1
-                                bind:digit2
-                                bind:digit3
-                                bind:digit4
-                                bind:digit5
-                                bind:digit6
-                                error={errors.codeError}
-                            />
-                        </div>
-                        {#if errors.codeError}
-                            <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+
+                            <div class="mb-3 text-start">
+                                <input
+                                        type="email"
+                                        id="email"
+                                        class="form-control"
+                                        placeholder="Email *"
+                                        bind:value={resetEmail}
+                                />
                             </div>
-                        {/if}
-                    </div>
-                {:else}
-                    <form onsubmit={(e) => {
-                        e.preventDefault();
-                        resetPassword();
-                    }}>
+
+                            {#if errors.resetEmail}
+                                <div class="text-danger mt-1">
+                                    {errors.resetEmail}
+                                </div>
+                            {/if}
+                        </div>
+
+                    {:else if currentModalStep === "verify"}
+                        <div class="text-centre">
+                            <p class="small">
+                                Please check your inbox and enter the verification
+                                code below to verify your email address. The code
+                                will expire in <strong>{timeRemainingText}</strong>
+                            </p>
+
+                            <div>
+                                <p class="mb-2 small">
+                                    Please re-enter your email here:
+                                </p>
+                                <EmailForm
+                                        {loading}
+                                        error={errors.codeFormEmail}
+                                        bind:email={confirmResetEmail}
+                                />
+                            </div>
+
+                            <div>
+                                <p class="m-0 small">
+                                    Please enter the verification code here:
+                                </p>
+                                <CodeForm
+                                        bind:digit1
+                                        bind:digit2
+                                        bind:digit3
+                                        bind:digit4
+                                        bind:digit5
+                                        bind:digit6
+                                        error={errors.codeError}
+                                />
+                            </div>
+
+                            {#if errors.codeError}
+                                <div class="text-danger small mb-3 animate-fade-in">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+                                </div>
+                            {/if}
+                        </div>
+
+                    {:else}
+                        <div class="mb-3">
+                            <label
+                                    for="newPassword"
+                                    class="form-label small fw-bold text-secondary"
+                            >
+                                New Password *
+                            </label>
+                            <PasswordForm
+                                    bind:password={newPassword}
+                                    error={errors.newPassword}
+                            />
+                        </div>
 
                         <div class="mb-3">
-                            <label for="newPassword"
-                                   class="form-label small fw-bold text-secondary"
-                            >New Password *</label>
-                            <PasswordForm bind:password={newPassword}
-                                          error={errors.newPassword}
+                            <label
+                                    for="newPasswordRepeat"
+                                    class="form-label small fw-bold text-secondary"
+                            >
+                                Confirm New Password *
+                            </label>
+                            <PasswordForm
+                                    bind:password={confirmPassword}
+                                    error={errors.confirmPassword}
                             />
                         </div>
-                        <div class="mb-3">
-                            <label for="newPasswordRepeat"
-                                   class="form-label small fw-bold text-secondary"
-                            >Confirm New Password *</label>
-                            <PasswordForm bind:password={confirmPassword}
-                                          error={errors.confirmPassword}
-                            />
-                        </div>
-                    </form>
-                {/if}
-            </div>
-            <div class="modal-footer">
-                <button
-                    class="btn btn-primary w-100"
-                    onclick={() => {
-                        if (currentModalStep === "emailInput") {
-                            sendVerificationCode();
-                        } else if (currentModalStep === "verify") {
-                            checkCode();
-                        } else if (currentModalStep === "resetPassword") {
-                            resetPassword();
-                        } else {
-                            authModal?.hide();
-                        }
-                    }}
-                >
-                    {#if currentModalStep === "verify"}
-                        Reset Password
-                    {:else if currentModalStep === "emailInput"}
-                        Get reset code
-                    {:else if currentModalStep === "resetPassword"}    
-                        Reset Password
                     {/if}
-                </button>
-            </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button
+                            class="btn btn-primary w-100"
+                            type="submit"
+                            disabled={updatingPassword}
+                    >
+                        {#if currentModalStep === "emailInput"}
+                            Reset Password
+                        {:else if currentModalStep === "verify"}
+                            Get reset code
+                        {:else if currentModalStep === "resetPassword" && !updatingPassword}
+                            Reset Password
+                        {:else if currentModalStep === "resetPassword" && updatingPassword}
+                            Updating Password...
+                        {/if}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

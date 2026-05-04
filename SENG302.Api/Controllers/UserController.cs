@@ -378,9 +378,7 @@ public class UserController : ControllerBase
         };
 
         var principle = new ClaimsPrincipal(
-            new ClaimsPrincipal(
-                new ClaimsIdentity(claims, "PasswordResetScheme")
-            )
+            new ClaimsIdentity(claims, "PasswordResetScheme")
         );
 
         await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
@@ -469,37 +467,41 @@ public class UserController : ControllerBase
     /// </summary>
     /// <param name="updatePasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
+    [AllowAnonymous]
     [HttpPut("password/reset")]
     public async Task<ActionResult> resetPassword([FromBody] UpdatePasswordRequest updatePasswordRequest)
     {
         try
         {
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userDisplayName = User.FindFirstValue(ClaimTypes.Name);
-            var userEmail =  User.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrEmpty(userIdString) ||  
-                string.IsNullOrEmpty(userDisplayName) || 
-                string.IsNullOrEmpty(userEmail))
+            var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+            if (result.Principal == null)
+            {
+                await HttpContext.SignOutAsync("PasswordResetScheme");
+                return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
+            }
+            var userEmail = result.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { message = "Unable to find user from cookie" });
             }
 
             await _userService.ResetPasswordAsync(
-                int.Parse(userIdString),
+                userEmail,
                 updatePasswordRequest.NewPassword,
                 updatePasswordRequest.NewPasswordConfirm);
             
             // Create a dictionary of important values to send in the email, then call function to send email
+            var user = await _userService.GetUserFromEmailAsync(userEmail);
             var emailDictionary = new Dictionary<string, string>
             {
-                {"DISPLAY_NAME", userDisplayName}
+                {"DISPLAY_NAME", user.Email}
             };
             await _emailService.SendEmailAsync(userEmail, EmailTemplate.PasswordChangedConfirmation, emailDictionary);
             return Ok();
         }
         catch (UnauthorizedAccessException e)
         {
-            return Unauthorized(new { message = e.Message });
+            return Unauthorized(new { message = e.Message + "Unauthorized"});
         }
         catch (MismatchedPasswordException e)
         {
