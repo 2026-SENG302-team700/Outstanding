@@ -1,10 +1,8 @@
-﻿using System.Data.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using SENG302.Api.Tests.Integration;
 using Reqnroll;
-using SENG302.Api;
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
 
 namespace SENG302.Api.Tests.Acceptance.Setup;

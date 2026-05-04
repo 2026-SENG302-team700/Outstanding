@@ -12,7 +12,7 @@ using SENG302.Api.DataAccess;
 namespace SENG302.Api.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260423013039_InitialCreate")]
+    [Migration("20260430224254_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -150,6 +150,9 @@ namespace SENG302.Api.Migrations
                     b.Property<string>("PasswordKey")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("ProfanityFiltering")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("ProfilePicture")
                         .HasColumnType("integer");

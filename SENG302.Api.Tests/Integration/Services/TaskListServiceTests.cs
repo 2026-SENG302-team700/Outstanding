@@ -93,4 +93,44 @@ public class TaskServiceTests : BaseIntegrationTestFixture
         updatedTaskLists.Count().ShouldBe(1);
         updatedTaskLists.First().Name.ShouldBe("Test Task List");
     }
+
+    [Fact]
+    public async Task CreateNewTaskList_ProfanityInNameUserHasFilterOn_ThrowsArgumentException()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            ProfanityFiltering = true
+        });
+        await context.SaveChangesAsync();
+
+        await Should.ThrowAsync<ArgumentException>(
+            async () => await ServiceUnderTest.CreateNewTaskListAsync("shit list", 1)
+        );
+    }
+
+    [Fact]
+    public async Task CreateNewTaskList_ProfanityInName_UserHasFilterOff_CreatesSuccessfully()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            ProfanityFiltering = false,
+        });
+        await context.SaveChangesAsync();
+
+        var taskList = await ServiceUnderTest.CreateNewTaskListAsync("shit list", 1);
+        taskList.ShouldNotBeNull();
+        taskList.Name.ShouldBe("shit list");
+    }
 }

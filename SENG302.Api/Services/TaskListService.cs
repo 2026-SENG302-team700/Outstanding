@@ -79,6 +79,17 @@ public class TaskListService : ITaskListService
             throw new ArgumentException("User with the provided id does not exist.");
         }
 
+        // check for profanity in the name
+        if (user.ProfanityFiltering)
+        {
+            var profanityFilter = new ProfanityFilter.ProfanityFilter();
+            var swearList = profanityFilter.DetectAllProfanities(name);
+            if (swearList.Count > 0)
+            {
+                throw new ArgumentException("List name cannot contain profanity.");
+            }
+        }
+
         // Create the new task list
         var newTaskList = new TaskList()
         {
