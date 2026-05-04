@@ -103,7 +103,20 @@
     </div>
   </div>
 </nav>
-{@render children?.()}
+
+<div class="page-wrapper container-fluid bg-light py-4">
+  <div class="content">
+    {@render children?.()}
+  </div>
+
+  <footer class="footerBar">
+    <div class="footerContent">
+      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/about"))}>
+        Content Policy
+      </button>
+    </div>
+  </footer>
+</div>
 
 <style>
   .profile-image {
@@ -137,5 +150,29 @@
       -1px -5px 4px rgba(214, 213, 210, 0.75);
     border-radius: 10px;
     margin-bottom: 20px;
+  }
+
+  .footerBar {
+    margin-top: auto;
+    background-color: white;
+    height: 60px;
+    box-shadow: 0 -2px 6px rgba(214, 213, 210, 0.75);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .footerContent {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+    align-items: center;
+  }
+
+  .page-wrapper {
+    min-height: 85vh; 
+    display: flex;
+    flex-direction: column;
   }
 </style>
