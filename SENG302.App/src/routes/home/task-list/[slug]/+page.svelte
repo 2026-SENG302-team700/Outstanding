@@ -161,6 +161,7 @@
               {/each}
             </ul>
           </DragDropProvider>
+        {/if}  
     </div>
   {/if}
 </div>
