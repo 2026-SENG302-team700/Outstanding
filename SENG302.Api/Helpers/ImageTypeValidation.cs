@@ -35,15 +35,12 @@ public static class ImageTypeValidation
 
         byte[] magicNumber = new byte[12];
 
-        int bytesRead = stream.Read(magicNumber, 0, magicNumber.Length);
+        var bytesRead = stream.Read(magicNumber, 0, magicNumber.Length);
 
         string fileMagicNumber = Convert.ToHexStringLower(magicNumber);
 
         foreach (var (refrMagicNumber, mimeType) in imageTypes)
         {
-            // If there are less than 12/4 bytes in the file and we are checking
-            // against a longer mimeType, then skip this one
-            if (bytesRead < mimeType.Length) continue;
 
             var valid = true;
 
