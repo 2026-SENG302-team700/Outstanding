@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 
-namespace SENG302.Api.Resources.Helpers;
+namespace SENG302.Api.Resources.DefaultDatabase;
 
 public static class CreateExampleUsersHelper
 {

@@ -5,7 +5,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Resources.DefaultDatabase;
 
 namespace SENG302.Api;
 

@@ -4,7 +4,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
@@ -519,6 +518,7 @@
             );
 
             if (!response.ok) {
+                //if (!imageError) imageError = response.text;
                 if (response.status == 500) {
                     throw new Error("Failed to upload picture");
                 } else {
@@ -532,7 +532,8 @@
                 pfpModal.hide();
             }
         } catch (err) {
-            addToast((err as Error).message, "error");
+            errors.image = (err as Error).message;
+            imageEditor.highlightError(true);
         }
     }
 </script>
@@ -820,15 +821,16 @@
                                 }
                             }
                     />
+                    <ImageEditor
+                        bind:this={imageEditor}
+                    >
+                    </ImageEditor>
                     {#if errors.image}
                         <div class="text-danger small mt-1">
                             {errors.image}
                         </div>
                     {/if}
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary"
-                            >Submit</button
-                        >
                         <button
                             type="submit"
                             class="btn btn-primary"
