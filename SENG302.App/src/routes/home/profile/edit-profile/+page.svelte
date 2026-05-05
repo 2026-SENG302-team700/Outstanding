@@ -56,9 +56,9 @@
         oldPassword: "",
         newPassword: "",
         confirmPassword: "",
-        image: ""
+        image: "",
     });
-    let imageError = $state("")
+    let imageError = $state("");
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
         if (userCode.length === 6) {
@@ -305,7 +305,10 @@
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
                 } else {
-                    addToast(data?.message || "Internal server error occurred.", "error");
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
                 }
                 return;
             }
@@ -465,7 +468,6 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
-        
         clearErrors()
         imageEditor.highlightError(false);
         console.log("recieve file");
@@ -477,7 +479,7 @@
             pfpModal.show();
         }
     }
-
+    
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
@@ -485,23 +487,22 @@
      */
     async function updatePfp() {
         const data = imageEditor.exportData();
-
+        
         if (!data) {
             if (!imageError) {
-                imageError = "No file Selected"
+                imageError = "No file Selected";
             }
         }
         errors.image = imageError;
         
         if (imageError) {
-            imageEditor.highlightError(true)
+            imageEditor.highlightError(true);
             return;
         }
-        
-        
-        let imageData = data.data
-        let imageFile = data.file
-        
+
+        let imageData = data.data;
+        let imageFile = data.file;
+
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -528,7 +529,7 @@
                     ...u,
                     pfpData: imageData,
                 }));
-                pfpModal.hide()
+                pfpModal.hide();
             }
         } catch (err) {
             addToast((err as Error).message, "error");
@@ -594,7 +595,7 @@
                             class="d-flex align-items-center justify-content-between"
                     >
                         <label for="profanityFiltering" class="form-label">Profanity Censor</label>
-                        <ToggleForm id={profanityFiltering} bind:checked={profanityFiltering} />
+                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} />
                     </div>
                 </div>
             
@@ -622,10 +623,11 @@
 </div>
 
 <!-- update password modal -->
-<div class="modal fade"
-     bind:this={modalElement}
-     tabindex="-1"
-     aria-hidden="true"
+<div
+    class="modal fade"
+    bind:this={modalElement}
+    tabindex="-1"
+    aria-hidden="true"
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
@@ -644,47 +646,53 @@
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit1}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit1}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit2}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit2}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit3}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit3}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit4}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit4}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit5}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit5}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
-                            <input type="text"
-                                   class="form-control form-control-lg text-center"
-                                   maxlength="1"
-                                   bind:value={digit6}
-                                   on:input={handleInput}
-                                   on:keydown={handleKeyDown}
+                            <input
+                                type="text"
+                                class="form-control form-control-lg text-center"
+                                maxlength="1"
+                                bind:value={digit6}
+                                on:input={handleInput}
+                                on:keydown={handleKeyDown}
                             />
                         </div>
 
@@ -695,9 +703,10 @@
                             </div>
                         {/if}
 
-                        <button class="btn btn-link btn-sm text-decoration-none"
-                                on:click={requestPasswordChange}
-                                disabled={resendTimer > 0 || isSending}
+                        <button
+                            class="btn btn-link btn-sm text-decoration-none"
+                            on:click={requestPasswordChange}
+                            disabled={resendTimer > 0 || isSending}
                         >
                             {#if resendTimer > 0}
                                 Resend code in {resendTimer}s
@@ -711,37 +720,45 @@
                 {:else}
                     <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label for="oldPassword"
-                                   class="form-label small fw-bold text-secondary"
-                            >Current Password *</label>
-                            <PasswordForm bind:password={oldPassword} 
-                                          error={errors.oldPassword}
+                            <label
+                                for="oldPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >Current Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={oldPassword}
+                                error={errors.oldPassword}
                             />
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword"
-                                   class="form-label small fw-bold text-secondary"
-                            >New Password *</label>
-                            <PasswordForm bind:password={newPassword}
-                                    error={errors.newPassword}
+                            <label
+                                for="newPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >New Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={newPassword}
+                                error={errors.newPassword}
                             />
                         </div>
                         <div class="mb-3">
-                            <label 
-                                    for="confirmPassword"
-                                    class="form-label small fw-bold text-secondary"
-                                    >Confirm New Password *</label>
-                            <PasswordForm 
-                                    bind:password={confirmPassword} 
-                                    error={errors.confirmPassword}
+                            <label
+                                for="confirmPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >Confirm New Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={confirmPassword}
+                                error={errors.confirmPassword}
                             />
                         </div>
-                        <button type="submit"
-                                class="btn btn-primary w-100 py-2 mt-3"
-                                disabled={updatingPassword}
-                                >{updatingPassword
-                                    ? "Updating..."
-                                    : "Update Password"}
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100 py-2 mt-3"
+                            disabled={updatingPassword}
+                            >{updatingPassword
+                                ? "Updating..."
+                                : "Update Password"}
                         </button>
                     </form>
                 {/if}
@@ -803,22 +820,24 @@
                                 }
                             }
                     />
-                    <ImageEditor bind:this={imageEditor} bind:imageErrors={imageError}/>
                     {#if errors.image}
                         <div class="text-danger small mt-1">
                             {errors.image}
                         </div>
                     {/if}
                     <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary"
+                            >Submit</button
+                        >
                         <button
-                                type="submit"
-                                class="btn btn-primary"
+                            type="submit"
+                            class="btn btn-primary"
                         >Submit</button>
                         <button
-                                type="button"
-                                class="btn btn-secondary"
-                                on:click={() => pfpModal.hide()}
-                                bind:this={pfpCancelButton}
+                            type="button"
+                            class="btn btn-secondary"
+                            on:click={() => pfpModal.hide()}
+                            bind:this={pfpCancelButton}
                         >Cancel</button>
                     </div>
                 </form>

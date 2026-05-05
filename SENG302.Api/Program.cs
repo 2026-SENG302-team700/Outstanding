@@ -96,6 +96,15 @@ public class Program
                 options.LoginPath = "/login";
                 options.LogoutPath = "/logout";
                 options.AccessDeniedPath = "/api/auth/access-denied";
+            })
+            .AddCookie("PasswordResetScheme", options =>
+            {
+                options.Cookie.Name = "OUTSTANDING-RESET-COOKIE";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = cookiePolicy;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
             });
 
         // Add CORS for development only

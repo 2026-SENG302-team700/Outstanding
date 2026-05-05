@@ -8,26 +8,31 @@
     import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
     import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
     import CancelButton from "$lib/components/cancel-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import CodeForm from "$lib/components/code-form.svelte";
 
     let email = $state("");
     let password = $state("");
     let loading = $state(false);
     let error = $state("");
-
-    let currentModalStep = $state("emailInput");
+    let currentModalStep = $state("verify");
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
+    let confirmResetEmail = $state("");
     let digit1 = $state("");
     let digit2 = $state("");
     let digit3 = $state("");
     let digit4 = $state("");
     let digit5 = $state("");
     let digit6 = $state("");
-    let timeRemainingText = $state(30);
+    let timeRemaining = $state(300);
+    let timeRemainingText = $state("05:00");
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
+    let interval;
 
     let errors = $state({
         email: "",
@@ -35,12 +40,7 @@
         codeError: "",
         passwordErrorIndicator: false,
         resetEmail: "",
-    });
-
-    $effect(() => {
-        if (userCode.length === 6) {
-            checkCode();
-        }
+        codeFormEmail: "",
     });
 
     onMount(async () => {
@@ -52,6 +52,38 @@
     });
 
     /**
+     * Format a given number of seconds into a user friendly readable time for the countdown timer
+     * @param seconds
+     */
+    function formatTime(seconds: number) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+
+    /**
+     * Starts the countdown for the timer
+     */
+    function startTimerCountdown() {
+        timeRemaining = 300;
+        clearInterval(interval);
+
+        interval = setInterval(() => {
+            timeRemaining--;
+            timeRemainingText = formatTime(timeRemaining);
+            if (timeRemaining <= 0) clearInterval(interval);
+        }, 1000);
+    }
+
+    /**
+     * Clears input fields containing digits if code is resent
+     */
+    function clearResetCodeModalFields() {
+        digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+        errors.codeError = "";
+    }
+
+    /**
      * Handles user login by sending a POST request to the server with the user's email and password.
      * Validates that all fields are filled in before making the request. If login is successful,
      * redirects the user to the profile page. If there is an error, displays an appropriate message.
@@ -59,9 +91,11 @@
     async function loginUser() {
         let valid = true;
         // Reset errors
-        errors.email = "";
-        errors.password = "";
-        errors.passwordErrorIndicator = false;
+        errors = {
+            email: "",
+            password: "",
+            passwordErrorIndicator: false,
+        };
 
         // Check email format
         const emailRegex = new RegExp(regexPatterns.user.email);
@@ -134,33 +168,9 @@
         }
     }
 
-    /// <summary>
-    /// Automatically refocus on the next input box
-    /// </summary>
-    function handleInput(e: Event) {
-        const input = e.target as HTMLInputElement;
-        if (input.value && input.nextElementSibling) {
-            (input.nextElementSibling as HTMLInputElement).focus();
-        }
-    }
-
-    /// <summary>
-    /// Move the focus back one box when backspace is clicked and the input box is empty
-    /// </summary>
-    function handleKeyDown(e: KeyboardEvent) {
-        const input = e.target as HTMLInputElement;
-        if (
-            e.key === "Backspace" &&
-            !input.value &&
-            input.previousElementSibling
-        ) {
-            (input.previousElementSibling as HTMLInputElement).focus();
-        }
-    }
-
     /**
-     * Send the email to the backend
-     * if the email belongs to a valid user a code will be sent to the users email and the
+     * Send the email for one time code to the backend and starts the timer
+     * Code will be sent to the email if it is valid and the
      * modal will progress to the next stage
      * shows relavent errors otherwise
      */
@@ -188,12 +198,17 @@
         }
 
         // Send email to backend for further validation and sending of code
+        currentModalStep = "verify";
+
+        startTimerCountdown();
+        clearResetCodeModalFields();
+
         try {
-            currentModalStep = "verify";
+            console.log(email);
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/generation`),
+                resolve(`/api/user/password/reset/code/generation`),
                 {
-                    method: "PUT",
+                    method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
@@ -202,44 +217,56 @@
                     }),
                 },
             );
+
+            if (response.ok) {
+                addToast("Password reset email sent", "success");
+            } else {
+                const data = await response.json().catch(() => null);
+                errors.codeError = data?.message || "Failed to send code.";
+            }
         } catch (err) {
             /*
              * This won't be displayed as we have already moved to the verify step
              * However if we wait for confirmation that the email sent, then time taken
              * can be used to work out what emails have accounts which we are trying to avoid
              */
-            errors.resetEmail = "Failed to send code";
+            errors.codeError = "Failed to send code " + (err as Error).message;
         }
     }
 
     /**
-     * Sends the code to the backend to ensure that the code that the user inputted aligns with the code generated
-     * by the backend.
+     * Function that is called when all digits are entered.
+     *
+     * Checks that the code is valid
      */
     async function checkCode() {
-        if (userCode.length === 6) {
-            return;
-        }
         try {
             errors.codeError = "";
+            errors.codeFormEmail = ""
+            
+            if (resetEmail !== confirmResetEmail) {
+                errors.codeFormEmail = "Emails do not match";
+                return;
+            }
+
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/reset/code/validation`),
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        Email: email,
+                        Email: confirmResetEmail,
                         Code: userCode,
                     }),
                 },
             );
 
+            const data = await response.json().catch(() => null);
+
             if (!response.ok) {
-                const data = await response.json.catch(() => null);
-                codeError =
-                    data?.message || `Error ${response.status}: Invalid Code.`;
+                errors.codeError = data?.message;
                 digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
                 const firstInput = document.querySelector(
                     "#code-input input",
@@ -247,16 +274,26 @@
                 firstInput?.focus();
             } else {
                 currentModalStep = "update";
+                // Remove before merging
+                authModal.hide();
             }
         } catch (err) {
-            codeError = "Connection error. Please try again later.";
+            console.log(err);
+            errors.codeError = "Connection error. Please try again later.";
         }
     }
 
+    /**
+     * Called when the forgot password is clicked, opens the modal
+     * for entering the email.
+     */
     async function requestNewPassword() {
         errors.resetEmail = "";
         currentModalStep = "emailInput";
         authModal?.show();
+        resetEmail = "";
+        confirmResetEmail = "";
+        errors.codeFormEmail = "";
     }
 </script>
 
@@ -266,36 +303,17 @@
     </div>
     <h1 class="text-center mb-4">Login</h1>
 
-    <form on:submit|preventDefault={loginUser}>
+    <form
+        onsubmit={(e) => {
+            e.preventDefault();
+            loginUser();
+        }}
+    >
         <div class="mb-3">
-            <input
-                type="type"
-                class="form-control"
-                class:error={errors.email}
-                class:is-invalid={errors.email || error}
-                placeholder="Email *"
-                bind:value={email}
-                disabled={loading}
-            />
-            {#if errors.email}
-                <div class="text-danger mt-1">{errors.email}</div>
-            {/if}
+            <EmailForm error={errors.email} {loading} bind:email />
         </div>
         <div class="mb-3">
-            <input
-                type="password"
-                class="form-control"
-                class:error={errors.password}
-                class:is-invalid={errors.password ||
-                    errors.passwordErrorIndicator ||
-                    error}
-                placeholder="Password *"
-                bind:value={password}
-                disabled={loading}
-            />
-            {#if errors.password}
-                <div class="text-danger mt-1">{errors.password}</div>
-            {/if}
+            <PasswordForm bind:password error={errors.password} {loading} />
         </div>
         <div class="mb-3">
             <AuthenticatorButton buttonType={"login"} />
@@ -305,7 +323,7 @@
                 class="btn btn-primary w-100"
                 hidden={errors.email !=
                     "Account is not validated yet, check your emails."}
-                on:click={() => goto(resolve("/register/verification"))}
+                onclick={() => goto(resolve("/register/verification"))}
             >
                 Verify Email
             </button>
@@ -314,7 +332,7 @@
     <div class="mb-3 mt-3">
         <button
             class="btn btn-link btn-sm text-decoration-none"
-            on:click={requestNewPassword}>Forgot Password?</button
+            onclick={requestNewPassword}>Forgot Password?</button
         >
     </div>
 </div>
@@ -349,7 +367,7 @@
                                 class="form-control"
                                 placeholder="Email *"
                                 bind:value={resetEmail}
-                                on:keydown={(e) =>
+                                onkeydown={(e) =>
                                     e.key === "Enter" && sendVerificationCode()}
                             />
                         </div>
@@ -358,85 +376,60 @@
                                 {errors.resetEmail}
                             </div>
                         {/if}
-
-                        <button
-                            class="btn btn-primary w-100"
-                            on:click={sendVerificationCode}
-                        >
-                            Get reset code
-                        </button>
                     </div>
-                {/if}
-                {#if currentModalStep === "verify"}
+                {:else if currentModalStep === "verify"}
                     <div class="text-centre">
-                        <p class="text-secondary">
-                            Password reset email sent to <br />
-                            <span class="text-dark fw-bold">{resetEmail}</span>
-                        </p>
                         <p class="small">
                             Please check your inbox and enter the verification
                             code below to verify your email address. The code
                             will expire in <strong>{timeRemainingText}</strong>
                         </p>
-                        <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit1}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit2}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit3}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit4}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit5}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
-                            />
-                            <input
-                                type="text"
-                                class="form-control form-control-lg text-center"
-                                maxlength="1"
-                                bind:value={digit6}
-                                on:input={handleInput}
-                                on:keydown={handleKeyDown}
+                        <div>
+                            <p class="mb-2 small">
+                                Please re-enter your email here:
+                            </p>
+                            <EmailForm
+                                {loading}
+                                error={errors.codeFormEmail}
+                                bind:email={confirmResetEmail}
                             />
                         </div>
-                        {#if errors.codeError}
-                            <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"
-                                ></i>
-                                {codeError}
-                            </div>
-                        {/if}
+                        <div>
+                            <p class="m-0 small">
+                                Please enter the verification code here:
+                            </p>
+                            <CodeForm
+                                bind:digit1
+                                bind:digit2
+                                bind:digit3
+                                bind:digit4
+                                bind:digit5
+                                bind:digit6
+                                error={errors.codeError}
+                            />
+                        </div>
                     </div>
-                {:else}{/if}
+                {/if}
+            </div>
+            <div class="modal-footer">
+                <button
+                    class="btn btn-primary w-100"
+                    onclick={() => {
+                        if (currentModalStep === "emailInput") {
+                            sendVerificationCode();
+                        } else if (currentModalStep === "verify") {
+                            checkCode();
+                        } else {
+                            authModal?.hide();
+                        }
+                    }}
+                >
+                    {#if currentModalStep === "verify"}
+                        Reset Password
+                    {:else if currentModalStep === "emailInput"}
+                        Get reset code
+                    {/if}
+                </button>
             </div>
         </div>
     </div>

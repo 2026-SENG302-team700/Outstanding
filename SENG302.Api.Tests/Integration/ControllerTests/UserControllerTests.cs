@@ -12,6 +12,7 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -238,7 +239,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
             });
             await context.SaveChangesAsync();
         }
-        var request = new { Email = email, Code = secretCode };
+        var request = new { Email = email, Code = secretCode, TimeLimitExists = false, };
 
         var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
 
