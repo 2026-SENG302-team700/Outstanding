@@ -4,7 +4,6 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
@@ -468,13 +467,16 @@
      * Sends an image to the image editor
      */
     async function sendToEditor() {
-        clearErrors();
+        clearErrors()
         imageEditor.highlightError(false);
         console.log("recieve file");
         if (!files || files.length === 0) {
             return;
         }
-        imageEditor.setImg(files[0]);
+        if (await imageEditor.validateImg(files[0])) {
+            imageEditor.setImg(files[0]);
+            pfpModal.show();
+        }
     }
     
     /**
@@ -529,101 +531,95 @@
                 pfpModal.hide();
             }
         } catch (err) {
-            addToast((err as Error).message, "error");
+            errors.image = (err as Error).message;
+            imageEditor.highlightError(true);
         }
     }
 </script>
 
-<div class="display:flex; flex-direction: row;">
-    <form on:submit|preventDefault={updateUser}>
-        <div class="m-3" style="display: flex; ">
-            <CancelButton path={"/home/profile"} />
-            <div class="ms-auto">
-                <AuthenticatorButton buttonType={"update"} />
-            </div>
-        </div>
-    
-        <div class="container d-flex flex-column flex-md-row">
-            <div
-                class="d-flex flex-column align-items-center justify-content-center m-3"
+<div class="container d-flex flex-column flex-md-row">
+    <div
+        class="d-flex flex-column align-items-center justify-content-center m-3"
+    >
+        <div class="position-relative d-inline-block">
+            <ProfilePic pfpData={$user.pfpData} size="xl" />
+
+            <button
+                type="button"
+                class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
+                on:click={() => {
+                    pfpInput.value = ""
+                    pfpInput.click();
+                }}
             >
-                <div class="position-relative d-inline-block">
-                    <ProfilePic pfpData={$user.pfpData} size="xl" />
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                        data-bs-toggle="modal"
-                        data-bs-target="#pfpInputModal"
-                        on:click={() => {
-                            imageEditor.reset();
-                            clearErrors();
-                            pfpInput.value = "";
-                            pfpInput.click();
-                        }}
-                    >
-                        <i class="bi bi-pencil-square fs-2"></i>
-                    </button>
+                <i class="bi bi-pencil-square fs-2"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="container d-flex flex-column flex-md-row">
+        <div class="flex-grow-1 m-3">
+            <form on:submit|preventDefault={updateUser}>
+                <div class="m-3" style="display: flex; ">
+                    <CancelButton path={"/home/profile"} />
+                    <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
                 </div>
-            </div>
-
-            <div class="flex-grow-1 m-3">
-                    <div class="mb-4">
-                        <h5 class="text-muted mb-2">Personal Information</h5>
-                        <hr class="mt-0" style="opacity: 0.15;" />
-                        <div class="mb-3">
-                            <label for="displayName" class="form-label"
-                                >Display Name</label
-                            >
-                            <DisplayNameForm
-                                bind:displayName
-                                error={errors.displayName}
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label for="userEmail" class="form-label">Email</label>
-                            <EmailForm bind:email error={errors.email} />
-                        </div>
-                        <div class="mb-3">
-                            <label for="country" class="form-label">Country</label>
-                            <CountrySelectForm bind:selectedCountryCode={country} />
-                        </div>
+                <div class="mb-4">
+                    <h5 class="text-muted mb-2">Personal Information</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div class="mb-3">
+                        <label for="displayName" class="form-label"
+                            >Display Name</label
+                        >
+                        <DisplayNameForm
+                            bind:displayName
+                            error={errors.displayName}
+                        />
                     </div>
                     <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email</label>
+                        <EmailForm bind:email error={errors.email} />
+                    </div>
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        <CountrySelectForm bind:selectedCountryCode={country} />
+                    </div>
+                </div>
+                <div class="mb-3">
 
-                    </div>
-                    <div class="mt-5 mb-4">
-                        <h5 class="text-muted mb-2">Preferences</h5>
-                        <hr class="mt-0" style="opacity: 0.15;" />
-                        <div
-                                class="d-flex align-items-center justify-content-between"
-                        >
-                            <label for="profanityFiltering" class="form-label">Profanity Censor</label>
-                            <ToggleForm id={profanityFiltering} bind:checked={profanityFiltering} />
-                        </div>
-                    </div>
-                
-                    <div class="mt-5 mb-4">
-                        <h5 class="text-muted mb-2">Account Security</h5>
-                        <hr class="mt-0" style="opacity: 0.15;" />
-                        <div
+                </div>
+                <div class="mt-5 mb-4">
+                    <h5 class="text-muted mb-2">Preferences</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div
                             class="d-flex align-items-center justify-content-between"
-                        >
-                            <p class="small text-secondary mb-0">
-                                Change your password to keep your account secure.
-                            </p>
-                            <button
-                                type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                on:click={requestPasswordChange}
-                            >
-                                Update Password
-                            </button>
-                        </div>
+                    >
+                        <label for="profanityFiltering" class="form-label">Profanity Censor</label>
+                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} />
                     </div>
-            </div>
+                </div>
+            
+                <div class="mt-5 mb-4">
+                    <h5 class="text-muted mb-2">Account Security</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div
+                        class="d-flex align-items-center justify-content-between"
+                    >
+                        <p class="small text-secondary mb-0">
+                            Change your password to keep your account secure.
+                        </p>
+                        <button
+                            type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            on:click={requestPasswordChange}
+                        >
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 <!-- update password modal -->
@@ -766,16 +762,16 @@
                         </button>
                     </form>
                 {/if}
-                <button
-                    type="button"
-                    class="btn btn-secondary w-100 py-2 mt-3"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                    on:click={() => {
-                        clearErrors();
-                        clearPasswordFields();
-                    }}>Cancel</button
-                >
+                    <button
+                        type="button"
+                        class="btn btn-secondary w-100 py-2 mt-3"
+                        aria-label="Close"
+                        on:click={() => {
+                            authModal.hide();
+                            clearErrors();
+                            clearPasswordFields();
+                        }}>Cancel</button
+                    >
             </div>
         </div>
     </div>
@@ -801,48 +797,49 @@
                 <button
                     type="button"
                     class="btn-close"
-                    data-bs-dismiss="modal"
+                    on:click={() => pfpModal.hide()}
                     aria-label="Close"
                 ></button>
             </div>
             <div class="modal-body">
                 <form on:submit|preventDefault={() => updatePfp()}>
                     <input
-                        accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                        bind:files
-                        bind:this={pfpInput}
-                        id="pfp"
-                        name="pfp"
-                        type="file"
-                        class="d-none"
-                        on:cancel={() => {
-                            pfpCancelButton.click();
-                        }}
-                        on:change={async () => {
-                            await sendToEditor();
-                            // Reset the value so that if we select the same image a second time the on:change event is triggered
-                            pfpInput.value = "";
-                        }}
+                            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                            bind:files
+                            bind:this={pfpInput}
+                            id="pfp"
+                            name="pfp"
+                            type="file"
+                            class="d-none"
+                            on:change={async () => {
+                                    imageEditor.reset();
+                                    clearErrors();
+                                    await sendToEditor();
+                                    // Reset the value so that if we select the same image a second time the on:change event is triggered
+                                    pfpInput.value = '';
+                                }
+                            }
                     />
                     <ImageEditor
                         bind:this={imageEditor}
-                        bind:imageErrors={imageError}
-                    />
+                    >
+                    </ImageEditor>
                     {#if errors.image}
                         <div class="text-danger small mt-1">
                             {errors.image}
                         </div>
                     {/if}
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary"
-                            >Submit</button
-                        >
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >Submit</button>
                         <button
                             type="button"
                             class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                            bind:this={pfpCancelButton}>Cancel</button
-                        >
+                            on:click={() => pfpModal.hide()}
+                            bind:this={pfpCancelButton}
+                        >Cancel</button>
                     </div>
                 </form>
             </div>
