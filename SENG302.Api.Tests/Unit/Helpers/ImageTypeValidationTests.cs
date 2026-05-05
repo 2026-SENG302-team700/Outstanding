@@ -16,11 +16,6 @@ public class ImageTypeValidationTests
         };
     }
 
-    private IFormFile GetFileOfHex(Byte[] bytes)
-    {
-        return GetMockFile("test", bytes);
-    }
-
     [Theory]
     [InlineData(new byte[] { 0x89, 0x50, 0x4e, 0x47 }, "image/png")]
     [InlineData(new byte[] { 0x47, 0x49, 0x46, 0x38 }, "image/gif")]
@@ -33,7 +28,7 @@ public class ImageTypeValidationTests
     [InlineData(new byte[] { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50 }, "image/webp")]
     public async Task GetMimeOfFile_ValidImageButJustMime_Success(byte[] bytes, string expectedMime)
     {
-        var file = GetFileOfHex(bytes);
+        var file = GetMockFile("test", bytes);
         ImageTypeValidation.GetRealImageMime(file).ShouldBe(expectedMime);
     }
 
@@ -46,7 +41,7 @@ public class ImageTypeValidationTests
     [InlineData(new byte[] { 0x52, 0x49, 0x46, 0x46, 0xfa, 0xaf, 0x45, 0x1f, 0x57, 0x45, 0x42, 0x50, 0x56 }, "image/webp")]
     public async Task GetMimeOfFile_ValidImage_Success(byte[] bytes, string expectedMime)
     {
-        var file = GetFileOfHex(bytes);
+        var file = GetMockFile("test", bytes);
         ImageTypeValidation.GetRealImageMime(file).ShouldBe(expectedMime);
     }
     
@@ -58,7 +53,7 @@ public class ImageTypeValidationTests
     [InlineData(new byte[] { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42 })]
     public async Task GetMimeOfFile_InvalidImage_Fail(byte[] bytes)
     {
-        var file = GetFileOfHex(bytes);
+        var file = GetMockFile("test", bytes);
         ImageTypeValidation.GetRealImageMime(file).ShouldBe(ImageTypeValidation.invalidMimeString);
     }
 }

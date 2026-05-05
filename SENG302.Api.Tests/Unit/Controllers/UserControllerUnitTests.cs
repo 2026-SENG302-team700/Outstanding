@@ -11,6 +11,7 @@ using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
 using NSubstitute;
 using Shouldly;
+using Org.BouncyCastle.Utilities;
 
 namespace SENG302.Api.Tests.Unit.Controllers;
 
@@ -173,29 +174,85 @@ public class UserControllerUnitTests : BaseUnitTestFixture
         result.Result.ShouldBeOfType<UnauthorizedObjectResult>();
     }
 
-    [Fact]
-    public async Task UploadProfilePicture_ValidImage_ReplacesOldAndReturnsOk()
+    public IFormFile CreateMockFile(byte[] bytes, string mimeType)
     {
-        SetupUserContext("10");
+        var stream = new MemoryStream(bytes);
         var mockfile = Substitute.For<IFormFile>();
-        mockfile.ContentType.Returns("image/png");
+        mockfile.ContentType.Returns(mimeType);
+        mockfile.OpenReadStream().Returns(stream);
 
         var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
-        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old.png", MimeType = "image/png" };
-        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new.png", MimeType = "image/png" };
+        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = mimeType };
+        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = mimeType };
 
         _mockUserService.GetUserByIdAsync(10).Returns(mockUser);
         _mockFileService.GetFileByIdAsync(50).Returns(oldFile);
         _mockFileService.GetFileByIdAsync(101).Returns(newFile);
         _mockFileService.SaveFileAsync(mockfile, 10).Returns(newFile);
 
-        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "0");
+        return mockfile;
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ValidImage_ReplacesOldAndReturnsOk()
+    {
+        SetupUserContext("10");
+        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0x47 ], "image/png");
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
         result.Result.ShouldBeOfType<OkResult>();
 
         await _mockFileService.Received(1).DeleteFileAsync("old-key");
         await _mockUserService.Received(1).SetUserProfilePicture(10, 0, 0, 0, 1);
 
-        await _mockUserService.Received(1).SetUserProfilePicture(10, 101, 0, 0, 0);
+        await _mockUserService.Received(1).SetUserProfilePicture(10, 101, 0, 0, 1);
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ImageInvalidRealMime_UnsupportedType()
+    {
+        SetupUserContext("10");
+        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0xff ], "image/png");
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp");
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ImageTooBig_Fail()
+    {
+        SetupUserContext("10");
+
+        var stream = new MemoryStream([ 0x89, 0x50, 0x4e, 0x47 ]);
+        var mockfile = Substitute.For<IFormFile>();
+        mockfile.ContentType.Returns("image/png");
+        mockfile.Length.Returns(5000001);
+        mockfile.OpenReadStream().Returns(stream);
+
+        var mockUser = new User { Email = "test@test.com", Country = "NZ", DisplayName = "testName", Id = 10, ProfilePicture = 50};
+        var oldFile = new CustomFile { Id = 50, OwnerId = 10, FileKey = "old-key", OriginalFileName = "old", MimeType = "image/png" };
+        var newFile = new CustomFile { Id = 101, OwnerId = 10, FileKey = "new-key", OriginalFileName = "new", MimeType = "image/png" };
+
+        _mockUserService.GetUserByIdAsync(10).Returns(mockUser);
+        _mockFileService.GetFileByIdAsync(50).Returns(oldFile);
+        _mockFileService.GetFileByIdAsync(101).Returns(newFile);
+        _mockFileService.SaveFileAsync(mockfile, 10).Returns(newFile);
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Image too large, maximum file size is 5MB");
+    }
+
+    [Fact]
+    public async Task UploadProfilePicture_ImageInvalidExtNotMatchMime_ExtNotMatch()
+    {
+        SetupUserContext("10");
+        var mockfile = CreateMockFile([ 0x89, 0x50, 0x4e, 0x47 ], "image/jpeg");
+
+        var result = await _controller.UploadProfilePicture(mockfile, "0", "0", "1");
+        result.Result.ShouldBeOfType<BadRequestObjectResult>();
+        ((BadRequestObjectResult)result.Result).Value.ShouldBe("Invalid image, file extension does not match file type");
     }
 
     [Fact]
