@@ -518,7 +518,6 @@
             );
 
             if (!response.ok) {
-                //if (!imageError) imageError = response.text;
                 if (response.status == 500) {
                     throw new Error("Failed to upload picture");
                 } else {
