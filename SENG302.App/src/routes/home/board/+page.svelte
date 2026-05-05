@@ -3,6 +3,7 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { resolve } from "$app/paths";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
+  import type { TaskItem } from "$lib/types.js";
 
   import {
     DragDropProvider,
@@ -18,25 +19,11 @@
   let loading = $state(false);
   let error = $state("");
   
-  let initialTasks: Record<string, string[]> = {
-    column: tasks.map((task) => `${task.TaskId}`),
-  }
-  let tasksForSnapshot = $state<Record<string, string[]>>(initialTasks)
-  let snapshot = $state(structuredClone(initialTasks));
   
 
   onMount(() => {
     fetchAllTasks();
   });
-
-  const sensors = [
-    PointerSensor.configure({
-      activatorElements(source) {
-        return [source.element, source.handle];
-      },
-    }),
-    KeyboardSensor,
-  ];
 
   async function fetchAllTasks() {
     try {
@@ -59,22 +46,7 @@
   }
   
   
-  function onDragStart() {
-    snapshot = structuredClone(tasksForSnapshot);
-  }
-  
-  function onDragOver(event: any) {
-    const { source } = event.operation;
-    if (source && source.type==="column") return;
-    tasksForSnapshot = move(tasksForSnapshot, event)
-  }
-  
-  function onDragEnd(event: any) {
-    const {source} = event.operation;
-    if (event.cancelled) {
-      tasksForSnapshot = snapshot;
-    }
-  }
+
   
 </script>
 

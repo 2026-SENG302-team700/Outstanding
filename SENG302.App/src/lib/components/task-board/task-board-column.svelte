@@ -1,11 +1,21 @@
 <script lang="ts">
+    import {CollisionPriority} from '@dnd-kit/abstract';
+    import {createSortable} from '@dnd-kit/svelte/sortable';
+    import type { TaskItem } from "$lib/types.js";
+    import TaskBoardItem from "$lib/components/task-board/task-board-item.svelte"
+
     let {
-        taskStatus,
-        children
+        id,
+        index,
+        row,
+        task,
     }: {
-        taskStatus: 0 | 1 | 2,
-        children: Snippet
+        id: string;
+        index: number;
+        row: number[];
+        task: TaskItem;
     } = $props();
+    
     
     function taskStatusToString(taskStatus: number): string {
         if (taskStatus == 0) {
@@ -30,14 +40,33 @@
             return "status-done-header";
         }
     }
+
+    const sortable = createSortable({
+        get id() { return id; },
+        get index() { return index; },
+        accept: ['column', 'item'],
+        collisionPriority: CollisionPriority.Low,
+        type: 'column',
+    });
+    
+    
     
 </script>
 
 <div class="board-column">
-    <div class="column-header {columnHeaderStyling(taskStatus)}">
-        {taskStatusToString(taskStatus)}
+    <div class="column-header {columnHeaderStyling(task.currentStatus)}">
+        {taskStatusToString(task.currentStatus)}
     </div>
-    {@render children?.()}
+    <ul>
+        {#each row as itemId, itemIndex (itemId)}
+            <TaskBoardItem
+                    task={task}
+                    id={itemId}
+                    column={id}
+                    index={itemIndex}
+            />
+        {/each}
+    </ul>
 </div>
 
 <style>

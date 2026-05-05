@@ -2,19 +2,23 @@
     import { formatDate } from "$lib/datepicker/formatDate";
     import { resolve } from "$app/paths";
     import { goto } from "$app/navigation";
+    import type { TaskItem } from "$lib/types.js";
+    import {createSortable} from '@dnd-kit/svelte/sortable';
+    
     
     let {
-        task
+        task,
+        id,
+        column,
+        index,
     }: {
-        task: {
-            taskId: number,
-            taskListId: number,
-            name: string,
-            description: string,
-            currentStatus: 0 | 1 | 2
-        }
+        task: TaskItem;
+        id: string;
+        column: string;
+        index: number;
     } = $props();
 
+    console.log(`Task: ${JSON.stringify(task, null, 2)}`)
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -32,10 +36,22 @@
         if (text.length <= length) return text;
         return text.slice(0, length) + "...";
     }
+
+    const sortable = createSortable({
+        get id() { return id; },
+        get index() { return index; },
+        get group() { return column; },
+        accept: 'item',
+        type: 'item',
+        feedback: 'clone',
+        get data() { return {group: column}; },
+    });
     
 </script>
 
-<div class="board-task-card {taskStatusStyling(task.currentStatus)}"
+<div
+    {@attach sortable.attach}
+    class="board-task-card {taskStatusStyling(task.currentStatus)}"
     tabindex="0"
     role="button"
     onclick={() => goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}
