@@ -12,7 +12,7 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers;
-using SENG302.Api.Models.Requests;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -85,7 +85,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
     }
     
-    
+    private async Task SetupTestUser()
+    {
+        await AddTestUser();
+        SetupUserContext("1", "Test User", "test@example.com");
+    }
 
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
@@ -480,5 +484,15 @@ public class UserControllerTests : BaseIntegrationTestFixture
         var request = new { NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
         var response = await HttpClient.PutAsJsonAsync("/api/user/password/reset", request);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
+        };
     }
 }
