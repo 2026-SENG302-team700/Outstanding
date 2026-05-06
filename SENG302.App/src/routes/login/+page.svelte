@@ -125,18 +125,18 @@
         try {
             loading = true;
             error = "";
-            // const response = await fetchWithCsrf(`/api/login`, {
-            //     method: "POST",
-            //     credentials: "include",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify({
-            //         email,
-            //         passwordString: password,
-            //     }),
-            // });
-            const response = new Response();
+            const response = await fetchWithCsrf(`/api/login`, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    passwordString: password,
+                }),
+            });
+            //const response = new Response();
 
             const data = await response.json().catch(() => null);
 
@@ -162,6 +162,7 @@
             // If login is succesful then redirect the user to the home page and show a toast notification for NFR
             addToast(`Welcome to Outstanding ${data?.message}!`);
             goto(resolve(`/home`));
+            return;
         } catch (err) {
             password = "";
             error = "Failed to login user: " + (err as Error).message;
