@@ -115,7 +115,7 @@ namespace SENG302.Api.Tests.Acceptance.Features.TaskList
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/TaskList/U13ProfanityDetection.feature.ndjson", 8);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Acceptance/Features/TaskList/U13ProfanityDetection.feature.ndjson", 14);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -143,23 +143,20 @@ namespace SENG302.Api.Tests.Acceptance.Features.TaskList
             await this.TestTearDownAsync();
         }
         
-        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
-            "")]
+        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC1.1 - Existing profanity is censored when profanity filter is enabled")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U13 - As Sarah I want task list titles to be moderated so that I can rest easy kn" +
             "owing that they are appropriate")]
-        [global::Xunit.TraitAttribute("Description", "AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
-            "")]
+        [global::Xunit.TraitAttribute("Description", "AC1.1 - Existing profanity is censored when profanity filter is enabled")]
         [global::Xunit.InlineDataAttribute("shit list", "0", new string[0])]
         [global::Xunit.InlineDataAttribute("fuck list", "1", new string[0])]
         [global::Xunit.InlineDataAttribute("damn", "2", new string[0])]
-        public async global::System.Threading.Tasks.Task AC3_1_CannotCreateATaskListWithProfanityWhenProfanityFilterIsEnabled(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
+        public async global::System.Threading.Tasks.Task AC1_1_ExistingProfanityIsCensoredWhenProfanityFilterIsEnabled(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
         {
             string[] tagsOfScenario = exampleTags;
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             argumentsOfScenario.Add("inappropriate-name", inappropriate_Name);
             string pickleIndex = @__pickleIndex;
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
-                    "", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC1.1 - Existing profanity is censored when profanity filter is enabled", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 6
@@ -176,41 +173,35 @@ namespace SENG302.Api.Tests.Acceptance.Features.TaskList
     await this.FeatureBackgroundAsync();
 #line hidden
 #line 7
-        await testRunner.GivenAsync("I have the profanity filter enabled", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync(string.Format("I have a task list with the name \"{0}\"", inappropriate_Name), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 8
-        await testRunner.AndAsync("I am on the create task list form", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+        await testRunner.WhenAsync("I enable the profanity filter", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 9
-        await testRunner.WhenAsync(string.Format("I create a task list with the name {0}", inappropriate_Name), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 10
-        await testRunner.ThenAsync("I should receive a bad request response", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 11
-        await testRunner.AndAsync("the error message should say \"List name cannot contain profanity.\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+        await testRunner.ThenAsync("the task list name should be displayed with stars", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC3.2 - Can create a task list with profanity when profanity filter is false")]
+        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC2.1 - Existing profanity is shown as-is when profanity filter is disabled")]
         [global::Xunit.TraitAttribute("FeatureTitle", "U13 - As Sarah I want task list titles to be moderated so that I can rest easy kn" +
             "owing that they are appropriate")]
-        [global::Xunit.TraitAttribute("Description", "AC3.2 - Can create a task list with profanity when profanity filter is false")]
+        [global::Xunit.TraitAttribute("Description", "AC2.1 - Existing profanity is shown as-is when profanity filter is disabled")]
         [global::Xunit.InlineDataAttribute("shit list", "3", new string[0])]
         [global::Xunit.InlineDataAttribute("fuck list", "4", new string[0])]
         [global::Xunit.InlineDataAttribute("damn", "5", new string[0])]
-        public async global::System.Threading.Tasks.Task AC3_2_CanCreateATaskListWithProfanityWhenProfanityFilterIsFalse(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
+        public async global::System.Threading.Tasks.Task AC2_1_ExistingProfanityIsShownAs_IsWhenProfanityFilterIsDisabled(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
         {
             string[] tagsOfScenario = exampleTags;
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             argumentsOfScenario.Add("inappropriate-name", inappropriate_Name);
             string pickleIndex = @__pickleIndex;
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3.2 - Can create a task list with profanity when profanity filter is false", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC2.1 - Existing profanity is shown as-is when profanity filter is disabled", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 19
+#line 17
     this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -223,16 +214,112 @@ namespace SENG302.Api.Tests.Acceptance.Features.TaskList
 #line 3
     await this.FeatureBackgroundAsync();
 #line hidden
+#line 18
+        await testRunner.GivenAsync(string.Format("I have a task list with the name \"{0}\"", inappropriate_Name), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 19
+        await testRunner.AndAsync("I have the profanity filter enabled", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
 #line 20
-        await testRunner.GivenAsync("I have the profanity filter disabled", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.WhenAsync("I disable the profanity filter", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 21
+        await testRunner.ThenAsync("the task list name should be displayed as-is", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
+            "")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U13 - As Sarah I want task list titles to be moderated so that I can rest easy kn" +
+            "owing that they are appropriate")]
+        [global::Xunit.TraitAttribute("Description", "AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
+            "")]
+        [global::Xunit.InlineDataAttribute("shit list", "6", new string[0])]
+        [global::Xunit.InlineDataAttribute("fuck list", "7", new string[0])]
+        [global::Xunit.InlineDataAttribute("damn", "8", new string[0])]
+        public async global::System.Threading.Tasks.Task AC3_1_CannotCreateATaskListWithProfanityWhenProfanityFilterIsEnabled(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
+        {
+            string[] tagsOfScenario = exampleTags;
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            argumentsOfScenario.Add("inappropriate-name", inappropriate_Name);
+            string pickleIndex = @__pickleIndex;
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3.1 - Cannot create a task list with profanity when profanity filter is enabled" +
+                    "", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 29
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 3
+    await this.FeatureBackgroundAsync();
+#line hidden
+#line 30
+        await testRunner.GivenAsync("I have the profanity filter enabled", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 31
         await testRunner.AndAsync("I am on the create task list form", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 22
+#line 32
         await testRunner.WhenAsync(string.Format("I create a task list with the name {0}", inappropriate_Name), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 23
+#line 33
+        await testRunner.ThenAsync("I should receive a bad request response", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 34
+        await testRunner.AndAsync("the error message should say \"List name cannot contain profanity.\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableTheoryAttribute(DisplayName="AC3.2 - Can create a task list with profanity when profanity filter is false")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "U13 - As Sarah I want task list titles to be moderated so that I can rest easy kn" +
+            "owing that they are appropriate")]
+        [global::Xunit.TraitAttribute("Description", "AC3.2 - Can create a task list with profanity when profanity filter is false")]
+        [global::Xunit.InlineDataAttribute("shit list", "9", new string[0])]
+        [global::Xunit.InlineDataAttribute("fuck list", "10", new string[0])]
+        [global::Xunit.InlineDataAttribute("damn", "11", new string[0])]
+        public async global::System.Threading.Tasks.Task AC3_2_CanCreateATaskListWithProfanityWhenProfanityFilterIsFalse(string inappropriate_Name, string @__pickleIndex, string[] exampleTags)
+        {
+            string[] tagsOfScenario = exampleTags;
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            argumentsOfScenario.Add("inappropriate-name", inappropriate_Name);
+            string pickleIndex = @__pickleIndex;
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC3.2 - Can create a task list with profanity when profanity filter is false", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 42
+    this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 3
+    await this.FeatureBackgroundAsync();
+#line hidden
+#line 43
+        await testRunner.GivenAsync("I have the profanity filter disabled", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 44
+        await testRunner.AndAsync("I am on the create task list form", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 45
+        await testRunner.WhenAsync(string.Format("I create a task list with the name {0}", inappropriate_Name), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 46
         await testRunner.ThenAsync("The task list should be created", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
