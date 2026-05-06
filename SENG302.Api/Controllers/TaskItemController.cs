@@ -5,7 +5,6 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -124,7 +123,7 @@ public class TaskItemController : ControllerBase
         try
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            
+
             var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
             return Ok(taskItem);
         }

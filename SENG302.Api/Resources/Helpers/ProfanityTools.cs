@@ -5,9 +5,9 @@ namespace SENG302.Api.Resources.Helpers;
 public class ProfanityTools
 {
 
-    public bool ContainsProfanity(string text, User user)
+    public bool ContainsProfanity(string text, bool profanityFiltering)
     {
-        if (user.ProfanityFiltering)
+        if (profanityFiltering)
         {
             var profanityFilter = new ProfanityFilter.ProfanityFilter();
             var swearList = profanityFilter.DetectAllProfanities(text);

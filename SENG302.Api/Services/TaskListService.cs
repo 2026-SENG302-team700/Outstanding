@@ -71,7 +71,7 @@ public class TaskListService : ITaskListService
         }
 
         // check for profanity in the name
-        if (_profanityTools.ContainsProfanity(name, user))
+        if (_profanityTools.ContainsProfanity(name, user.ProfanityFiltering))
         {
             throw new ArgumentException("List name cannot contain profanity.");
         }

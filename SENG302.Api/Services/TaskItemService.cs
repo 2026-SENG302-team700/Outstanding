@@ -1,6 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using SENG302.Api.Resources.Helpers;
 
 namespace SENG302.Api.Services;
 
@@ -18,6 +19,7 @@ public class TaskItemService : ITaskItemService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
+    private readonly ProfanityTools _profanityTools;
 
     public TaskItemService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
@@ -39,15 +41,9 @@ public class TaskItemService : ITaskItemService
             errors["name"] = "Title is required and must be between 3 and 128 characters long";
         }
 
-        if (!profanityFiltering) return errors;
-        
-        var profanityFilter = new ProfanityFilter.ProfanityFilter(); 
-        var swearList = profanityFilter.DetectAllProfanities(taskItemName); 
-        if (swearList.Count > 0) 
-        { 
-            errors["name"] = "Title cannot contain profanity.";
-        }
-        
+
+        if (_profanityTools.ContainsProfanity(name, profanityFiltering)) errors["name"] = "Title cannot contain profanity.";
+
         return errors;
     }
 
@@ -135,7 +131,7 @@ public class TaskItemService : ITaskItemService
 
         var user = await context.Users.FindAsync(userId);
         var profanityFiltering = user?.ProfanityFiltering ?? false;
-        
+
         // Clean request
         taskItem.Name = taskItem.Name.Trim();
         taskItem.Description = taskItem.Description.Trim();
@@ -143,7 +139,7 @@ public class TaskItemService : ITaskItemService
 
         // Validation
         var errors = new Dictionary<string, string>();
-        
+
         foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
         {
             errors[key] = value;
@@ -197,10 +193,10 @@ public class TaskItemService : ITaskItemService
     public async Task<TaskItem?> GetTaskItemAsync(int id, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var user = await context.Users.FindAsync(userId);
         var profanityFiltering = user?.ProfanityFiltering ?? false;
-        
+
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.TaskId == id);
 
         if (!profanityFiltering) return taskItem;
@@ -211,7 +207,7 @@ public class TaskItemService : ITaskItemService
 
         taskItem.Name = censoredName;
         taskItem.Description = censoredDescription;
-        
+
         return taskItem;
     }
 
@@ -226,10 +222,10 @@ public class TaskItemService : ITaskItemService
     public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        
+
         var user = await context.Users.FindAsync(userId);
         var profanityFiltering = user?.ProfanityFiltering ?? false;
-        
+
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(u => u.TaskId == taskItemUpdates.taskId);
         if (taskItem == null)
         {
@@ -241,7 +237,7 @@ public class TaskItemService : ITaskItemService
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
 
         var errors = new Dictionary<string, string>();
-        
+
         foreach (var (key, value) in ValidateTaskItemName(taskItemUpdates.Name, profanityFiltering))
         {
             errors[key] = value;
