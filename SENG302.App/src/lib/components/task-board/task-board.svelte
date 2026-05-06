@@ -68,12 +68,12 @@
     <div class="wrapper">
         <div class="board-columns">
             {#each columns as column, columnIndex (column)}
-                
+                {console.log(`Tasks for each column: ${JSON.stringify(tasks.filter((t) => t.currentStatus === parseInt(column)), null, 2)}`)}
                 <TaskBoardColumn
                         id={column}
                         index={columnIndex}
                         row={tasksForSnapshot[column]}
-                        task={tasks.filter((t) => t.currentStatus === parseInt(column))}
+                        tasks={tasks.filter((t) => t.currentStatus === parseInt(column))}
                 />
             {/each}
         </div>

@@ -8,12 +8,12 @@
         id,
         index,
         row,
-        task,
+        tasks,
     }: {
         id: string;
         index: number;
         row: number[];
-        task: TaskItem;
+        tasks: TaskItem[];
     } = $props();
     
     
@@ -49,19 +49,20 @@
         type: 'column',
     });
     
-    
+// {console.log(`ItemId = ${itemId}. Column=${id}. task=${JSON.stringify(tasks[itemIndex], null, 2)}`)}    
     
 </script>
 
 <div class="board-column"
      {@attach droppable.attach}>
-    <div class="column-header {columnHeaderStyling(task.currentStatus)}">
-        {taskStatusToString(task.currentStatus)}
+    <div class="column-header {columnHeaderStyling(id)}">
+        {taskStatusToString(id)}
     </div>
     <ul>
         {#each row as itemId, itemIndex (itemId)}
+  
             <TaskBoardItem
-                    task={task}
+                    task={tasks[itemIndex]}
                     id={itemId}
                     column={id}
                     index={itemIndex}
