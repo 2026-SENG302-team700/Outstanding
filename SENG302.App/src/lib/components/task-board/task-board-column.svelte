@@ -1,6 +1,6 @@
 <script lang="ts">
     import {CollisionPriority} from '@dnd-kit/abstract';
-    import {createSortable} from '@dnd-kit/svelte/sortable';
+    import {createDroppable} from '@dnd-kit/svelte';
     import type { TaskItem } from "$lib/types.js";
     import TaskBoardItem from "$lib/components/task-board/task-board-item.svelte"
 
@@ -41,7 +41,7 @@
         }
     }
 
-    const sortable = createSortable({
+    const droppable = createDroppable({
         get id() { return id; },
         get index() { return index; },
         accept: ['column', 'item'],
@@ -53,7 +53,8 @@
     
 </script>
 
-<div class="board-column">
+<div class="board-column"
+     {@attach droppable.attach}>
     <div class="column-header {columnHeaderStyling(task.currentStatus)}">
         {taskStatusToString(task.currentStatus)}
     </div>
