@@ -1,8 +1,6 @@
-
-
 using SENG302.Api.Models.Entities;
 
-namespace SENG302.Api.Resources;
+namespace SENG302.Api.Resources.Helpers;
 
 public class ProfanityTools
 {
@@ -17,10 +15,8 @@ public class ProfanityTools
             {
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
         }
+        return false;
     }
 }
