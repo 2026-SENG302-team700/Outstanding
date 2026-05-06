@@ -114,6 +114,9 @@
       <button class="btn btn-secondary" onclick={() => goto(resolve("/home/content-policy"))}>
         Content Policy
       </button>
+      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/privacy-policy"))}>
+        Privacy Policy
+      </button>
     </div>
   </footer>
 </div>
@@ -165,7 +168,7 @@
   .footerContent {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    gap: 12px;
     padding: 0 15px;
     align-items: center;
   }
