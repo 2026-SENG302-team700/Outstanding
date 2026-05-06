@@ -12,8 +12,6 @@
   } from "@dnd-kit/svelte";
   import { defaultPreset } from "@dnd-kit/dom";
   import { move } from "@dnd-kit/helpers";
-  //import "../styles.css";
-  //import SortableColumn from "../SortableColumn.svelte";
 
   let tasks = $state([]);
   let loading = $state(false);

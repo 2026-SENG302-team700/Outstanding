@@ -7,18 +7,22 @@
     
     
     let {
-        task,
+        itemTask,
         id,
         column,
         index,
     }: {
-        task: TaskItem;
+        itemTask: TaskItem;
         id: string;
         column: string;
         index: number;
     } = $props();
+    
+    let task = { taskId: itemTask.taskId, taskListId: itemTask.taskListId, 
+        name: itemTask.name, description: itemTask.description, dueDate: itemTask.dueDate, 
+        currentStatus: itemTask.currentStatus };
 
-    console.log(`Task: ${JSON.stringify(task, null, 2)}`)
+    console.log(`Task: ${JSON.stringify(itemTask, null, 2)}. id = ${id}. column = ${column}. Index = ${index}`)
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -51,7 +55,7 @@
 
 <div
     {@attach sortable.attach}
-    class="board-task-card {taskStatusStyling(task.currentStatus)}"
+    class="board-task-card {taskStatusStyling(column)}"
     tabindex="0"
     role="button"
     onclick={() => goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}

@@ -12,6 +12,10 @@
         tasks: TaskItem[];
     } = $props();
 
+    // Creating this taskMap and passing it to the column component to be used to index tasks was inspired by Claude AI
+    const taskMap: Record<number, TaskItem> = Object.fromEntries(
+        tasks.map(t => [t.taskId, t])
+    );
     
     const initialTasks: Record<number, number[]> = {
         0: tasks.filter((t) => t.currentStatus === 0).map((_: TaskItem, index: number) => _.taskId).slice(),
@@ -39,7 +43,7 @@
     
 
     function onDragStart() {
-        snapshot = structuredClone(tasksForSnapshot);
+        snapshot = $state.snapshot(tasksForSnapshot);;
     }
 
     function onDragOver(event: any) {
@@ -51,7 +55,7 @@
     function onDragEnd(event: any) {
         const {source} = event.operation;
         if (event.cancelled) {
-            tasksForSnapshot = snapshot;
+            tasksForSnapshot = $state.snapshot(snapshot);;
         }
     }
     
@@ -73,7 +77,7 @@
                         id={column}
                         index={columnIndex}
                         row={tasksForSnapshot[column]}
-                        tasks={tasks.filter((t) => t.currentStatus === parseInt(column))}
+                        tasks={taskMap}
                 />
             {/each}
         </div>

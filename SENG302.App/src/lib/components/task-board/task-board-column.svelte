@@ -13,7 +13,7 @@
         id: string;
         index: number;
         row: number[];
-        tasks: TaskItem[];
+        tasks: Record<number, TaskItem>;
     } = $props();
     
     
@@ -62,7 +62,7 @@
         {#each row as itemId, itemIndex (itemId)}
   
             <TaskBoardItem
-                    task={tasks[itemIndex]}
+                    itemTask={tasks[itemId]}
                     id={itemId}
                     column={id}
                     index={itemIndex}
