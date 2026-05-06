@@ -148,18 +148,21 @@
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
       >Add Task
     </button>
-    <button type="button"
-            class="btn btn-secondary"
-            on:click={handleUndo}
-    >
-      Undo Last Sorting
-    </button>
-    <button type="button"
-            class="btn btn-secondary"
-            on:click={toggleBoardView}
-    >
-      See Task List
-    </button>
+    <div>
+      <button type="button"
+              class="btn btn-outline-info"
+              on:click={toggleBoardView}
+      >
+        See Task List
+      </button>
+      <button type="button"
+              class="btn btn-outline-warning"
+              on:click={handleUndo}
+      >
+        Undo Last Sorting
+      </button>
+      
+    </div>
   </div>
 
   {#if loading && Object.keys(tasks).length === 0}
@@ -170,16 +173,17 @@
     </div>
   {:else}
     <div class="mb-3">
-        {#if boardView}
-            <TaskBoard tasks="{tasks}" />
-        {:else}
-      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-        <ul class="list">
-          {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
-          {/each}
-        </ul>
-      </DragDropProvider>
+      {#if boardView}
+          <TaskBoard tasks="{tasks}" />
+      {:else}
+        <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+          <ul class="list">
+            {#each taskRefs as taskRef, index (taskRef)}
+              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            {/each}
+          </ul>
+        </DragDropProvider>
+        {/if}
     </div>
   {/if}
 </div>
