@@ -451,6 +451,7 @@ public class UserService : IUserService
     /// <param name="newEmail">a string of the provided email</param>
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
+    /// <param name="profanityFiltering">a boolean that represents whether profanity filtering is enabled or disabled</param>
     /// <returns>The new user that has been saved in the database</returns>
     public async Task<User?> UpdateUser(int userId,
         string newEmail,

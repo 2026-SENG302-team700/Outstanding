@@ -12,6 +12,7 @@ using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -71,7 +72,11 @@ public class UserControllerTests : BaseIntegrationTestFixture
         };
     }
     
-    
+    private async Task SetupTestUser()
+    {
+        await AddTestUser();
+        SetupUserContext("1", "Test User", "test@example.com");
+    }
 
     [Fact]
     public async Task UpdateUser_Success_ReturnOk()
@@ -211,13 +216,13 @@ public class UserControllerTests : BaseIntegrationTestFixture
     }
     
     [Fact]
-    public async Task InitiateOneTimeCode_UserNotFound_ReturnsProblem()
+    public async Task InitiateOneTimeCode_UserNotFound_NotFound()
     {
         var request = new { Email = "nonexistent@example.com" };
 
         var response = await HttpClient.PutAsJsonAsync("/api/user/password/code/generation", request);
         
-        response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
     
     [Fact]
@@ -238,7 +243,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
             });
             await context.SaveChangesAsync();
         }
-        var request = new { Email = email, Code = secretCode };
+        var request = new { Email = email, Code = secretCode, TimeLimitExists = false, };
 
         var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
 
@@ -420,5 +425,15 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
         var response = await _controller.updatePassword(request);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
+    }
+
+    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
+    {
+        var stream = new MemoryStream(content);
+        return new FormFile(stream, 0, stream.Length, "file", filename)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = mimeType
+        };
     }
 }

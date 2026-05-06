@@ -1,169 +1,442 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
-  import { fetchWithCsrf } from "$lib/csrf";
-  import { addToast } from "$lib/toast/toast";
-  import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
-  import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
-  import CancelButton from "$lib/components/cancel-button.svelte";
+    import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
+    import type { Modal } from "bootstrap";
+    import { resolve } from "$app/paths";
+    import { fetchWithCsrf } from "$lib/csrf";
+    import { addToast } from "$lib/toast/toast";
+    import regexPatterns from "../../../../SENG302.Shared/regexPatterns.json";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import CodeForm from "$lib/components/code-form.svelte";
 
-  let email = $state("");
-  let password = $state("");
-  let loading = $state(false);
-  let error = $state("");
+    let email = $state("");
+    let password = $state("");
+    let loading = $state(false);
+    let error = $state("");
+    let currentModalStep = $state("verify");
+    let modalElement: HTMLElement | undefined = $state();
+    let authModal: Modal | undefined;
+    let resetEmail = $state("");
+    let confirmResetEmail = $state("");
+    let digit1 = $state("");
+    let digit2 = $state("");
+    let digit3 = $state("");
+    let digit4 = $state("");
+    let digit5 = $state("");
+    let digit6 = $state("");
+    let timeRemaining = $state(300);
+    let timeRemainingText = $state("05:00");
+    let userCode = $derived(
+        digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
+    );
+    let interval;
 
-  let errors = $state({
-    email: "",
-    password: "",
-    passwordErrorIndicator: false,
-  });
+    let errors = $state({
+        email: "",
+        password: "",
+        codeError: "",
+        passwordErrorIndicator: false,
+        resetEmail: "",
+        codeFormEmail: "",
+    });
 
-  /**
-   * Handles user login by sending a POST request to the server with the user's email and password.
-   * Validates that all fields are filled in before making the request. If login is successful,
-   * redirects the user to the profile page. If there is an error, displays an appropriate message.
-   */
-  async function loginUser() {
-    let valid = true;
-    // Reset errors
-    errors = {
-      email: "",
-      password: "",
-      passwordErrorIndicator: false,
-    };
+    onMount(async () => {
+        const { Modal: BootstrapModal } = await import("bootstrap");
 
-    // Check email format
-    const emailRegex = new RegExp(regexPatterns.user.email);
-    if (email && !emailRegex.test(email)) {
-      errors.email =
-        "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+        if (modalElement) {
+            authModal = new BootstrapModal(modalElement);
+        }
+    });
+
+    /**
+     * Format a given number of seconds into a user friendly readable time for the countdown timer
+     * @param seconds
+     */
+    function formatTime(seconds: number) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
 
-    // Validate inputs
-    if (!email) {
-      errors.email = "Email is required.";
-      valid = false;
+    /**
+     * Starts the countdown for the timer
+     */
+    function startTimerCountdown() {
+        timeRemaining = 300;
+        clearInterval(interval);
+
+        interval = setInterval(() => {
+            timeRemaining--;
+            timeRemainingText = formatTime(timeRemaining);
+            if (timeRemaining <= 0) clearInterval(interval);
+        }, 1000);
     }
 
-    if (!password) {
-      errors.password = "Password is required.";
-      valid = false;
+    /**
+     * Clears input fields containing digits if code is resent
+     */
+    function clearResetCodeModalFields() {
+        digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+        errors.codeError = "";
     }
 
-    if (!valid) {
-      return;
+    /**
+     * Handles user login by sending a POST request to the server with the user's email and password.
+     * Validates that all fields are filled in before making the request. If login is successful,
+     * redirects the user to the profile page. If there is an error, displays an appropriate message.
+     */
+    async function loginUser() {
+        let valid = true;
+        // Reset errors
+        errors = {
+            email: "",
+            password: "",
+            passwordErrorIndicator: false,
+        };
+
+        // Check email format
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (email && !emailRegex.test(email)) {
+            errors.email =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+        }
+
+        // Validate inputs
+        if (!email) {
+            errors.email = "Email is required.";
+            valid = false;
+        }
+
+        if (!password) {
+            errors.password = "Password is required.";
+            valid = false;
+        }
+
+        if (!valid) {
+            return;
+        }
+
+        try {
+            loading = true;
+            error = "";
+            const response = await fetchWithCsrf(resolve(`/api/login`), {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email,
+                    passwordString: password,
+                }),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (response.status === 404 || response.status === 401) {
+                password = "";
+                errors.email = data?.message || "Invalid email or password.";
+                errors.passwordErrorIndicator = true;
+                return;
+            }
+
+            if (response.status === 400) {
+                errors.email = data.message;
+                return;
+            }
+
+            if (!response.ok) {
+                password = "";
+                error = data?.message || "Failed to login user: !response.ok";
+                addToast(error, "error");
+                console.error("!response.ok outside of 400, 401 and 404.");
+                return;
+            }
+            // If login is succesful then redirect the user to the home page and show a toast notification for NFR
+            addToast(`Welcome to Outstanding ${data?.message}!`);
+            goto(resolve(`/home`));
+        } catch (err) {
+            password = "";
+            error = "Failed to login user: " + (err as Error).message;
+            addToast(error, "error");
+            console.error(err);
+        } finally {
+            loading = false;
+        }
     }
 
-    try {
-      loading = true;
-      error = "";
-      const response = await fetchWithCsrf(resolve(`/api/login`), {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          passwordString: password,
-        }),
-      });
+    /**
+     * Send the email for one time code to the backend and starts the timer
+     * Code will be sent to the email if it is valid and the
+     * modal will progress to the next stage
+     * shows relavent errors otherwise
+     */
+    async function sendVerificationCode() {
+        // reset error
+        errors.resetEmail = "";
 
-      const data = await response.json().catch(() => null);
+        // Validate email on front end
+        let valid = true;
 
-      if (response.status === 404 || response.status === 401) {
-        password = "";
-        errors.email = data?.message || "Invalid email or password.";
-        errors.passwordErrorIndicator = true;
-        return;
-      }
+        if (!resetEmail) {
+            errors.resetEmail = "Email is required.";
+            valid = false;
+        }
 
-      if (response.status === 400) {
-        errors.email = data.message;
-        return;
-      }
+        const emailRegex = new RegExp(regexPatterns.user.email);
+        if (resetEmail && !emailRegex.test(resetEmail)) {
+            errors.resetEmail =
+                "Invalid email address. Email must be in the format ‘jane@doe.nz’";
+            valid = false;
+        }
 
-      if (!response.ok) {
-        password = "";
-        error = data?.message || "Failed to login user: !response.ok";
-        addToast(error, "error");
-        console.error("!response.ok outside of 400, 401 and 404.");
-        return;
-      }
-      // If login is succesful then redirect the user to the home page and show a toast notification for NFR
-      addToast(`Welcome to Outstanding ${data?.message}!`);
-      goto(resolve(`/home`));
-    } catch (err) {
-      password = "";
-      error = "Failed to login user: " + (err as Error).message;
-      addToast(error, "error");
-      console.error(err);
-    } finally {
-      loading = false;
+        if (!valid) {
+            return;
+        }
+
+        // Send email to backend for further validation and sending of code
+        currentModalStep = "verify";
+
+        startTimerCountdown();
+        clearResetCodeModalFields();
+
+        try {
+            console.log(email);
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/reset/code/generation`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        email: resetEmail,
+                    }),
+                },
+            );
+
+            if (response.ok) {
+                addToast("Password reset email sent", "success");
+            } else {
+                const data = await response.json().catch(() => null);
+                errors.codeError = data?.message || "Failed to send code.";
+            }
+        } catch (err) {
+            /*
+             * This won't be displayed as we have already moved to the verify step
+             * However if we wait for confirmation that the email sent, then time taken
+             * can be used to work out what emails have accounts which we are trying to avoid
+             */
+            errors.codeError = "Failed to send code " + (err as Error).message;
+        }
     }
-  }
+
+    /**
+     * Function that is called when all digits are entered.
+     *
+     * Checks that the code is valid
+     */
+    async function checkCode() {
+        try {
+            errors.codeError = "";
+            errors.codeFormEmail = ""
+            
+            if (resetEmail !== confirmResetEmail) {
+                errors.codeFormEmail = "Emails do not match";
+                return;
+            }
+
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/reset/code/validation`),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        Email: confirmResetEmail,
+                        Code: userCode,
+                    }),
+                },
+            );
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                errors.codeError = data?.message;
+                digit1 = digit2 = digit3 = digit4 = digit5 = digit6 = "";
+                const firstInput = document.querySelector(
+                    "#code-input input",
+                ) as HTMLInputElement;
+                firstInput?.focus();
+            } else {
+                currentModalStep = "update";
+                // Remove before merging
+                authModal.hide();
+            }
+        } catch (err) {
+            console.log(err);
+            errors.codeError = "Connection error. Please try again later.";
+        }
+    }
+
+    /**
+     * Called when the forgot password is clicked, opens the modal
+     * for entering the email.
+     */
+    async function requestNewPassword() {
+        errors.resetEmail = "";
+        currentModalStep = "emailInput";
+        authModal?.show();
+        resetEmail = "";
+        confirmResetEmail = "";
+        errors.codeFormEmail = "";
+    }
 </script>
 
 <div class="container">
-  <div class="mb-3">
-    <CancelButton path="/"></CancelButton>
-  </div>
-  <h1 class="text-center mb-4">Login</h1>
+    <div class="mb-3">
+        <CancelButton path="/"></CancelButton>
+    </div>
+    <h1 class="text-center mb-4">Login</h1>
 
-  <form
-    onsubmit={(e) => {
-      e.preventDefault();
-      loginUser();
-    }}
-  >
-    <div class="mb-3">
-      <input
-        type="type"
-        class="form-control"
-        class:error={errors.email}
-        class:is-invalid={errors.email || error}
-        placeholder="Email *"
-        bind:value={email}
-        disabled={loading}
-      />
-      {#if errors.email}
-        <div class="text-danger mt-1">{errors.email}</div>
-      {/if}
+    <form
+        onsubmit={(e) => {
+            e.preventDefault();
+            loginUser();
+        }}
+    >
+        <div class="mb-3">
+            <EmailForm error={errors.email} {loading} bind:email />
+        </div>
+        <div class="mb-3">
+            <PasswordForm bind:password error={errors.password} {loading} />
+        </div>
+        <div class="mb-3">
+            <AuthenticatorButton buttonType={"login"} />
+        </div>
+        <div class="mb-3">
+            <button
+                class="btn btn-primary w-100"
+                hidden={errors.email !=
+                    "Account is not validated yet, check your emails."}
+                onclick={() => goto(resolve("/register/verification"))}
+            >
+                Verify Email
+            </button>
+        </div>
+    </form>
+    <div class="mb-3 mt-3">
+        <button
+            class="btn btn-link btn-sm text-decoration-none"
+            onclick={requestNewPassword}>Forgot Password?</button
+        >
     </div>
-    <div class="mb-3">
-      <input
-        type="password"
-        class="form-control"
-        class:error={errors.password}
-        class:is-invalid={errors.password ||
-          errors.passwordErrorIndicator ||
-          error}
-        placeholder="Password *"
-        bind:value={password}
-        disabled={loading}
-      />
-      {#if errors.password}
-        <div class="text-danger mt-1">{errors.password}</div>
-      {/if}
+</div>
+
+<!-- Reset password modal -->
+<div
+    class="modal fade"
+    bind:this={modalElement}
+    tabindex="-1"
+    aria-hidden="true"
+>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    {currentModalStep === "verify"
+                        ? "Verify Your Identity"
+                        : "Set New Password"}
+                </h5>
+            </div>
+            <div class="modal-body">
+                {#if currentModalStep === "emailInput"}
+                    <div class="text-center">
+                        <p class="text-secondary">
+                            We'll send a verification code to your email
+                        </p>
+
+                        <div class="mb-3 text-start">
+                            <input
+                                type="email"
+                                id="email"
+                                class="form-control"
+                                placeholder="Email *"
+                                bind:value={resetEmail}
+                                onkeydown={(e) =>
+                                    e.key === "Enter" && sendVerificationCode()}
+                            />
+                        </div>
+                        {#if errors.resetEmail}
+                            <div class="text-danger mt-1">
+                                {errors.resetEmail}
+                            </div>
+                        {/if}
+                    </div>
+                {:else if currentModalStep === "verify"}
+                    <div class="text-centre">
+                        <p class="small">
+                            Please check your inbox and enter the verification
+                            code below to verify your email address. The code
+                            will expire in <strong>{timeRemainingText}</strong>
+                        </p>
+                        <div>
+                            <p class="mb-2 small">
+                                Please re-enter your email here:
+                            </p>
+                            <EmailForm
+                                {loading}
+                                error={errors.codeFormEmail}
+                                bind:email={confirmResetEmail}
+                            />
+                        </div>
+                        <div>
+                            <p class="m-0 small">
+                                Please enter the verification code here:
+                            </p>
+                            <CodeForm
+                                bind:digit1
+                                bind:digit2
+                                bind:digit3
+                                bind:digit4
+                                bind:digit5
+                                bind:digit6
+                                error={errors.codeError}
+                            />
+                        </div>
+                    </div>
+                {/if}
+            </div>
+            <div class="modal-footer">
+                <button
+                    class="btn btn-primary w-100"
+                    onclick={() => {
+                        if (currentModalStep === "emailInput") {
+                            sendVerificationCode();
+                        } else if (currentModalStep === "verify") {
+                            checkCode();
+                        } else {
+                            authModal?.hide();
+                        }
+                    }}
+                >
+                    {#if currentModalStep === "verify"}
+                        Reset Password
+                    {:else if currentModalStep === "emailInput"}
+                        Get reset code
+                    {/if}
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-      <AuthenticatorButton buttonType={"login"} />
-    </div>
-    <div class="mb-3">
-      <button
-        class="btn btn-primary w-100"
-        hidden={errors.email !=
-          "Account is not validated yet, check your emails."}
-        onclick={() => goto(resolve("/register/verification"))}
-      >
-        Verify Email
-      </button>
-    </div>
-  </form>
 </div>
 
 <style>
-  .cursor-pointer {
-    cursor: pointer;
-  }
+    .cursor-pointer {
+        cursor: pointer;
+    }
 </style>
