@@ -7,22 +7,24 @@
     
     
     let {
-        itemTask,
+        task,
         id,
         column,
         index,
     }: {
-        itemTask: TaskItem;
+        task: TaskItem;
         id: string;
         column: string;
         index: number;
     } = $props();
-    
-    let task = { taskId: itemTask.taskId, taskListId: itemTask.taskListId, 
-        name: itemTask.name, description: itemTask.description, dueDate: itemTask.dueDate, 
-        currentStatus: itemTask.currentStatus };
 
-    console.log(`Task: ${JSON.stringify(itemTask, null, 2)}. id = ${id}. column = ${column}. Index = ${index}`)
+    $effect(() => {
+            task.currentStatus = column
+        });
+    
+    
+    // console.log(`Task: ${JSON.stringify(task, null, 2)}. id = ${id}. column = ${column}. Index = ${index}`)
+    
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -120,4 +122,6 @@
         font-size: 0.75rem;
         color: #9ca3af;
     }
+    
+    
 </style>

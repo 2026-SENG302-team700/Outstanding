@@ -49,7 +49,7 @@
         type: 'column',
     });
     
-// {console.log(`ItemId = ${itemId}. Column=${id}. task=${JSON.stringify(tasks[itemIndex], null, 2)}`)}    
+
     
 </script>
 
@@ -62,7 +62,7 @@
         {#each row as itemId, itemIndex (itemId)}
   
             <TaskBoardItem
-                    itemTask={tasks[itemId]}
+                    task={tasks[itemId]}
                     id={itemId}
                     column={id}
                     index={itemIndex}
