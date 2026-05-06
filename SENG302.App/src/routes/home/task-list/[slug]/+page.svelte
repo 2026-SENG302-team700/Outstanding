@@ -3,16 +3,17 @@
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount } from "svelte";
-  import { formatDate } from "$lib/datepicker/formatDate";
-  import TaskBoard from "$lib/components/task-board/task-board.svelte"
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskBoard from "$lib/components/task-board/task-board.svelte"
+  import { addToast } from "$lib/toast/toast.ts";
 
   let loading = $state(false);
   let boardView = $state(false);
-  
+
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -34,26 +35,27 @@
     taskRefs = move(taskRefs, event);
   }
 
-  function onDragEnd(event: any) {
+  async function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
     }
+    await reorderReloadTasks();
   }
-
-  /// <Summary>
-  /// Fetches tasks of the certain task list from the backend
-  /// and stores them in the frontend as an array of objects
-  /// <Summary>
+  
+  /**
+   * Fetches tasks of the certain task list from the backend
+   * and stores them in the frontend as an array of objects
+   */
   async function GetTasks() {
     try {
       loading = true;
       error = "";
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/${params.slug}`),
-        {
-          method: "GET",
-          credentials: "include",
-        },
+              resolve(`/api/taskItem/${params.slug}`), 
+              {
+                method: "GET",
+                credentials: "include",
+              },
       );
       const data = await response.json();
       if (!response.ok) {
@@ -69,21 +71,21 @@
     }
   }
 
-  /// <summary>
-  /// Creates a new task list for the user with the given name. Validates the name
-  /// before sending the request to the backend. If creation is successful, navigates
-  /// back to the home screen. If there is an error, displays the error message.
-  /// </summary>
+  /**
+   * Creates a new task list for the user with the given name. Validates the name
+   * before sending the request to the backend. If creation is successful, navigates
+   * back to the home screen. If there is an error, displays the error message.
+   */
   async function GetList() {
     try {
       loading = true;
       error = "";
       const response = await fetchWithCsrf(
-        resolve(`/api/taskList/${params.slug}` as any),
-        {
-          method: "GET",
-          credentials: "include",
-        },
+              resolve(`/api/taskList/${params.slug}` as any),
+              {
+                method: "GET",
+                credentials: "include",
+              },
       );
 
       const data = await response.json();
@@ -98,8 +100,32 @@
       loading = false;
     }
   }
+
+  /**
+   * Sends ordering information to backend to persist dnd changes.
+   */
+  async function reorderReloadTasks(): void {
+    const orderedIds = taskRefs.map(ref => tasks[ref].taskId);
+
+    try {
+      await fetchWithCsrf(resolve('/api/taskItem/order'), {
+        method: "PATCH",
+        credentials: "include",
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(orderedIds)
+      });
+    } catch (err) {
+      console.error(err);
+      addToast("An error occurred.", "error");
+    }
+
+  }
   
+  /**
+   * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
+   */
   async function toggleBoardView() {
+    GetTasks();
     if (boardView) {
       boardView = false;
     } else {
@@ -122,19 +148,19 @@
 <div class="container">
   <div style="display: flex; flex-direction: row; ">
     <h1
-      class="text-break text-center mb-4"
-      style="flex: 1; justify-content: center; width: 1270px"
+            class="text-break text-center mb-4"
+            style="flex: 1; justify-content: center; width: 1270px"
     >
       {listName}
     </h1>
   </div>
   <div class="mb-3 card-body d-flex justify-content-between align-items-center">
     <button
-      type="button"
-      class="btn btn-primary"
-      on:click={() =>
+            type="button"
+            class="btn btn-primary"
+            on:click={() =>
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
-      >Add Task
+    >Add Task
     </button>
     <button type="button"
             class="btn btn-secondary"
@@ -151,16 +177,16 @@
     </div>
   {:else}
     <div class="mb-3">
-    {#if boardView}
-       <TaskBoard tasks="{tasks}" />
-    {:else}
-      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-        <ul class="list">
-          {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
-          {/each}
-        </ul>
-      </DragDropProvider>
+      {#if boardView}
+        <TaskBoard tasks="{tasks}" />
+      {:else}
+        <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+          <ul class="list">
+            {#each taskRefs as taskRef, index (taskRef)}
+              <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+            {/each}
+          </ul>
+        </DragDropProvider>
       {/if}
     </div>
   {/if}
@@ -177,8 +203,8 @@
     cursor: pointer;
     box-shadow: 0px 0px 5px lightgrey;
     transition:
-      box-shadow 0.2s ease,
-      transform 0.1s ease;
+            box-shadow 0.2s ease,
+            transform 0.1s ease;
   }
 
   .task-card:hover {
@@ -308,15 +334,15 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
   }
-  
+
   .board-status-todo {
     border-left-color: grey;
   }
-  
+
   .board-status-inprogress {
     border-left-color: blue;
   }
-  
+
   .board-status-done {
     border-left-color: lightgreen;
   }

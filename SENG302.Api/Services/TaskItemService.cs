@@ -11,6 +11,7 @@ public interface ITaskItemService
     Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem, int userId);
     Task<TaskItem?> GetTaskItemAsync(int id, int userId);
     Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates, int userId);
+    Task ReorderTaskItemsAsync(List<int> orderedIds);
 }
 
 
@@ -165,7 +166,10 @@ public class TaskItemService : ITaskItemService
         {
             throw new MultipleValidationException(errors);
         }
-
+        
+        // gets order position of task in a task list
+        var orderPosition = await context.Set<TaskItem>().Where(t => t.TaskListId == taskItem.TaskListId).MaxAsync(t => (int?)t.OrderPosition) + 1 ?? 0;
+        
         // Add task item
         var newTask = new TaskItem()
         {
@@ -174,7 +178,8 @@ public class TaskItemService : ITaskItemService
             Description = taskItem.Description,
             CurrentStatus = taskItem.CurrentStatus,
             DueDate = taskItem.DueDate,
-            creationTime = DateTime.UtcNow
+            creationTime = DateTime.UtcNow,
+            OrderPosition = orderPosition
         };
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
@@ -189,7 +194,7 @@ public class TaskItemService : ITaskItemService
     public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
+        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).OrderBy(t => t.OrderPosition).ToListAsync();
 
         return taskItems;
     }
@@ -273,6 +278,18 @@ public class TaskItemService : ITaskItemService
         context.TaskItems.Update(taskItem);
         await context.SaveChangesAsync();
         return taskItem;
+    }
+
+    public async Task ReorderTaskItemsAsync(List<int> orderedIds)
+    {
+        await using var context =  await _dbContextFactory.CreateDbContextAsync();
+        var orderingDict = orderedIds.Select((id, index) => (id, index)).ToDictionary(x => x.id, x => x.index);
+        var items = await context.TaskItems.Where(t => orderedIds.Contains(t.TaskId)).ToListAsync();
+        foreach (var item in items)
+        {
+            item.OrderPosition = orderingDict[item.TaskId];
+        }
+        await context.SaveChangesAsync();
     }
 }
 
