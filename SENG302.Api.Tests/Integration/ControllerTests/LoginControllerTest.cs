@@ -5,7 +5,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 using Microsoft.AspNetCore.Identity;
-using SENG302.Api.Models.Requests;
+using SENG302.Api.Services;
+using SENG302.Api.Models.Entities;
+using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -226,8 +229,8 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         json.GetProperty("login").GetBoolean().ShouldBe(false);
         json.GetProperty("message").GetString().ShouldBe("Account is not validated yet, check your emails.");
     }
-    
-    
+
+
     [Fact]
     public async Task LoginUser_UnverifiedEmailTimedOut_Unauthorized()
     {
@@ -259,12 +262,99 @@ public class LoginControllerTest : BaseIntegrationTestFixture
         json.GetProperty("login").GetBoolean().ShouldBe(false);
         json.GetProperty("message").GetString().ShouldBe("Invalid email or password");
     }
-    
+
     [Fact]
     public async Task LogoutUser_ValidInformation_ReturnOk()
     {
         var response = await HttpClient.DeleteAsync("/api/logout");
-        
+
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    // [Fact]
+    // public async Task LoginUser_WithPendingResetToken_CancelsResetAndSendsEmail()
+    // {
+    //     // add a new user
+    //     await using var context = DbContextFactory.CreateDbContext();
+    //     PasswordHasher<User> passwordHasher = new();
+    //     var user = new User
+    //     {
+    //         Id = 1,
+    //         Email = "test@example.com",
+    //         DisplayName = "Test User",
+    //         Country = "NZ",
+    //         EmailVerified = true,
+    //         TimeCreated = DateTime.UtcNow
+    //     };
+    //     user.PasswordKey = passwordHasher.HashPassword(user, "P455word!");
+    //     context.Users.Add(user);
+    //     await context.SaveChangesAsync();
+
+    //     // simulate a pending reset token
+    //     await HttpClient.PostAsJsonAsync("/api/user/password/reset/code/generation", new
+    //     {
+    //         Email = "test@example.com"
+    //     });
+
+    //     // login
+    //     var response = await HttpClient.PostAsJsonAsync("/api/login", new
+    //     {
+    //         Email = "test@example.com",
+    //         PasswordString = "Team700!"
+    //     });
+
+    //     // check the login works
+    //     response.StatusCode.ShouldBe(HttpStatusCode.OK);
+    //     var content = await response.Content.ReadAsStringAsync();
+    //     var json = JsonSerializer.Deserialize<JsonElement>(content);
+    //     json.GetProperty("login").GetBoolean().ShouldBe(true);
+
+    //     // check email was sent, wait for the email template to be made
+    //     // await ServiceProvider.GetRequiredService<IEmailService>()
+    //     // .Received(1)
+    //     // .SendEmailAsync(
+    //     //     "test@example.com",
+    //     //     EmailTemplate.ResetCancelledWarning,
+    //     //     Arg.Any<Dictionary<string, string>>()
+    //     // );
+    // }
+
+    [Fact]
+    public async Task LoginUser_WithoutPendingResetToken_DoesNotSendWarningEmail()
+    {
+        // create a new user
+        await using var context = DbContextFactory.CreateDbContext();
+        PasswordHasher<User> passwordHasher = new();
+        var user = new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            Country = "NZ",
+            EmailVerified = true,
+            TimeCreated = DateTime.UtcNow
+        };
+        user.PasswordKey = passwordHasher.HashPassword(user, "Team700!");
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        // login
+        var response = await HttpClient.PostAsJsonAsync("/api/login", new
+        {
+            Email = "test@example.com",
+            PasswordString = "Team700!"
+        });
+
+        // check login works
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        // check an email was not sent (waiting on email template)
+        // await ServiceProvider.GetRequiredService<IEmailService>()
+        //     .DidNotReceive()
+        //     .SendEmailAsync(
+        //         "test@example.com",
+        //         EmailTemplate.ResetCancelledWarning,
+        //         Arg.Any<Dictionary<string, string>>()
+        //     );
     }
 }
