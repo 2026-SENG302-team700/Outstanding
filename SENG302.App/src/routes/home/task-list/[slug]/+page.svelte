@@ -9,8 +9,12 @@
   import type { TaskItem } from "$lib/types.js";
   import { saveSnapshot, retrieveSnapshot } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
+  import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskBoard from "$lib/components/task-board/task-board.svelte"
 
   let loading = $state(false);
+  let boardView = $state(false);
+  
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -86,8 +90,6 @@
     }
   }
 
-
-
   /// <summary>
   /// Creates a new task list for the user with the given name. Validates the name
   /// before sending the request to the backend. If creation is successful, navigates
@@ -118,6 +120,15 @@
     }
     
   }
+  
+  async function toggleBoardView() {
+    if (boardView) {
+      boardView = false;
+    } else {
+      boardView = true;
+    }
+  }
+  
 </script>
 
 <div class="container">
@@ -143,6 +154,12 @@
     >
       Undo Last Sorting
     </button>
+    <button type="button"
+            class="btn btn-secondary"
+            on:click={toggleBoardView}
+    >
+      See Task List
+    </button>
   </div>
 
   {#if loading && Object.keys(tasks).length === 0}
@@ -153,6 +170,9 @@
     </div>
   {:else}
     <div class="mb-3">
+        {#if boardView}
+            <TaskBoard tasks="{tasks}" />
+        {:else}
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
@@ -246,5 +266,76 @@
   .badge-done {
     background: white;
     color: lightgreen;
+  }
+
+  /* Board view */
+  .board-columns {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .board-column {
+    flex: 1;
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 10px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .column-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .status-todo-header {
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  .status-inprogress-header {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+  .status-done-header {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  .board-task-card {
+    background: white;
+    border: 1px solid lightgrey;
+    border-left: 4px solid white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+    transition:
+            box-shadow 0.2s ease,
+            transform 0.1s ease;
+    cursor: pointer;
+  }
+
+  .board-task-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .board-status-todo {
+    border-left-color: grey;
+  }
+  
+  .board-status-inprogress {
+    border-left-color: blue;
+  }
+  
+  .board-status-done {
+    border-left-color: lightgreen;
   }
 </style>
