@@ -473,16 +473,11 @@ public class UserController : ControllerBase
     {
         try
         {
-            var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
-            if (result.Principal == null)
-            {
-                await HttpContext.SignOutAsync("PasswordResetScheme");
-                return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
-            }
-            var userEmail = result.Principal.FindFirstValue(ClaimTypes.Email);
+            var userEmail = HttpContext.User?.FindFirstValue(ClaimTypes.Email);
+
             if (string.IsNullOrEmpty(userEmail))
             {
-                return Unauthorized(new { message = "Unable to find user from cookie" });
+                return Unauthorized(new { message = "Code is no longer valid, please ask for a new code." });
             }
 
             await _userService.ResetPasswordAsync(

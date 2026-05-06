@@ -72,6 +72,18 @@ public class UserControllerTests : BaseIntegrationTestFixture
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
+
+    private void SetupTempSessionContext(string email)
+    {
+        var claims = new[] { new Claim(ClaimTypes.Email, email) };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var principal = new ClaimsPrincipal(identity);
+        
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = principal }
+        };
+    }
     
     
 
@@ -441,11 +453,12 @@ public class UserControllerTests : BaseIntegrationTestFixture
         context.Users.Add(user); 
         await context.SaveChangesAsync(); 
         var userId = user.Id;
+        SetupTempSessionContext("test@example.com");
         
         
-        var request = new { NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
-        var response = await HttpClient.PutAsJsonAsync("/api/user/password/reset", request);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var request = new UpdatePasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
+        var response = await _controller.resetPassword(request);
+        response.ShouldBeOfType<OkResult>();
         
         var verifyContext = await  DbContextFactory.CreateDbContextAsync();
         PasswordHasher<User> passwordHasher = new(); 
