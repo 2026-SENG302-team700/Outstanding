@@ -75,6 +75,7 @@
 
 <style>
     .board-task-card {
+        display: inherit;
         background: white;
         border: 1px solid lightgrey;
         border-left: 4px solid white;
