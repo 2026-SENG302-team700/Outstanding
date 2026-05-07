@@ -26,24 +26,35 @@
     GetTasks();
   });
 
+  /**
+   * Creates a snapshot of the original ordering of list of items before the items are dragged
+   */
   function onDragStart() {
     snapshot = taskRefs.slice();
   }
 
+  /**
+   * Changes the task-ref list ordering based on where the task has been moved to
+   * @param event
+   */
   function onDragOver(event: any) {
     taskRefs = move(taskRefs, event);
   }
 
+  /**
+   * If the drag event is cancelled, resets the taskRefs to how the task board looked before the drag and drop
+   * @param event
+   */
   function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
     }
   }
 
-  /// <Summary>
-  /// Fetches tasks of the certain task list from the backend
-  /// and stores them in the frontend as an array of objects
-  /// <Summary>
+  /**
+   * Fetches tasks of the certain task list from the backend
+   *  and stores them in the frontend as an array of objects
+   */
   async function GetTasks() {
     try {
       loading = true;
@@ -69,11 +80,11 @@
     }
   }
 
-  /// <summary>
-  /// Creates a new task list for the user with the given name. Validates the name
-  /// before sending the request to the backend. If creation is successful, navigates
-  /// back to the home screen. If there is an error, displays the error message.
-  /// </summary>
+  /**
+   * Creates a new task list for the user with the given name. Validates the name
+   * before sending the request to the backend. If creation is successful, navigates
+   * back to the home screen. If there is an error, displays the error message.
+   */
   async function GetList() {
     try {
       loading = true;
@@ -98,7 +109,10 @@
       loading = false;
     }
   }
-  
+
+  /**
+   * Changes the board view from just list of tasks to tasks sorted by status
+   */
   async function toggleBoardView() {
     if (boardView) {
       boardView = false;
