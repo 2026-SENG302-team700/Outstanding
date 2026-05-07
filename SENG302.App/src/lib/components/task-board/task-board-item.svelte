@@ -21,7 +21,7 @@
 
     
     /**
-     * Returns the class name to apply the task card based on it's status
+     * Returns the CSS stylesheet class name to apply the task card based on it's status
      * @param taskStatus : Number representing the task status the column represents
      */
     function taskStatusStyling(taskStatus: number): string {
@@ -128,6 +128,4 @@
         font-size: 0.75rem;
         color: #9ca3af;
     }
-    
-    
 </style>

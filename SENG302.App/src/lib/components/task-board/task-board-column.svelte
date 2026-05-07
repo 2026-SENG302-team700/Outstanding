@@ -15,11 +15,10 @@
         row: number[];
         tasks: Record<number, TaskItem>;
     } = $props();
-
-    /**
-     * 
-     * @param taskStatus : number - The number to return based on 
-     */
+    
+    /** 
+     * Turns taskStatus number to string to be displayed as a column header
+     * **/
     function taskStatusToString(taskStatus: number): string {
         if (taskStatus == 0) {
             return "Todo";
@@ -33,9 +32,8 @@
     }
 
     /**
-     * Returns the class name to apply the column header based on it's status
-     * @param taskStatus : Number representing the task status the column represents
-     */
+     * Turns taskStatus number to string to representing a CSS stylesheet class.
+     * **/
     function columnHeaderStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo-header";
