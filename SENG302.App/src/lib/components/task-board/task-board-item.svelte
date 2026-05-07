@@ -62,7 +62,7 @@
 
 <div
     {@attach sortable.attach}
-    class="board-task-card {taskStatusStyling(column)}"
+    class="board-task-card {taskStatusStyling(parseInt(column))}"
     tabindex="0"
     role="button"
     onclick={() => goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}
@@ -87,6 +87,7 @@
         border-left: 4px solid white;
         border-radius: 8px;
         padding: 8px 12px;
+        margin-bottom: 5px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
         transition:
                 box-shadow 0.2s ease,
