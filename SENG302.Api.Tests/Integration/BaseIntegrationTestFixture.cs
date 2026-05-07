@@ -10,6 +10,7 @@ using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Services;
+using Reqnroll.Assist;
 
 namespace SENG302.Api.Tests.Integration;
 
@@ -40,7 +41,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
         FakeTimeProvider = new FakeTimeProvider(TestNow);
         FakeTestDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-        
+
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
@@ -57,7 +58,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                     }
                 });
             });
-            
+
             // There are some changes we need to make between how our app is configured normally, and how it should be configured for tests
             // In our tests, we want to mock / fake some things, or completely replace others
             config.ConfigureTestServices(services =>
@@ -74,7 +75,7 @@ public abstract class BaseIntegrationTestFixture : IClassFixture<WebApplicationF
                 services.AddSingleton<TimeProvider>(FakeTimeProvider);
                 services.AddSingleton<IEmailService>(Substitute.For<IEmailService>());
 
-                // Replace authentication with test auth
+                // Replace authentication with test auth and add the reset password authentication test scheme
                 services.AddAuthentication("Test").AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
             });
         });
