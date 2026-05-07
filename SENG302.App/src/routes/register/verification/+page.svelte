@@ -213,7 +213,6 @@
                     ResendingCode: false,
                 });
             }
-
             const response = await fetchWithCsrf(
                 resolve(`/api/register/code/generation`),
                 {

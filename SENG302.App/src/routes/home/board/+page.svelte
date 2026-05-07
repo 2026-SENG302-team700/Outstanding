@@ -18,11 +18,14 @@
   let error = $state("");
   
   
-
+  
   onMount(() => {
     fetchAllTasks();
   });
 
+  /**
+   * Fetches all tasks from the backend
+   */
   async function fetchAllTasks() {
     try {
       loading = true;
@@ -43,8 +46,6 @@
     }
   }
   
-  
-
   
 </script>
 

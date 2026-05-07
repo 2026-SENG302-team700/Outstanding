@@ -16,7 +16,9 @@
         tasks: Record<number, TaskItem>;
     } = $props();
     
-    
+    /** 
+     * Turns taskStatus number to string to be displayed as a column header
+     * **/
     function taskStatusToString(taskStatus: number): string {
         if (taskStatus == 0) {
             return "Todo";
@@ -28,7 +30,10 @@
             return "Done";
         }
     }
-    
+
+    /**
+     * Turns taskStatus number to string to representing a CSS stylesheet class.
+     * **/
     function columnHeaderStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo-header";
@@ -40,7 +45,7 @@
             return "status-done-header";
         }
     }
-
+    
     const droppable = createDroppable({
         get id() { return id; },
         get index() { return index; },
@@ -49,7 +54,7 @@
         type: 'column',
     });
     
-// {console.log(`ItemId = ${itemId}. Column=${id}. task=${JSON.stringify(tasks[itemIndex], null, 2)}`)}    
+
     
 </script>
 
@@ -62,7 +67,7 @@
         {#each row as itemId, itemIndex (itemId)}
   
             <TaskBoardItem
-                    itemTask={tasks[itemId]}
+                    task={tasks[itemId]}
                     id={itemId}
                     column={id}
                     index={itemIndex}
