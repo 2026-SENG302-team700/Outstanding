@@ -11,7 +11,7 @@
   import type { TaskItem } from "$lib/types.js";
 
   let loading = $state(false);
-  let boardView = $state(false);
+  let boardView = $state(false); 
   
   let listName = $state();
   let taskRefs: number[] = $state([]);
