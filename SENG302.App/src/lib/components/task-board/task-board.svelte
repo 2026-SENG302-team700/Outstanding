@@ -16,12 +16,12 @@
         tasks: TaskItem[];
     } = $props();
 
-    // Creating this taskMap and passing it to the column component to be used to index tasks was inspired by Claude AI
+    // Creating this taskMap of task Id to task object & passing it to the column component to be used to index tasks was inspired by Claude AI
     const taskMap: Record<number, TaskItem> = Object.fromEntries(
         tasks.map(t => [t.taskId, t])
     );
     
-    
+    // Creates a record (Map/Dictionary) of the status to the list of task Id's with that status
     const initialTasks: Record<number, number[]> = {
         0: tasks.filter((t) => t.currentStatus === 0).map((_: TaskItem, index: number) => _.taskId).slice(),
         1: tasks.filter((t) => t.currentStatus === 1).map((_: TaskItem, index: number) => _.taskId).slice(),
@@ -33,8 +33,13 @@
 
     const columns = Object.keys(initialTasks);
     let snapshot = $state(structuredClone(initialTasks));
-    
-    
+
+    /**
+     * sensors are used to detect user input via mouse, touch and keyboard.
+     * PointerSensor is for mouse, keyboard and stylus, KeyboardSensor is self explanatory.
+     * activatorElements are the objects that the Pointer can initiate a drag operation with. (in our case, its
+     * the grab handles on the task.)
+     */
     const sensors = [
         PointerSensor.configure({
             activatorElements(source) {
@@ -45,14 +50,12 @@
     ];
 
     /**
-     * Update tasks current status
+     * Updates the tasks current status
      * @param task to be updated 
      * @param column which represents the new task status
      */
     async function updateTask(task: TaskItem, curStatus: string) {
-        console.log(task)
-        console.log(curStatus)
-        let currentStatus: number = parseInt(curStatus);
+        let status: number = parseInt(curStatus);
         try {
             const response = await fetchWithCsrf(
                 resolve(`/api/taskItem/item/${task.taskId}` as any),
@@ -67,7 +70,7 @@
                         name: task.name,
                         description: task.description,
                         dueDate: task.dueDate || null,
-                        currentStatus
+                        currentStatus: status
                     }),
                 },
             );
@@ -79,18 +82,30 @@
             addToast(`Failed to update task: ${err.message}`);
         }
     }
-    
-    
+
+    /**
+     * creates a new copy of the snapshot every time a task item is dragged
+     */
     function onDragStart() {
         snapshot = $state.snapshot(tasksForSnapshot);
     }
     
+
+    /**
+     * takes an event (drag operation). then checks what it is dragging,
+     * In this case, we can only drag a task, and it calls the "move" function
+     * @param event
+     */
     function onDragOver(event: any) {
-        const { source } = event.operation;
-        if (source && source.type==="column") return;
         tasksForSnapshot = move(tasksForSnapshot, event)
     }
-    
+
+    /**
+     * if the drag event is cancelled, then revert back to the original copy.
+     * Otherwise, if the status of the task is changed, it will find the status whose tasks is changed and call the
+     * updateTask function to update it in the backend.
+     * @param event 
+     */
     async function onDragEnd(event: any) {
         const {source} = event.operation;
         if (event.cancelled) {
@@ -138,20 +153,3 @@
         align-items: flex-start;
     }
 </style>
-
-
-<!--<TaskBoardColumn taskStatus=0>-->
-<!--    {#each tasks.filter((t) => t.currentStatus === 0) as task}-->
-<!--        <TaskBoardItem task={task} />-->
-<!--    {/each}-->
-<!--</TaskBoardColumn>-->
-<!--<TaskBoardColumn taskStatus=1>-->
-<!--    {#each tasks.filter((t) => t.currentStatus === 1) as task}-->
-<!--        <TaskBoardItem task={task} />-->
-<!--    {/each}-->
-<!--</TaskBoardColumn>-->
-<!--<TaskBoardColumn taskStatus=2>-->
-<!--    {#each tasks.filter((t) => t.currentStatus === 2) as task}-->
-<!--        <TaskBoardItem task={task} />-->
-<!--    {/each}-->
-<!--</TaskBoardColumn>-->

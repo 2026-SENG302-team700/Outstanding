@@ -15,8 +15,11 @@
         row: number[];
         tasks: Record<number, TaskItem>;
     } = $props();
-    
-    
+
+    /**
+     * 
+     * @param taskStatus : number - The number to return based on 
+     */
     function taskStatusToString(taskStatus: number): string {
         if (taskStatus == 0) {
             return "Todo";
@@ -28,7 +31,11 @@
             return "Done";
         }
     }
-    
+
+    /**
+     * Returns the class name to apply the column header based on it's status
+     * @param taskStatus : Number representing the task status the column represents
+     */
     function columnHeaderStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo-header";
@@ -40,7 +47,7 @@
             return "status-done-header";
         }
     }
-
+    
     const droppable = createDroppable({
         get id() { return id; },
         get index() { return index; },

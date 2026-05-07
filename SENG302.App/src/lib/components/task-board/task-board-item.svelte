@@ -17,14 +17,13 @@
         column: string;
         index: number;
     } = $props();
+    
 
-    $effect(() => {
-            task.currentStatus = column
-        });
     
-    
-    // console.log(`Task: ${JSON.stringify(task, null, 2)}. id = ${id}. column = ${column}. Index = ${index}`)
-    
+    /**
+     * Returns the class name to apply the task card based on it's status
+     * @param taskStatus : Number representing the task status the column represents
+     */
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -37,6 +36,12 @@
         }
     }
 
+    /**
+     * Shortens the description to be displayed on the task cards if it is too long, 
+     * replacing a slice of the description after a certain character count with '...'
+     * @param text - The text being displayed
+     * @param length - The character length up to which we display description, replacing everything after with '...'
+     */
     function shortenDesc(text: string | null, length: number) {
         if (!text) return "No description";
         if (text.length <= length) return text;
