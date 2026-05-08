@@ -1,8 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
-
-namespace SENG302.Api.Models.Entities;
+namespace SENG302.Api.Models.Requests.Password;
 
 /// <summary>
 /// A class representing a request to update the users password
@@ -11,7 +7,7 @@ namespace SENG302.Api.Models.Entities;
 /// </summary>
 public class UpdatePasswordRequest
 {
-    public string OldPassword { get; set; } = "";
+    public string OldPassword { get; set; }
     public required string NewPassword { get; set; }
     public required string NewPasswordConfirm { get; set; }
 }
