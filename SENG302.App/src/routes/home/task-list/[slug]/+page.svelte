@@ -9,6 +9,7 @@
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { page } from "$app/state";
 
   let loading = $state(false);
   let boardView = $state(false); 
@@ -25,6 +26,20 @@
     GetList();
     GetTasks();
   });
+
+  /**
+   * Trigger when url changes, checks params to see what page view needs to be loaded
+  */
+  $effect(() => {
+    let query = page.url.searchParams.get("mode");
+    if (query != "board-view") {
+      boardView = false;
+    }
+    else {
+      boardView = true;
+    }
+    GetTasks();
+  })
 
   /**
    * Creates a snapshot of the original ordering of list of items before the items are dragged
@@ -98,7 +113,7 @@
       );
 
       const data = await response.json();
-      if (!response.ok) {
+      if (!response.ok) {false
         error = data || "Failed to get list.";
         return;
       }
@@ -111,13 +126,15 @@
   }
 
   /**
-   * Changes the board view from just list of tasks to tasks sorted by status
+   * Changes the url to add board view as a param
    */
   async function toggleBoardView() {
-    if (boardView) {
-      boardView = false;
-    } else {
-      boardView = true;
+    let query = page.url.searchParams.get("mode");
+    if (query == "board-view") {
+      goto(resolve(`/home/task-list/${params.slug}`))
+    }
+    else {
+      goto(resolve(`/home/task-list/${params.slug}/?mode=board-view`))
     }
   }
 
@@ -152,7 +169,7 @@
     </button>
     <button type="button"
             class="btn btn-secondary"
-            on:click={toggleBoardView}
+            on:click={() => toggleBoardView()}
     >
       See Task List
     </button>
