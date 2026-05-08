@@ -76,9 +76,10 @@ public class TaskItemService : ITaskItemService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         return await context.Set<TaskItem>()
-        .Where(t => context.Set<TaskList>()
+            .Where(t => context.Set<TaskList>()
             .Any(l => l.Id == t.TaskListId && l.UserId == userId))
-        .ToListAsync();
+            .OrderBy(t => t.OrderPosition)
+            .ToListAsync();
     }
 
     /// <summary>

@@ -160,4 +160,66 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         var result = await ServiceUnderTest.GetTaskItemAsync(-1, 1);
         result.ShouldBeNull();
     }
+    
+    [Fact]
+    public async Task ReorderTaskItemsAsync_ValidOrdering_SetsOrderingPosition()
+    {
+        await SetupUserAndList(1, 1);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.TaskItems.AddRange(
+            new TaskItem {
+                TaskId = 1,
+                TaskListId = 1,
+                Name = "task 1",
+                Description = ""
+            },
+            new TaskItem {
+                TaskId = 2,
+                TaskListId = 1,
+                Name = "task 2",
+                Description = ""
+            },
+            new TaskItem {
+                TaskId = 3,
+                TaskListId = 1,
+                Name = "task 3",
+                Description = ""
+            }
+        );
+        
+        await context.SaveChangesAsync();
+
+        await ServiceUnderTest.ReorderTaskItemsAsync([3, 1, 2]);
+        var taskItems = (await ServiceUnderTest.GetTaskItemsByListAsync(1)).ToList();
+        
+        taskItems.Count.ShouldBe(3);
+        taskItems[0].TaskId.ShouldBe(3);
+        taskItems[1].TaskId.ShouldBe(1);
+        taskItems[2].TaskId.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task ReorderTaskItemsAsync_NoTaskItems_NoChangesInDB()
+    {
+        await SetupUserAndList(1, 1);
+        
+        await using var context = DbContextFactory.CreateDbContext();
+        context.TaskItems.Add(
+            new TaskItem
+            {
+                TaskId = 1,
+                TaskListId = 1,
+                Name = "task 1",
+                Description = "",
+                OrderPosition = 8
+            }
+        );
+        await context.SaveChangesAsync();
+        
+        await ServiceUnderTest.ReorderTaskItemsAsync([]);
+
+        var taskItem = await ServiceUnderTest.GetTaskItemAsync(1, 1);
+        taskItem.OrderPosition.ShouldBe(8);
+    }
 }
