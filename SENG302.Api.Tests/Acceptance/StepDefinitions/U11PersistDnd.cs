@@ -18,22 +18,6 @@ public class U11PersistDnd
         _fixture = fixture;
     }
 
-    //[Given(@"I am a registered user")]
-    //public async Task GivenIAmARegisteredUser()
-    //{
-    //    await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
-    //    context.Users.Add(new User                                                                                            
-    //        {
-    //            Email = "test@example.com",                                                                                       
-    //            DisplayName = "Tipene",
-    //            PasswordKey = "password",                                                                                         
-    //            Country = "NZ"                                                                                                    
-    //        }
-    //    );
-    //    await context.SaveChangesAsync();
-    //    _fixture.CurrentUserId = 1;
-    //}
-
     [Given(@"I have a task list")]
     public async Task GivenIHaveATaskList()
     {
