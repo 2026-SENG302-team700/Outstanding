@@ -93,7 +93,7 @@ public class UserService : IUserService
         var swearList = profanityFilter.DetectAllProfanities(displayName);
         if (swearList.Count > 0)
         {
-            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities";
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
         }
 
         return errors;
