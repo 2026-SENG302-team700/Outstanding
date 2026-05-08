@@ -74,7 +74,7 @@
         <span class="due-date">
             🗓 {task.dueDate === null
                 ? "No Due Date"
-                : formatDate(task.dueDate.toDateString())}
+                : formatDate(task.dueDate)}
         </span>
     </div>
 </div>
