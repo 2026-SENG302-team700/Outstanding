@@ -2,6 +2,8 @@ using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Resources.Helpers;
+using SENG302.Api.Models.Requests;
+
 
 namespace SENG302.Api.Services;
 
@@ -40,6 +42,7 @@ public class TaskItemService : ITaskItemService
         {
             errors["name"] = "Title is required and must be between 3 and 128 characters long";
         }
+
 
 
         if (_profanityTools.ContainsProfanity(name, profanityFiltering)) errors["name"] = "Title cannot contain profanity.";
@@ -142,24 +145,25 @@ public class TaskItemService : ITaskItemService
 
         foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
         {
-            errors[key] = value;
+            errors.Add(key, value);
         }
 
         foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
         {
-            errors[key] = value;
+            errors.Add(key, value);
         }
 
         foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
         {
-            errors[key] = value;
+            errors.Add(key, value);
         }
 
         ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
 
         if (errors.Count > 0)
         {
-            throw new MultipleValidationException(errors);
+
+
         }
 
         // Add task item
