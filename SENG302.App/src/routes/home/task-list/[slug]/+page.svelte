@@ -129,14 +129,12 @@
    * Sends ordering information to backend to persist dnd changes.
    */
   async function reorderReloadTasks(): void {
-    const orderedIds = taskRefs.map(ref => tasks[ref].taskId);
-
     try {
       await fetchWithCsrf(resolve('/api/taskItem/order'), {
         method: "PATCH",
         credentials: "include",
         headers: {'content-type': 'application/json'},
-        body: JSON.stringify(orderedIds)
+        body: JSON.stringify(taskRefs)
       });
     } catch (err) {
       console.error(err);

@@ -12,7 +12,6 @@
         index: number;
         task: TaskItem;
     } = $props();
-    console.log(task)
     const sortable = createSortable({
         get id() {
             return id;
