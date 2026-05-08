@@ -2,17 +2,19 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
+  import { addToast, toasts } from "$lib/toast/toast.js";
   import { page } from "$app/state";
 
   let loading = $state(false);
-  let boardView = $state(false); 
+  let boardView = $state(false);
   
   let listName = $state();
   let taskRefs: number[] = $state([]);
@@ -25,6 +27,10 @@
   onMount(() => {
     GetList();
     GetTasks();
+  });
+  
+  onDestroy(() => {
+    clearSnapshotHistory();
   });
 
   /**
@@ -64,6 +70,25 @@
     if (event.canceled) {
       taskRefs = snapshot;
     }
+    saveSnapshot(snapshot);
+  }
+
+  /**
+   * get the past history and show the corrosponding toast depending on the situation 
+   */
+  function handleUndo() {
+    let retrievedSnapshot = retrieveSnapshot();
+    if (retrievedSnapshot.snapshot.length === 0) { 
+      if (retrievedSnapshot.snapshotFlag === false) {
+        addToast("No sorting to undo", "error")
+        return;
+      }
+      if (retrievedSnapshot.snapshotFlag === true) {
+        addToast("Cannot undo more than 5 sorting", "error")
+        return;
+      }
+    }
+    taskRefs = retrievedSnapshot.snapshot;
   }
 
   /**
@@ -87,7 +112,7 @@
         return;
       }
       tasks = data;
-      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
+      taskRefs = data.map(task => task.taskId);
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -113,7 +138,7 @@
       );
 
       const data = await response.json();
-      if (!response.ok) {false
+      if (!response.ok) {
         error = data || "Failed to get list.";
         return;
       }
@@ -129,6 +154,7 @@
    * Changes the url to add board view as a param
    */
   async function toggleBoardView() {
+      clearSnapshotHistory();  
     let query = page.url.searchParams.get("mode");
     if (query == "board-view") {
       goto(resolve(`/home/task-list/${params.slug}`))
@@ -138,16 +164,7 @@
     }
   }
 
-  /**
-   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
-   * @param text the description to shorten
-   * @param length length of description to cut down too
-   */
-  function shortenDesc(text: string | null, length: number) {
-    if (!text) return "No Description";
-    if (text.length <= length) return text;
-    return text.slice(0, length) + "...";
-  }
+  
 </script>
 
 <div class="container">
@@ -167,12 +184,21 @@
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
       >Add Task
     </button>
-    <button type="button"
-            class="btn btn-secondary"
-            on:click={() => toggleBoardView()}
-    >
-      See Task List
-    </button>
+    <div>
+      <button type="button"
+              class="btn btn-outline-info"
+              on:click={toggleBoardView}
+      >
+        See Task List
+      </button>
+      <button type="button"
+              class="btn btn-outline-warning"
+              on:click={handleUndo}
+      >
+        Undo Last Sorting
+      </button>
+      
+    </div>
   </div>
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
@@ -182,17 +208,17 @@
     </div>
   {:else}
     <div class="mb-3">
-        {#if boardView}
-            <TaskBoard tasks="{tasks}" />
-        {:else}
-          <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-            <ul class="list">
-              {#each taskRefs as taskRef, index (taskRef)}
-                <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
-              {/each}
-            </ul>
-          </DragDropProvider>
-        {/if}  
+    {#if boardView}
+       <TaskBoard tasks="{tasks}" />
+    {:else}
+      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+        <ul class="list">
+          {#each taskRefs as taskRef, index (taskRef)}
+            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+          {/each}
+        </ul>
+      </DragDropProvider>
+    {/if}
     </div>
   {/if}
 </div>
