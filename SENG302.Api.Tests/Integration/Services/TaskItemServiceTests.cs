@@ -160,6 +160,135 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         var result = await ServiceUnderTest.GetTaskItemAsync(-1, 1);
         result.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task GetTaskItemAsync_ProfanityFilterEnabled_CensorsNameAndDescription()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "NZ",
+            ProfanityFiltering = true
+        });
+        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        var task = new TaskItem
+        {
+            TaskListId = 1,
+            Name = "shit task",
+            Description = "this is shit",
+            CurrentStatus = CurrentTaskStatus.Todo,
+            creationTime = DateTimeOffset.UtcNow
+        };
+        context.TaskItems.Add(task);
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.GetTaskItemAsync(task.TaskId, 1);
+
+        result.ShouldNotBeNull();
+        result!.Name.ShouldNotContain("shit");
+        result.Description.ShouldNotContain("shit");
+    }
+
+    [Fact]
+    public async Task GetTaskItemAsync_ProfanityFilterDisabled_DoesntCensorNameAndDescription()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "NZ",
+            ProfanityFiltering = false
+        });
+        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        var task = new TaskItem
+        {
+            TaskListId = 1,
+            Name = "shit task",
+            Description = "this is shit",
+            CurrentStatus = CurrentTaskStatus.Todo,
+            creationTime = DateTimeOffset.UtcNow
+        };
+        context.TaskItems.Add(task);
+        await context.SaveChangesAsync();
+
+        var result = await ServiceUnderTest.GetTaskItemAsync(task.TaskId, 1);
+
+        result.ShouldNotBeNull();
+        result!.Name.ShouldContain("shit");
+        result.Description.ShouldContain("shit");
+    }
+
+    [Fact]
+    public async Task GetTaskItemsByListAsync_ProfanityFilterEnabled_CensorsTasks()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "NZ",
+            ProfanityFiltering = true
+        });
+        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        var task = new TaskItem
+        {
+            TaskListId = 1,
+            Name = "shit task",
+            Description = "this is shit",
+            CurrentStatus = CurrentTaskStatus.Todo,
+            creationTime = DateTimeOffset.UtcNow
+        };
+        context.TaskItems.Add(task);
+        await context.SaveChangesAsync();
+
+        var results = await ServiceUnderTest.GetTaskItemsByListAsync(1, 1);
+
+        results.ShouldNotBeEmpty();
+        results.First().Name.ShouldNotContain("shit");
+        results.First().Description.ShouldNotContain("shit");
+    }
+
+    [Fact]
+    public async Task GetTaskItemsByListAsync_ProfanityFilterDisabled_DoesntCensorsTasks()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@test.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "NZ",
+            ProfanityFiltering = false
+        });
+        context.TaskLists.Add(new TaskList { Id = 1, Name = "Test List", UserId = 1 });
+        var task = new TaskItem
+        {
+            TaskListId = 1,
+            Name = "shit task",
+            Description = "this is shit",
+            CurrentStatus = CurrentTaskStatus.Todo,
+            creationTime = DateTimeOffset.UtcNow
+        };
+        context.TaskItems.Add(task);
+        await context.SaveChangesAsync();
+
+        var results = await ServiceUnderTest.GetTaskItemsByListAsync(1, 1);
+
+        results.ShouldNotBeEmpty();
+        results.First().Name.ShouldContain("shit");
+        results.First().Description.ShouldContain("shit");
+    }
+
     
     [Fact]
     public async Task ReorderTaskItemsAsync_ValidOrdering_SetsOrderingPosition()

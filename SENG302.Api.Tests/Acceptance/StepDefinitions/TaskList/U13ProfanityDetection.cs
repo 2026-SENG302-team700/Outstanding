@@ -4,6 +4,7 @@ using Reqnroll;
 using Shouldly;
 using SENG302.Api.Tests.Acceptance.Setup;
 using SENG302.Api.Models.Entities;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace SENG302.Api.Tests.Acceptance.StepDefinitions.TaskList;
 
@@ -12,6 +13,8 @@ public class U13ProfanityDetection
 {
     private readonly AcceptanceTestFixture _fixture;
     private HttpResponseMessage? _lastResponse;
+    private string? _taskListName;
+
 
     public U13ProfanityDetection(AcceptanceTestFixture fixture)
     {
@@ -59,6 +62,38 @@ public class U13ProfanityDetection
         // no setup needed
     }
 
+    [Given(@"I have a task list with the name {string}")]
+    public async Task GivenIHaveATaskListWithTheName(string name)
+    {
+        _taskListName = name;
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        context.TaskLists.Add(new Models.Entities.TaskList
+        {
+            Id = 1,
+            Name = name,
+            UserId = 1
+        });
+        await context.SaveChangesAsync();
+    }
+
+    [When(@"I disable the profanity filter")]
+    public async Task WhenIDisableTheProfanityFilter()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(1);
+        user!.ProfanityFiltering = false;
+        await context.SaveChangesAsync();
+    }
+
+    [When(@"I enable the profanity filter")]
+    public async Task WhenIEnableTheProfanityFilter()
+    {
+        await using var context = await _fixture.DbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(1);
+        user!.ProfanityFiltering = true;
+        await context.SaveChangesAsync();
+    }
+
     [When(@"I create a task list with the name (.*)")]
     public async Task WhenICreateATaskListWithTheName(string name)
     {
@@ -73,6 +108,25 @@ public class U13ProfanityDetection
     {
         _lastResponse.ShouldNotBeNull();
         _lastResponse!.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Then(@"the task list name should be displayed with stars")]
+    public async Task ThenTheTaskListNameShouldBeDisplayedWithStars()
+    {
+        var response = await _fixture.HttpClient.GetAsync("/api/taskList");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.TaskList>>();
+        lists!.First().Name.ShouldNotContain("shit");
+        lists.First().Name.ShouldContain("*");
+    }
+
+    [Then(@"the task list name should be displayed as-is")]
+    public async Task ThenTheTaskListNameShouldBeDisplayedAsIs()
+    {
+        var response = await _fixture.HttpClient.GetAsync("/api/taskList");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var lists = await response.Content.ReadFromJsonAsync<List<Models.Entities.TaskList>>();
+        lists!.First().Name.ShouldBe(_taskListName);
     }
 
     [Then(@"the error message should say {string}")]
