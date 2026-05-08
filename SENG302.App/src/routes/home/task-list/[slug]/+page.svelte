@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
