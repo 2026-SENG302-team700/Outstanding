@@ -575,6 +575,7 @@
                         <DisplayNameForm
                             bind:displayName
                             error={errors.displayName}
+                            registering={false}
                         />
                     </div>
                     <div class="mb-3">

@@ -189,7 +189,6 @@
             localStorage.setItem("email", email);
             goto(resolve(`/register/verification`));
         } catch (err) {
-            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
@@ -215,6 +214,7 @@
                     bind:displayName
                     error={errors.displayName}
                     {loading}
+                    registering={true}
             />
         </div>
         <div class="mb-3">
