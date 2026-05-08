@@ -3,6 +3,29 @@ Feature: U13 - As Sarah I want task list titles to be moderated so that I can re
     Background:
         Given I am a registered user
 
+    Scenario Outline: AC1.1 - Existing profanity is censored when profanity filter is enabled
+        Given I have a task list with the name "<inappropriate-name>"
+        When I enable the profanity filter
+        Then the task list name should be displayed with stars
+
+        Examples:
+            | inappropriate-name |
+            | shit list          |
+            | fuck list          |
+            | damn               |
+
+    Scenario Outline: AC2.1 - Existing profanity is shown as-is when profanity filter is disabled
+        Given I have a task list with the name "<inappropriate-name>"
+        And I have the profanity filter enabled
+        When I disable the profanity filter
+        Then the task list name should be displayed as-is
+
+        Examples:
+            | inappropriate-name |
+            | shit list          |
+            | fuck list          |
+            | damn               |
+
     Scenario Outline: AC3.1 - Cannot create a task list with profanity when profanity filter is enabled
         Given I have the profanity filter enabled
         And I am on the create task list form
@@ -27,3 +50,4 @@ Feature: U13 - As Sarah I want task list titles to be moderated so that I can re
             | shit list          |
             | fuck list          |
             | damn               |
+

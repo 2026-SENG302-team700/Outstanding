@@ -3,14 +3,14 @@
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount, onDestroy } from "svelte";
+  import { formatDate } from "$lib/datepicker/formatDate";
+  import TaskBoard from "$lib/components/task-board/task-board.svelte"
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
   import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
-  import { formatDate } from "$lib/datepicker/formatDate";
-  import TaskBoard from "$lib/components/task-board/task-board.svelte"
 
   let loading = $state(false);
   let boardView = $state(false);
@@ -133,6 +133,17 @@
       boardView = true;
     }
   }
+
+  /**
+   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
+   * @param text the description to shorten
+   * @param length length of description to cut down too
+   */
+  function shortenDesc(text: string | null, length: number) {
+    if (!text) return "No Description";
+    if (text.length <= length) return text;
+    return text.slice(0, length) + "...";
+  }
   
 </script>
 
@@ -178,17 +189,17 @@
     </div>
   {:else}
     <div class="mb-3">
-      {#if boardView}
-          <TaskBoard tasks="{tasks}" />
-      {:else}
-        <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-          <ul class="list">
-            {#each taskRefs as taskRef, index (taskRef)}
-              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
-            {/each}
-          </ul>
-        </DragDropProvider>
-        {/if}
+    {#if boardView}
+       <TaskBoard tasks="{tasks}" />
+    {:else}
+      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+        <ul class="list">
+          {#each taskRefs as taskRef, index (taskRef)}
+            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+          {/each}
+        </ul>
+      </DragDropProvider>
+      {/if}
     </div>
   {/if}
 </div>
