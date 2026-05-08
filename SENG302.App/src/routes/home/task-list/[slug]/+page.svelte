@@ -7,7 +7,7 @@
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
-  import { saveSnapshot, retrieveSnapshot } from "$lib/snapshot-handling/snapshot-handler";
+  import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
   import { formatDate } from "$lib/datepicker/formatDate";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
@@ -26,6 +26,10 @@
   onMount(() => {
     GetList();
     GetTasks();
+  });
+  
+  onDestroy(() => {
+    clearSnapshotHistory();
   });
 
   function onDragStart() {
@@ -122,6 +126,7 @@
   }
   
   async function toggleBoardView() {
+    clearSnapshotHistory();
     if (boardView) {
       boardView = false;
     } else {

@@ -28,3 +28,11 @@ export function retrieveSnapshot(): snapshotRetrieval {
   }
   return snapshot;
 }
+
+/**
+ * Clears snapshot history
+ */
+export function clearSnapshotHistory(): void {
+  hasHistoryHappened = false;
+  taskListSnapshots = [];
+}
