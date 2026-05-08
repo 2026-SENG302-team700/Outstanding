@@ -20,6 +20,7 @@
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
+    let loadingStatus = $state(0);
     let confirmResetEmail = $state("");
     let digit1 = $state("");
     let digit2 = $state("");
@@ -41,6 +42,7 @@
         passwordErrorIndicator: false,
         resetEmail: "",
         codeFormEmail: "",
+        sendError: "",
     });
 
     onMount(async () => {
@@ -177,6 +179,7 @@
     async function sendVerificationCode() {
         // reset error
         errors.resetEmail = "";
+        loadingStatus = 1;
 
         // Validate email on front end
         let valid = true;
@@ -194,17 +197,14 @@
         }
 
         if (!valid) {
+            loadingStatus = 0;
             return;
         }
 
-        // Send email to backend for further validation and sending of code
-        currentModalStep = "verify";
-
-        startTimerCountdown();
-        clearResetCodeModalFields();
+        loadingStatus = 1;
 
         try {
-            console.log(email);
+            console.log("start");
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset/code/generation`),
                 {
@@ -220,18 +220,51 @@
 
             if (response.ok) {
                 addToast("Password reset email sent", "success");
+
+                console.log("end");
+                currentModalStep = "verify";
+
+                startTimerCountdown();
+                clearResetCodeModalFields();
             } else {
                 const data = await response.json().catch(() => null);
-                errors.codeError = data?.message || "Failed to send code.";
+                errors.resetEmail = data?.message || "Failed to send code.";
             }
         } catch (err) {
-            /*
-             * This won't be displayed as we have already moved to the verify step
-             * However if we wait for confirmation that the email sent, then time taken
-             * can be used to work out what emails have accounts which we are trying to avoid
-             */
-            errors.codeError = "Failed to send code " + (err as Error).message;
+            errors.resetEmail = "Failed to send code " + (err as Error).message;
         }
+
+        loadingStatus = 0;
+    }
+
+    async function cancelCode() {
+        errors.codeError = "";
+        loadingStatus = 2;
+
+        const response = await fetchWithCsrf(
+            `/api/user/password/reset/code/cancel`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    Email: resetEmail,
+                }),
+            },
+        );
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            errors.codeError = data?.message;
+        } else {
+            currentModalStep = "update";
+            // Remove before merging
+            authModal.hide();
+        }
+
+        loadingStatus = 0;
     }
 
     /**
@@ -240,12 +273,14 @@
      * Checks that the code is valid
      */
     async function checkCode() {
+        loadingStatus = 3;
         try {
             errors.codeError = "";
-            errors.codeFormEmail = ""
-            
+            errors.codeFormEmail = "";
+
             if (resetEmail !== confirmResetEmail) {
                 errors.codeFormEmail = "Emails do not match";
+                loadingStatus = 0;
                 return;
             }
 
@@ -281,6 +316,8 @@
             console.log(err);
             errors.codeError = "Connection error. Please try again later.";
         }
+
+        loadingStatus = 0;
     }
 
     /**
@@ -371,6 +408,7 @@
                                     e.key === "Enter" && sendVerificationCode()}
                             />
                         </div>
+
                         {#if errors.resetEmail}
                             <div class="text-danger mt-1">
                                 {errors.resetEmail}
@@ -414,6 +452,7 @@
             <div class="modal-footer">
                 <button
                     class="btn btn-primary w-100"
+                    disabled={loadingStatus != 0}
                     onclick={() => {
                         if (currentModalStep === "emailInput") {
                             sendVerificationCode();
@@ -424,10 +463,33 @@
                         }
                     }}
                 >
-                    {#if currentModalStep === "verify"}
+                    {#if loadingStatus == 1}
+                        Sending...
+                    {:else if loadingStatus == 3}
+                        Verifying...
+                    {:else if currentModalStep === "verify"}
                         Reset Password
                     {:else if currentModalStep === "emailInput"}
                         Get reset code
+                    {/if}
+                </button>
+                <button
+                    class="btn btn-secondary w-100"
+                    disabled={loadingStatus != 0}
+                    onclick={() => {
+                        if (currentModalStep === "emailInput") {
+                            authModal?.hide();
+                        } else if (currentModalStep === "verify") {
+                            cancelCode();
+                        } else {
+                            authModal?.hide();
+                        }
+                    }}
+                >
+                    {#if loadingStatus == 2}
+                        Cancelling...
+                    {:else}
+                        Cancel
                     {/if}
                 </button>
             </div>

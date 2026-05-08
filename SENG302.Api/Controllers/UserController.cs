@@ -417,6 +417,48 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    [AllowAnonymous]
+    [HttpPost("password/reset/code/cancel")]
+    public async Task<ActionResult<int>> CancelResetPasswordCode([FromBody] CancelResetOneTimeCodeRequest cancelRequest)
+    {
+        if (string.IsNullOrWhiteSpace(cancelRequest.Email))
+        {
+            return BadRequest(new { message = "An email is required" });
+        }
+        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+
+        if (result.Principal == null)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
+        }
+
+        // check email in body and make sure it matches the cancel request
+        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
+        if (email != cancelRequest.Email)
+        {
+            // return some message
+            return BadRequest(new { message = "Emails do not match" });
+        }
+
+        await HttpContext.SignOutAsync("PasswordResetScheme");
+
+        var user = await _userService.GetUserFromEmailAsync(email);
+
+        if (user != null)
+        {
+            var emailDictionary = new Dictionary<string, string>
+            {
+                {"DISPLAY_NAME", user.DisplayName}
+            };
+
+            await _emailService.SendEmailAsync(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
+        }
+
+
+        return Ok();
+    }
+
 
     /// <summary>
     /// Sends a request to update the users email 

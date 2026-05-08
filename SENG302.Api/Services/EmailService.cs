@@ -15,7 +15,7 @@ public enum EmailTemplate
     ResetPasswordCode,
     PasswordChangedConfirmation,
     PasswordResetConfirmation,
-    ResetCancelledWarning
+    PasswordResetProcessCancelled
 }
 
 public interface IEmailService
@@ -57,7 +57,7 @@ public class EmailService : IEmailService
         {
             message.To.Add(new MailboxAddress("Outstanding User", toEmail));
         }
-        
+
         message.Subject = subject;
 
         message.Body = new BodyBuilder
