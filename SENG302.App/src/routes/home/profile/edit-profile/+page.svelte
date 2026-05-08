@@ -301,6 +301,7 @@
             } else {
                 const data = await response.json().catch(() => null);
                 if (data?.errors) {
+                    console.log(data.errors)
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
                 } else {
@@ -574,6 +575,7 @@
                         <DisplayNameForm
                             bind:displayName
                             error={errors.displayName}
+                            registering={false}
                         />
                     </div>
                     <div class="mb-3">
