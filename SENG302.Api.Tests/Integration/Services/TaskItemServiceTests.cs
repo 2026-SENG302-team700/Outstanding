@@ -320,7 +320,7 @@ public class TaskItemServiceTests : BaseIntegrationTestFixture
         await context.SaveChangesAsync();
 
         await ServiceUnderTest.ReorderTaskItemsAsync([3, 1, 2]);
-        var taskItems = (await ServiceUnderTest.GetTaskItemsByListAsync(1)).ToList();
+        var taskItems = (await ServiceUnderTest.GetTaskItemsByListAsync(1, 1)).ToList();
         
         taskItems.Count.ShouldBe(3);
         taskItems[0].TaskId.ShouldBe(3);
