@@ -16,8 +16,13 @@
     let password = $state("");
     let loading = $state(false);
     let error = $state("");
-    
-    let currentModalStep = $state("emailInput");
+
+    const ModalStep = {
+        EMAIL_INPUT: "emailInput",
+        VERIFY: "verify",
+        RESET_PASSWORD: "resetPassword",
+    };
+    let currentModalStep = $state(ModalStep.EMAIL_INPUT);
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
@@ -211,7 +216,7 @@
         }
 
         // Send email to backend for further validation and sending of code
-        currentModalStep = "verify";
+        currentModalStep = ModalStep.VERIFY;
 
         startTimerCountdown();
         clearResetCodeModalFields();
@@ -284,7 +289,7 @@
                 ) as HTMLInputElement;
                 firstInput?.focus();
             } else {
-                currentModalStep = "resetPassword";
+                currentModalStep = ModalStep.RESET_PASSWORD;
             }
         } catch (err) {
             errors.codeError = "Connection error. Please try again later.";
@@ -297,7 +302,7 @@
      */
     async function requestNewPassword() {
         errors.resetEmail = "";
-        currentModalStep = "emailInput";
+        currentModalStep = ModalStep.EMAIL_INPUT;
         authModal?.show();
         resetEmail = "";
         confirmResetEmail = "";
@@ -448,27 +453,27 @@
         <div class="modal-content p-4">
             <form
                     onsubmit={() => {
-            if (currentModalStep === "emailInput") {
+            if (currentModalStep === ModalStep.EMAIL_INPUT) {
                 sendVerificationCode();
-            } else if (currentModalStep === "verify") {
+            } else if (currentModalStep === ModalStep.VERIFY) {
                 checkCode();
-            } else if (currentModalStep === "resetPassword") {
+            } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
                 resetPassword();
             }
         }}
             >
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold">
-                        {currentModalStep === "emailInput"
+                        {currentModalStep === ModalStep.EMAIL_INPUT
                             ? "Request Reset Code"
-                            : currentModalStep === "verify"
+                            : currentModalStep === ModalStep.VERIFY
                                 ? "Verify Your Identity"
                                 : "Reset Password"}
                     </h5>
                 </div>
 
                 <div class="modal-body">
-                    {#if currentModalStep === "emailInput"}
+                    {#if currentModalStep === ModalStep.EMAIL_INPUT}
                         <div class="text-center">
                             <p class="text-secondary">
                                 We'll send a verification code to your email
@@ -491,7 +496,7 @@
                             {/if}
                         </div>
 
-                    {:else if currentModalStep === "verify"}
+                    {:else if currentModalStep === ModalStep.VERIFY}
                         <div class="text-centre">
                             <p class="small">
                                 Please check your inbox and enter the verification
@@ -567,13 +572,13 @@
                             type="submit"
                             disabled={updatingPassword}
                     >
-                        {#if currentModalStep === "emailInput"}
-                            Reset Password
-                        {:else if currentModalStep === "verify"}
+                        {#if currentModalStep === ModalStep.EMAIL_INPUT}
                             Get reset code
-                        {:else if currentModalStep === "resetPassword" && !updatingPassword}
+                        {:else if currentModalStep === ModalStep.VERIFY}
                             Reset Password
-                        {:else if currentModalStep === "resetPassword" && updatingPassword}
+                        {:else if currentModalStep === ModalStep.RESET_PASSWORD && !updatingPassword}
+                            Reset Password
+                        {:else if currentModalStep === ModalStep.RESET_PASSWORD && updatingPassword}
                             Updating Password...
                         {/if}
                     </button>
