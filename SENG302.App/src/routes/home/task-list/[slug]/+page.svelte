@@ -2,13 +2,15 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
+  import { addToast, toasts } from "$lib/toast/toast.js";
 
   let loading = $state(false);
   let boardView = $state(false);
@@ -25,6 +27,10 @@
     GetList();
     GetTasks();
   });
+  
+  onDestroy(() => {
+    clearSnapshotHistory();
+  });
 
   function onDragStart() {
     snapshot = taskRefs.slice();
@@ -38,6 +44,25 @@
     if (event.canceled) {
       taskRefs = snapshot;
     }
+    saveSnapshot(snapshot);
+  }
+
+  /**
+   * get the past history and show the corrosponding toast depending on the situation 
+   */
+  function handleUndo() {
+    let retrievedSnapshot = retrieveSnapshot();
+    if (retrievedSnapshot.snapshot.length === 0) { 
+      if (retrievedSnapshot.snapshotFlag === false) {
+        addToast("No sorting to undo", "error")
+        return;
+      }
+      if (retrievedSnapshot.snapshotFlag === true) {
+        addToast("Cannot undo more than 5 sorting", "error")
+        return;
+      }
+    }
+    taskRefs = retrievedSnapshot.snapshot;
   }
 
   /// <Summary>
@@ -61,7 +86,7 @@
         return;
       }
       tasks = data;
-      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
+      taskRefs = data.map(task => task.taskId);
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -97,9 +122,11 @@
     } finally {
       loading = false;
     }
+    
   }
   
   async function toggleBoardView() {
+    clearSnapshotHistory();
     if (boardView) {
       boardView = false;
     } else {
@@ -107,16 +134,7 @@
     }
   }
 
-  /**
-   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
-   * @param text the description to shorten
-   * @param length length of description to cut down too
-   */
-  function shortenDesc(text: string | null, length: number) {
-    if (!text) return "No Description";
-    if (text.length <= length) return text;
-    return text.slice(0, length) + "...";
-  }
+  
 </script>
 
 <div class="container">
@@ -136,13 +154,23 @@
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
       >Add Task
     </button>
-    <button type="button"
-            class="btn btn-secondary"
-            on:click={toggleBoardView}
-    >
-      See Task List
-    </button>
+    <div>
+      <button type="button"
+              class="btn btn-outline-info"
+              on:click={toggleBoardView}
+      >
+        See Task List
+      </button>
+      <button type="button"
+              class="btn btn-outline-warning"
+              on:click={handleUndo}
+      >
+        Undo Last Sorting
+      </button>
+      
+    </div>
   </div>
+
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
   {:else if Object.keys(tasks).length === 0}
@@ -157,11 +185,11 @@
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
           {/each}
         </ul>
       </DragDropProvider>
-      {/if}
+    {/if}
     </div>
   {/if}
 </div>

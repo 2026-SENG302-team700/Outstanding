@@ -13,7 +13,7 @@
         index: number;
         task: TaskItem;
     } = $props();
-
+    console.log(task)
     const sortable = createSortable({
         get id() {
             return id;
@@ -74,7 +74,7 @@
         <span class="due-date">
             🗓 {task.dueDate === null
                 ? "No Due Date"
-                : formatDate(task.dueDate)}
+                : formatDate(task.dueDate.toDateString())}
         </span>
     </div>
 </div>
