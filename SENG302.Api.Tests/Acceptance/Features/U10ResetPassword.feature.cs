@@ -221,7 +221,7 @@ namespace SENG302.Api.Tests.Acceptance.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("AC8.2 - Login without a pending reset does not send a warning email", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 16
+#line 17
     this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -231,19 +231,19 @@ namespace SENG302.Api.Tests.Acceptance.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 17
+#line 18
         await testRunner.GivenAsync("I am a registered user with valid credentials", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 18
+#line 19
         await testRunner.AndAsync("I have not requested a password reset", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 19
+#line 20
         await testRunner.WhenAsync("I login with valid credentials", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 20
+#line 21
         await testRunner.ThenAsync("I am logged in successfully", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 21
+#line 22
         await testRunner.AndAsync("no warning email is sent to me", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
