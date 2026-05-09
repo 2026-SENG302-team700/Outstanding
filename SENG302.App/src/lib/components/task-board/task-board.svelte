@@ -119,6 +119,25 @@
                 }
             }
         }
+        reorderReloadTasks()
+    }
+
+    /**
+     * Sends ordering information to backend to persist dnd changes. Sends the list of taskId to the backend.
+     */
+    async function reorderReloadTasks(): void {
+        try {
+            await fetchWithCsrf(resolve('/api/taskItem/order'), {
+                method: "PATCH",
+                credentials: "include",
+                headers: {'content-type': 'application/json'},
+                body: JSON.stringify(Object.values($state.snapshot(tasksForSnapshot)).flat())
+            });
+        } catch (err) {
+            console.error(err);
+            addToast("An error occurred.", "error");
+        }
+
     }
     
 </script>
