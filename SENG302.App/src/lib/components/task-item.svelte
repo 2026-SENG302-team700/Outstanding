@@ -3,7 +3,6 @@
     import type { TaskItem } from "../types";
     import { createSortable } from "@dnd-kit/svelte/sortable";
     import { formatDate } from "$lib/datepicker/formatDate";
-    
     let {
         id,
         index,
@@ -13,7 +12,6 @@
         index: number;
         task: TaskItem;
     } = $props();
-    console.log(task)
     const sortable = createSortable({
         get id() {
             return id;
@@ -65,8 +63,6 @@
             {:else}Done{/if}
         </span>
     </div>
-
-    <!-- <button {@attach sortable.attachHandle}>Handle</button> -->
 
     <p class="task-description">{shortenDesc(task.description, 50)}</p>
 

@@ -14,7 +14,7 @@
 
   let loading = $state(false);
   let boardView = $state(false);
-  
+
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -40,11 +40,12 @@
     taskRefs = move(taskRefs, event);
   }
 
-  function onDragEnd(event: any) {
+  async function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
     }
     saveSnapshot(snapshot);
+    await reorderReloadTasks();
   }
 
   /**
@@ -64,11 +65,11 @@
     }
     taskRefs = retrievedSnapshot.snapshot;
   }
-
-  /// <Summary>
-  /// Fetches tasks of the certain task list from the backend
-  /// and stores them in the frontend as an array of objects
-  /// <Summary>
+  
+  /**
+   * Fetches tasks of the certain task list from the backend
+   * and stores them in the frontend as an array of objects
+   */
   async function GetTasks() {
     try {
       loading = true;
@@ -94,11 +95,11 @@
     }
   }
 
-  /// <summary>
-  /// Creates a new task list for the user with the given name. Validates the name
-  /// before sending the request to the backend. If creation is successful, navigates
-  /// back to the home screen. If there is an error, displays the error message.
-  /// </summary>
+  /**
+   * Creates a new task list for the user with the given name. Validates the name
+   * before sending the request to the backend. If creation is successful, navigates
+   * back to the home screen. If there is an error, displays the error message.
+   */
   async function GetList() {
     try {
       loading = true;
@@ -122,11 +123,32 @@
     } finally {
       loading = false;
     }
-    
+  }
+
+  /**
+   * Sends ordering information to backend to persist dnd changes.
+   */
+  async function reorderReloadTasks(): void {
+    try {
+      await fetchWithCsrf(resolve('/api/taskItem/order'), {
+        method: "PATCH",
+        credentials: "include",
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(taskRefs)
+      });
+    } catch (err) {
+      console.error(err);
+      addToast("An error occurred.", "error");
+    }
+
   }
   
+  /**
+   * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
+   */
   async function toggleBoardView() {
     clearSnapshotHistory();
+    GetTasks();
     if (boardView) {
       boardView = false;
     } else {
@@ -170,7 +192,6 @@
       
     </div>
   </div>
-
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
   {:else if Object.keys(tasks).length === 0}
