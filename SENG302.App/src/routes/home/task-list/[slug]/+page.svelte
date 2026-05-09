@@ -15,7 +15,7 @@
 
   let loading = $state(false);
   let boardView = $state(false);
-  
+
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -66,11 +66,12 @@
    * If the drag event is cancelled, resets the taskRefs to how the task board looked before the drag and drop
    * @param event
    */
-  function onDragEnd(event: any) {
+  async function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
     }
     saveSnapshot(snapshot);
+    await reorderReloadTasks();
   }
 
   /**
@@ -151,10 +152,30 @@
   }
 
   /**
+   * Sends ordering information to backend to persist dnd changes.
+   */
+  async function reorderReloadTasks(): void {
+    try {
+      await fetchWithCsrf(resolve('/api/taskItem/order'), {
+        method: "PATCH",
+        credentials: "include",
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(taskRefs)
+      });
+    } catch (err) {
+      console.error(err);
+      addToast("An error occurred.", "error");
+    }
+
+  }
+
+  /**
    * Changes the url to add board view as a param
+   * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
    */
   async function toggleBoardView() {
-      clearSnapshotHistory();  
+      clearSnapshotHistory();
+      GetTasks();
     let query = page.url.searchParams.get("mode");
     if (query == "board-view") {
       goto(resolve(`/home/task-list/${params.slug}`))
@@ -200,6 +221,7 @@
       
     </div>
   </div>
+
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
   {:else if Object.keys(tasks).length === 0}

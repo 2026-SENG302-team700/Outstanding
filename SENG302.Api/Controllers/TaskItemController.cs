@@ -134,4 +134,19 @@ public class TaskItemController : ControllerBase
             return BadRequest(e.Message);
         }
     }
+    
+    [HttpPatch("order")]
+    public async Task<ActionResult> OrderTaskItems([FromBody] List<int> orderedIds)
+    {
+        try
+        {
+            await _taskItemService.ReorderTaskItemsAsync(orderedIds);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
+    }
 }

@@ -12,7 +12,6 @@
         index: number;
         task: TaskItem;
     } = $props();
-    console.log(task)
     const sortable = createSortable({
         get id() {
             return id;
@@ -64,7 +63,6 @@
             {:else}Done{/if}
         </span>
     </div>
-    
 
     <p class="task-description">{shortenDesc(task.description, 50)}</p>
 
