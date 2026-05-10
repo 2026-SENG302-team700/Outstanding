@@ -11,10 +11,12 @@
   import type { TaskItem } from "$lib/types.js";
   import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
+  import { flip } from "svelte/animate";
 
   let loading = $state(false);
   let boardView = $state(false);
-
+  let inUndoAnimation = $state(false);
+  
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -63,8 +65,11 @@
         return;
       }
     }
+
+    inUndoAnimation = true;
     taskRefs = retrievedSnapshot.snapshot;
     await reorderReloadTasks();
+    inUndoAnimation = false;
   }
   
   /**
@@ -141,7 +146,6 @@
       console.error(err);
       addToast("An error occurred.", "error");
     }
-
   }
   
   /**
@@ -207,7 +211,9 @@
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            <div animate:flip = {inUndoAnimation ? { duration: 200 } : { duration: 0 }}>
+              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            </div>
           {/each}
         </ul>
       </DragDropProvider>
