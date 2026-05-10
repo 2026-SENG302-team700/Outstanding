@@ -391,10 +391,10 @@
                         break;
                 }
             } else {
-                addToast("Failed to update password ");
+                addToast("Failed to update password", "error");
             }
         } catch (err) {
-            addToast("Failed to update password");
+            addToast("Failed to update password", "error");
         } finally {
             updatingPassword = false;
         }
