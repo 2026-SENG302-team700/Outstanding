@@ -51,7 +51,7 @@
   /**
    * get the past history and show the corrosponding toast depending on the situation 
    */
-  function handleUndo() {
+  async function handleUndo() {
     let retrievedSnapshot = retrieveSnapshot();
     if (retrievedSnapshot.snapshot.length === 0) { 
       if (retrievedSnapshot.snapshotFlag === false) {
@@ -64,6 +64,7 @@
       }
     }
     taskRefs = retrievedSnapshot.snapshot;
+    await reorderReloadTasks();
   }
   
   /**
