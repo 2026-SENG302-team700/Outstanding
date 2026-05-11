@@ -417,34 +417,50 @@ public class UserController : ControllerBase
         return Ok();
     }
 
+    /// <summary>
+    /// Recieves a POST at "password/reset/code/cancel" with an object that has one property "Email"
+    /// The function runs through several checks then eventually cancels the password reset code
+    /// </summary>
+    /// <param name="cancelRequest">
+    /// This object bears only an "Email" property - 
+    /// the email for which we are cancelling the reset password request
+    /// </param>
+    /// <returns>Different responses based on the validity of the information</returns>
     [AllowAnonymous]
     [HttpPost("password/reset/code/cancel")]
     public async Task<ActionResult<int>> CancelResetPasswordCode([FromBody] CancelResetOneTimeCodeRequest cancelRequest)
     {
+        // Confirm the email exists and is not simply white space
         if (string.IsNullOrWhiteSpace(cancelRequest.Email))
         {
             return BadRequest(new { message = "An email is required" });
         }
+
+        // Authenticate this context based on the password reset scheme
         var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
 
+        // Using the results from the authentication, if it is null therefore the password reset has expired
         if (result.Principal == null)
         {
             await HttpContext.SignOutAsync("PasswordResetScheme");
-            return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
+            return BadRequest(new { message = "Code is no longer valid." });
         }
 
-        // check email in body and make sure it matches the cancel request
+        // If the reset scheme is still active, make sure the user email matches the claimed email
         var email = result.Principal.FindFirstValue(ClaimTypes.Email);
         if (email != cancelRequest.Email)
         {
-            // return some message
+            // Return an error message if they do not match
             return BadRequest(new { message = "Emails do not match" });
         }
 
+        // Sign the user out from the password reset scheme, cancelling the code
         await HttpContext.SignOutAsync("PasswordResetScheme");
 
+        // Retrieve the user from the user service - this is to get the name of the user
         var user = await _userService.GetUserFromEmailAsync(email);
 
+        // If the user exists, send an email saying the password reset process has been cancelled
         if (user != null)
         {
             var emailDictionary = new Dictionary<string, string>
@@ -454,7 +470,10 @@ public class UserController : ControllerBase
 
             await _emailService.SendEmailAsync(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
         }
-
+        else
+        {
+            return BadRequest(new { message = "User does not exist" });
+        }
 
         return Ok();
     }
