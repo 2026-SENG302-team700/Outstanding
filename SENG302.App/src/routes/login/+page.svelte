@@ -302,11 +302,15 @@
      */
     async function requestNewPassword() {
         errors.resetEmail = "";
-        currentModalStep = ModalStep.EMAIL_INPUT;
-        authModal?.show();
+        errors.codeFormEmail = "";
+        
         resetEmail = "";
         confirmResetEmail = "";
-        errors.codeFormEmail = "";
+        newPassword = "";
+        confirmResetEmail = "";
+
+        currentModalStep = ModalStep.EMAIL_INPUT;
+        authModal?.show();
     }
 
     /**
