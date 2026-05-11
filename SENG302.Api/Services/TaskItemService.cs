@@ -22,7 +22,7 @@ public class TaskItemService : ITaskItemService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
     private readonly TimeProvider _timeProvider;
-    private readonly ProfanityTools _profanityTools;
+
 
     public TaskItemService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
@@ -46,7 +46,7 @@ public class TaskItemService : ITaskItemService
 
 
 
-        if (_profanityTools.ContainsProfanity(name, profanityFiltering)) errors["name"] = "Title cannot contain profanity.";
+        if (ProfanityTools.ContainsProfanity(name, profanityFiltering)) errors["name"] = "Title cannot contain profanity.";
 
         return errors;
     }
@@ -174,12 +174,6 @@ public class TaskItemService : ITaskItemService
         }
 
         ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
-
-        if (errors.Count > 0)
-        {
-
-
-        }
         
         // gets order position of task attached to a certain user.
         var orderPosition = await context.Set<TaskItem>()

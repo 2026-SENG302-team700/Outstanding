@@ -14,7 +14,7 @@ public interface ITaskListService
 public class TaskListService : ITaskListService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    private readonly ProfanityTools _profanityTools = new();
+
 
     public TaskListService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
@@ -80,7 +80,7 @@ public class TaskListService : ITaskListService
         }
 
         // check for profanity in the name
-        if (_profanityTools.ContainsProfanity(name, user.ProfanityFiltering))
+        if (ProfanityTools.ContainsProfanity(name, user.ProfanityFiltering))
         {
             throw new ArgumentException("List name cannot contain profanity.");
         }

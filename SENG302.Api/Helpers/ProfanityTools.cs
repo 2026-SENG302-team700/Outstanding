@@ -1,11 +1,9 @@
-using SENG302.Api.Models.Entities;
-
 namespace SENG302.Api.Resources.Helpers;
 
-public class ProfanityTools
+public static class ProfanityTools
 {
 
-    public bool ContainsProfanity(string text, bool profanityFiltering)
+    public static bool ContainsProfanity(string text, bool profanityFiltering)
     {
         if (profanityFiltering)
         {

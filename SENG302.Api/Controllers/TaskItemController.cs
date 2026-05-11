@@ -14,13 +14,13 @@ namespace SENG302.Api.Controllers;
 [Route("api/taskItem")]
 public class TaskItemController : ControllerBase
 {
+    private readonly IUserService _userService;
     private readonly ITaskItemService _taskItemService;
-    private readonly ProfanityTools _profanityTools;
-    private readonly UserService _userService;
 
-    public TaskItemController(ITaskItemService taskItemService)
+    public TaskItemController(ITaskItemService taskItemService, IUserService userService)
     {
         _taskItemService = taskItemService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -80,15 +80,14 @@ public class TaskItemController : ControllerBase
     {
         var errors = new Dictionary<string, string>();
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        Console.WriteLine(userId);
         User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            if (_profanityTools.ContainsProfanity(taskItemRequest.Description, user.ProfanityFiltering))
+            if (ProfanityTools.ContainsProfanity(taskItemRequest.Description, user.ProfanityFiltering))
             {
                 errors["description"] = "Description cannot contain profanity.";
             }
-            if (_profanityTools.ContainsProfanity(taskItemRequest.Name, user.ProfanityFiltering))
+            if (ProfanityTools.ContainsProfanity(taskItemRequest.Name, user.ProfanityFiltering))
             {
                 errors["name"] = "Name cannot contain profanity.";
             }

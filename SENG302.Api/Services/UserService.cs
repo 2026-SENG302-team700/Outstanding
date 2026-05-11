@@ -343,7 +343,6 @@ public class UserService : IUserService
     public async Task<User?> GetUserByIdAsync(int id)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
         return user;
     }
@@ -356,7 +355,6 @@ public class UserService : IUserService
     public async Task<int?> GetUserIdFromEmailAsync(string email)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
         return user?.Id;
     }
