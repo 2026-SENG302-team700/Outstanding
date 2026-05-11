@@ -20,6 +20,11 @@
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
+    // The "reset password" modal has 4 statuses, stored in 'loadingStatus'
+    // '0' for when first opening up the modal
+    // '1' for sending reset email
+    // '2' for sending cancel email
+    // '3' for verifying code
     let loadingStatus = $state(0);
     let confirmResetEmail = $state("");
     let digit1 = $state("");
@@ -237,6 +242,9 @@
         loadingStatus = 0;
     }
 
+    /**
+     * Cancel the password reset code
+     */
     async function cancelCode() {
         errors.codeError = "";
         loadingStatus = 2;
@@ -260,7 +268,6 @@
             errors.codeError = data?.message;
         } else {
             currentModalStep = "update";
-            // Remove before merging
             authModal.hide();
         }
 
@@ -309,7 +316,6 @@
                 firstInput?.focus();
             } else {
                 currentModalStep = "update";
-                // Remove before merging
                 authModal.hide();
             }
         } catch (err) {
