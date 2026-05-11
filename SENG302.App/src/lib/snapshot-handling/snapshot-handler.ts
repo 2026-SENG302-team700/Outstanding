@@ -33,6 +33,6 @@ export function retrieveSnapshot(): snapshotRetrieval {
  * Clears snapshot history
  */
 export function clearSnapshotHistory(): void {
-  hasHistoryHappened = false;
+  hasHistoryHappened = false; 
   taskListSnapshots = [];
 }
