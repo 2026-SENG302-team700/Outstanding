@@ -60,6 +60,14 @@ public class RegistrationController : ControllerBase
             errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
         
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
+        }
+        
         if (string.IsNullOrWhiteSpace(user.Country))
         {
             return BadRequest(new
@@ -78,6 +86,8 @@ public class RegistrationController : ControllerBase
         {
             errors["passwordConfirm"] = "Passwords do not match";
         }
+        
+        
 
         if (errors.Count > 0)
         {

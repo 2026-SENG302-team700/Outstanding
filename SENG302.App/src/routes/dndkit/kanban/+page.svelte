@@ -23,7 +23,6 @@
         }),
         KeyboardSensor,
     ];
-
     const todoItems = ["buy milk", "make bed", "look for jobs"];
     const progressItems = ["complete sprint 3", "procrastinate"];
     const doneItems = ["do nothing", "complete sprint 2", "complete sprint 1"];

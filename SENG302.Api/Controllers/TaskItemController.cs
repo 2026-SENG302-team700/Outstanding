@@ -62,7 +62,8 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest("List not provided");
         }
-        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId);
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId, int.Parse(userIdString));
         return Ok(taskList);
     }
 
@@ -150,5 +151,20 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest(e.Message);
         }
+    }
+    
+    [HttpPatch("order")]
+    public async Task<ActionResult> OrderTaskItems([FromBody] List<int> orderedIds)
+    {
+        try
+        {
+            await _taskItemService.ReorderTaskItemsAsync(orderedIds);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
     }
 }

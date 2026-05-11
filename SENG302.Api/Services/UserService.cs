@@ -88,6 +88,13 @@ public class UserService : IUserService
         {
             errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
         }
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
+        }
 
         return errors;
     }
@@ -337,7 +344,8 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user;
     }
 
     /// <summary>
@@ -362,6 +370,7 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+
         return user;
     }
 
@@ -470,6 +479,7 @@ public class UserService : IUserService
         {
             foreach (var (field, message) in ValidateEmail(context, newEmail))
             {
+               
                 errors[field] = message;
             }
         }        
