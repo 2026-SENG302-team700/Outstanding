@@ -22,9 +22,11 @@
 
   let {
     tasks,
+    taskLists = [],
     onUndoReady = (_fn: () => Promise<void>) => {},
   }: {
     tasks: TaskItem[];
+    taskLists?: { id: number; name: string }[];
     onUndoReady?: (fn: () => Promise<void>) => void;
   } = $props();
 
@@ -233,6 +235,7 @@
           index={columnIndex}
           row={tasksForSnapshot[parseInt(column)]}
           tasks={taskMap}
+          {taskLists}
         />
       {/each}
     </div>

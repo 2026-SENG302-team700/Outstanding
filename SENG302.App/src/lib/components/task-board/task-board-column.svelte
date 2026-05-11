@@ -12,11 +12,13 @@
     index,
     row,
     tasks,
+    taskLists = [],
   }: {
     id: string;
     index: number;
     row: number[];
     tasks: Record<number, TaskItem>;
+    taskLists?: { id: number; name: string }[];
   } = $props();
 
   /**
@@ -75,6 +77,7 @@
             id={itemId}
             column={id}
             index={itemIndex}
+            {taskLists}
           />
         </div>
       </div>

@@ -10,12 +10,21 @@
     id,
     column,
     index,
+    taskLists = [],
   }: {
     task: TaskItem;
     id: string;
     column: string;
     index: number;
+    taskLists?: { id: number; name: string }[];
   } = $props();
+
+  /**
+   * Get the name of a list for when viewing the tasks on the home board page
+   */
+  function getListName(taskListId: number): string {
+    return taskLists.find((l) => l.id === taskListId)?.name ?? "";
+  }
 
   /**
    * Returns the CSS stylesheet class name to apply the task card based on it's status
@@ -80,6 +89,9 @@
   <div class="task-card-header">
     <span class="task-title">{task.name}</span>
   </div>
+  {#if taskLists.length > 0}
+    <span class="list-badge">{getListName(task.taskListId)}</span>
+  {/if}
   <p class="task-description">{shortenDesc(task.description, 30)}</p>
   <span class="due-date">
     🗓 {task.dueDate === null ? "No due date" : formatDate(task.dueDate)}
@@ -134,5 +146,16 @@
   .due-date {
     font-size: 0.75rem;
     color: #9ca3af;
+  }
+
+  .list-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #3730a3;
+    display: inline-block;
+    margin-bottom: 6px;
   }
 </style>
