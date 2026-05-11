@@ -12,10 +12,12 @@
   import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
   import { page } from "$app/state";
+  import { flip } from "svelte/animate";
 
   let loading = $state(false);
   let boardView = $state(false);
-
+  let inUndoAnimation = $state(false);
+  
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -77,7 +79,7 @@
   /**
    * get the past history and show the corrosponding toast depending on the situation 
    */
-  function handleUndo() {
+  async function handleUndo() {
     let retrievedSnapshot = retrieveSnapshot();
     if (retrievedSnapshot.snapshot.length === 0) { 
       if (retrievedSnapshot.snapshotFlag === false) {
@@ -89,9 +91,13 @@
         return;
       }
     }
-    taskRefs = retrievedSnapshot.snapshot;
-  }
 
+    inUndoAnimation = true;
+    taskRefs = retrievedSnapshot.snapshot;
+    await reorderReloadTasks();
+    inUndoAnimation = false;
+  }
+  
   /**
    * Fetches tasks of the certain task list from the backend
    *  and stores them in the frontend as an array of objects
@@ -168,7 +174,7 @@
     }
 
   }
-
+  
   /**
    * Changes the url to add board view as a param
    * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
@@ -221,7 +227,6 @@
       
     </div>
   </div>
-
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
   {:else if Object.keys(tasks).length === 0}
@@ -236,7 +241,9 @@
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            <div animate:flip = {inUndoAnimation ? { duration: 200 } : { duration: 0 }}>
+              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            </div>
           {/each}
         </ul>
       </DragDropProvider>
