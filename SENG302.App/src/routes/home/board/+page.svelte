@@ -3,15 +3,29 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { resolve } from "$app/paths";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
+  import type { TaskItem } from "$lib/types.js";
+
+  import {
+    DragDropProvider,
+    PointerSensor,
+    KeyboardSensor,
+  } from "@dnd-kit/svelte";
+  import { defaultPreset } from "@dnd-kit/dom";
+  import { move } from "@dnd-kit/helpers";
 
   let tasks = $state([]);
   let loading = $state(false);
   let error = $state("");
-
+  
+  
+  
   onMount(() => {
     fetchAllTasks();
   });
 
+  /**
+   * Fetches all tasks from the backend
+   */
   async function fetchAllTasks() {
     try {
       loading = true;
@@ -31,6 +45,8 @@
       loading = false;
     }
   }
+  
+  
 </script>
 
 <div class="container">

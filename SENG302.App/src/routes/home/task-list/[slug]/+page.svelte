@@ -11,6 +11,7 @@
   import type { TaskItem } from "$lib/types.js";
   import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
+  import { page } from "$app/state";
   import { flip } from "svelte/animate";
 
   let loading = $state(false);
@@ -34,14 +35,39 @@
     clearSnapshotHistory();
   });
 
+  /**
+   * Trigger when url changes, checks params to see what page view needs to be loaded
+  */
+  $effect(() => {
+    let query = page.url.searchParams.get("mode");
+    if (query != "board-view") {
+      boardView = false;
+    }
+    else {
+      boardView = true;
+    }
+    GetTasks();
+  })
+
+  /**
+   * Creates a snapshot of the original ordering of list of items before the items are dragged
+   */
   function onDragStart() {
     snapshot = taskRefs.slice();
   }
 
+  /**
+   * Changes the task-ref list ordering based on where the task has been moved to
+   * @param event
+   */
   function onDragOver(event: any) {
     taskRefs = move(taskRefs, event);
   }
 
+  /**
+   * If the drag event is cancelled, resets the taskRefs to how the task board looked before the drag and drop
+   * @param event
+   */
   async function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
@@ -74,7 +100,7 @@
   
   /**
    * Fetches tasks of the certain task list from the backend
-   * and stores them in the frontend as an array of objects
+   *  and stores them in the frontend as an array of objects
    */
   async function GetTasks() {
     try {
@@ -146,18 +172,22 @@
       console.error(err);
       addToast("An error occurred.", "error");
     }
+
   }
   
   /**
+   * Changes the url to add board view as a param
    * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
    */
   async function toggleBoardView() {
-    clearSnapshotHistory();
-    GetTasks();
-    if (boardView) {
-      boardView = false;
-    } else {
-      boardView = true;
+      clearSnapshotHistory();
+      GetTasks();
+    let query = page.url.searchParams.get("mode");
+    if (query == "board-view") {
+      goto(resolve(`/home/task-list/${params.slug}`))
+    }
+    else {
+      goto(resolve(`/home/task-list/${params.slug}/?mode=board-view`))
     }
   }
 
