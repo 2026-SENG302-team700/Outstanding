@@ -368,6 +368,7 @@
                         newPassword: newPassword,
                         newPasswordConfirm: confirmPassword,
                     }),
+                    credentials: "include"
                 },
             );
             if (response.ok) {

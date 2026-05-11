@@ -130,23 +130,21 @@ public class ResetPasswordController : ControllerBase
     /// </summary>
     /// <param name="resetPasswordRequest"></param>
     /// <returns>response to frontend based on status of request</returns>
-    [AllowAnonymous]
+    [Authorize(AuthenticationSchemes = "PasswordResetScheme")]
     [HttpPut]
     public async Task<ActionResult> resetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
     {
         try
         {
-            var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
 
-            if (!result.Succeeded || result.Principal == null)
+            if (string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new
                 {
                     message = "Code is no longer valid, please ask for a new code."
                 });
             }
-
-            var userEmail = result.Principal.FindFirstValue(ClaimTypes.Email);
 
             await _userService.ResetPasswordAsync(
                 userEmail,

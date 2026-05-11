@@ -11,29 +11,27 @@ using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Shouldly;
 using Microsoft.EntityFrameworkCore;
-using SENG302.Api.Controllers;
-using Microsoft.AspNetCore.Http.HttpResults;
+using SENG302.Api.Controllers.UserController.PasswordController;
+using SENG302.Api.Models.Requests.Password;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
-public class UserControllerTests : BaseIntegrationTestFixture
+public class UpdatePasswordTests : BaseIntegrationTestFixture
 {
     private readonly IEmailService _mockEmailService;
     private readonly IOneTimeCodeService _mockOneTimeCodeService;
-    private readonly IFileService _mockFileService;
-    private readonly UserController _controller;
+    private readonly UpdatePasswordController _controller;
 
     private IUserService ServiceUnderTest => ServiceProvider.GetRequiredService<IUserService>();
-    public UserControllerTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
+
+    public UpdatePasswordTests(WebApplicationFactory<Program> webApplicationFactory) : base(webApplicationFactory)
     {
         _mockOneTimeCodeService = Substitute.For<IOneTimeCodeService>();
         _mockEmailService = Substitute.For<IEmailService>();
-        _mockFileService = Substitute.For<IFileService>();
         _controller =
-            new UserController(ServiceUnderTest, _mockFileService, _mockOneTimeCodeService, _mockEmailService);
+            new UpdatePasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailService);
     }
     
-
     private async Task AddTestUser()
     {
         // Add user to be updated to db
@@ -72,143 +70,6 @@ public class UserControllerTests : BaseIntegrationTestFixture
             HttpContext = new DefaultHttpContext { User = principal }
         };
     }
-
-    private void SetupTempSessionContext(string email)
-    {
-        var claims = new[] { new Claim(ClaimTypes.Email, email) };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var principal = new ClaimsPrincipal(identity);
-        
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = principal }
-        };
-    }
-    
-    private async Task SetupTestUser()
-    {
-        await AddTestUser();
-        SetupUserContext("1", "Test User", "test@example.com");
-    }
-
-    [Fact]
-    public async Task UpdateUser_Success_ReturnOk()
-    {
-        await AddTestUser();
-
-        // Send update request
-        var data = new
-        {
-            Email = "updated@example.com",
-            DisplayName = "Updated User",
-            Country = "US"
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        // Get updated context and verify
-        await using var verifyContext = DbContextFactory.CreateDbContext();
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(u => u.Id == 1);
-        updatedUser!.Email.ShouldBe("updated@example.com");
-        updatedUser.DisplayName.ShouldBe("Updated User");
-        updatedUser.Country.ShouldBe("US");
-    }
-
-    [Theory]
-    [InlineData("", "test", "NZ")]
-    [InlineData("updated@example.com", "", "NZ")]
-    [InlineData("updated@example.com", "test", "")]
-    public async Task UpdateUser_MissingField_BadRequest(string newEmail, string newDisplayName, string newCountry)
-    {
-        await AddTestUser();
-
-        // Send update request
-        var data = new
-        {
-            Email = newEmail,
-            DisplayName = newDisplayName,
-            Country = newCountry
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Theory]
-    [InlineData("test.userexample.com")]      // Missing @ symbol
-    [InlineData("@example.com")]              // Missing username
-    [InlineData("test.user@")]                // Missing domain
-    [InlineData("test.user@example")]         // Missing top-level domain (TLD)
-    [InlineData("t st.user@example.com")]     // Spaces
-    [InlineData("te..st.user@example.com")]   // Consecutive periods
-    [InlineData("test@user@example.com")]     // Multiple @ symbols
-    [InlineData("test.user@gmail,com")]       // Missing dot in domain
-    public async Task UpdateUser_MalformedEmail_BadRequest(string newEmail)
-    {
-        await AddTestUser();
-
-        // Send update request
-        var data = new
-        {
-            Email = newEmail,
-            DisplayName = "Test",
-            Country = "NZ"
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task UpdateUser_EmailAlreadyExists_BadRequest()
-    {
-        await AddTestUser();
-
-        // Add user to be updated to db
-        await using var context = DbContextFactory.CreateDbContext();
-        context.Users.Add(new User
-        {
-            Id = 2,
-            Email = "update@example.com",
-            DisplayName = "Test User",
-            PasswordKey = "password",
-            Country = "Test Country"
-        });
-        await context.SaveChangesAsync();
-
-        // Send update request
-        var data = new
-        {
-            Email = "update@example.com",
-            DisplayName = "Test",
-            Country = "NZ"
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-    }
-
-    [Theory]
-    [InlineData("Hi")]
-    [InlineData("Hi!")]
-    [InlineData("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")] // 65 'a's
-    public async Task UpdateUser_InvalidDisplayName_BadRequest(string newDisplayName)
-    {
-        await AddTestUser();
-
-        // Send update request
-        var data = new
-        {
-            Email = "update@example.com",
-            DisplayName = newDisplayName,
-            Country = "NZ"
-        };
-        var response = await HttpClient.PutAsJsonAsync("/api/user", data);
-
-        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
-
-    }
     
     [Fact]
     public async Task InitiateOneTimeCode_ValidEmail_UpdatesDatabaseAndReturnsOk()
@@ -216,7 +77,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         await AddTestUser();
         var request = new { Email = "test@example.com" };
 
-        var response = await HttpClient.PutAsJsonAsync("/api/user/password/code/generation", request);
+        var response = await HttpClient.PutAsJsonAsync("/api/user/password/update/code/generation", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -233,7 +94,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
     {
         var request = new { Email = "nonexistent@example.com" };
 
-        var response = await HttpClient.PutAsJsonAsync("/api/user/password/code/generation", request);
+        var response = await HttpClient.PutAsJsonAsync("/api/user/password/update/code/generation", request);
         
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -258,7 +119,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
         }
         
         var request = new { Email = email, Code = secretCode, TimeLimitExists = false, };
-        var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
+        var response = await HttpClient.PostAsJsonAsync("/api/user/password/update/code/validation", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
@@ -282,7 +143,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
         var request = new { Email = email, Code = "222222" }; // wrong code
 
-        var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
+        var response = await HttpClient.PostAsJsonAsync("/api/user/password/update/code/validation", request);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -292,7 +153,7 @@ public class UserControllerTests : BaseIntegrationTestFixture
     {
         var request = new { Email = "missing@test.com", Code = "123456" };
 
-        var response = await HttpClient.PostAsJsonAsync("/api/user/password/code/validation", request);
+        var response = await HttpClient.PostAsJsonAsync("/api/user/password/update/code/validation", request);
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
     
@@ -447,52 +308,5 @@ public class UserControllerTests : BaseIntegrationTestFixture
 
         var response = await _controller.updatePassword(request);
         response.ShouldBeOfType<UnauthorizedObjectResult>();
-    }
-
-    [Fact]
-    public async Task ResetPassword_ValidData_PasswordReset()
-    {
-        var context = await DbContextFactory.CreateDbContextAsync();
-        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" }; 
-        context.Users.Add(user); 
-        await context.SaveChangesAsync(); 
-        var userId = user.Id;
-        SetupTempSessionContext("test@example.com");
-        
-        
-        var request = new UpdatePasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
-        var response = await _controller.resetPassword(request);
-        response.ShouldBeOfType<OkResult>();
-        
-        var verifyContext = await  DbContextFactory.CreateDbContextAsync();
-        PasswordHasher<User> passwordHasher = new(); 
-        var updatedUser = await verifyContext.Users.FirstOrDefaultAsync(x => x.Id == userId); 
-        
-        Assert.NotNull(updatedUser); 
-        Assert.Equal("test@example.com", updatedUser.Email); 
-        Assert.Equal(PasswordVerificationResult.Success, passwordHasher.VerifyHashedPassword(updatedUser, updatedUser.PasswordKey, "Test700!"));
-    }
-
-    [Fact]
-    public async Task ResetPassword_MissmatchedPasswords_BadRequest()
-    {
-        var context = await DbContextFactory.CreateDbContextAsync();
-        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" }; 
-        context.Users.Add(user); 
-        await context.SaveChangesAsync(); 
-        
-        var request = new { NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
-        var response = await HttpClient.PutAsJsonAsync("/api/user/password/reset", request);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-    }
-
-    private IFormFile GetMockFile(string filename, Byte[] content, string mimeType)
-    {
-        var stream = new MemoryStream(content);
-        return new FormFile(stream, 0, stream.Length, "file", filename)
-        {
-            Headers = new HeaderDictionary(),
-            ContentType = mimeType
-        };
     }
 }

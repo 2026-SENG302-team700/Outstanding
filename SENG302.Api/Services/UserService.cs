@@ -684,7 +684,7 @@ public class UserService : IUserService
     /// <summary>
     /// Validates and performs the request to reset the users password
     /// </summary>
-    /// <param name="userId">The users id</param>
+    /// <param name="userEmail">The users email</param>
     /// <param name="newPassword">The password the user wishes to change to</param>
     /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
     /// <returns>true on successful update</returns>
