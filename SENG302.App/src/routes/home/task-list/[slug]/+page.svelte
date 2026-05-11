@@ -2,16 +2,20 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { fetchWithCsrf } from "$lib/csrf";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
   import TaskBoard from "$lib/components/task-board/task-board.svelte"
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
+  import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
+  import { addToast, toasts } from "$lib/toast/toast.js";
+  import { flip } from "svelte/animate";
 
   let loading = $state(false);
   let boardView = $state(false);
+  let inUndoAnimation = $state(false);
   
   let listName = $state();
   let taskRefs: number[] = $state([]);
@@ -25,6 +29,10 @@
     GetList();
     GetTasks();
   });
+  
+  onDestroy(() => {
+    clearSnapshotHistory();
+  });
 
   function onDragStart() {
     snapshot = taskRefs.slice();
@@ -34,16 +42,40 @@
     taskRefs = move(taskRefs, event);
   }
 
-  function onDragEnd(event: any) {
+  async function onDragEnd(event: any) {
     if (event.canceled) {
       taskRefs = snapshot;
     }
+    saveSnapshot(snapshot);
+    await reorderReloadTasks();
   }
 
-  /// <Summary>
-  /// Fetches tasks of the certain task list from the backend
-  /// and stores them in the frontend as an array of objects
-  /// <Summary>
+  /**
+   * get the past history and show the corrosponding toast depending on the situation 
+   */
+  async function handleUndo() {
+    let retrievedSnapshot = retrieveSnapshot();
+    if (retrievedSnapshot.snapshot.length === 0) { 
+      if (retrievedSnapshot.snapshotFlag === false) {
+        addToast("No sorting to undo", "error")
+        return;
+      }
+      if (retrievedSnapshot.snapshotFlag === true) {
+        addToast("Cannot undo more than 5 sorting", "error")
+        return;
+      }
+    }
+
+    inUndoAnimation = true;
+    taskRefs = retrievedSnapshot.snapshot;
+    await reorderReloadTasks();
+    inUndoAnimation = false;
+  }
+  
+  /**
+   * Fetches tasks of the certain task list from the backend
+   * and stores them in the frontend as an array of objects
+   */
   async function GetTasks() {
     try {
       loading = true;
@@ -61,7 +93,7 @@
         return;
       }
       tasks = data;
-      taskRefs = data.map((_: TaskItem, index: number) => index).slice();
+      taskRefs = data.map(task => task.taskId);
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -69,11 +101,11 @@
     }
   }
 
-  /// <summary>
-  /// Creates a new task list for the user with the given name. Validates the name
-  /// before sending the request to the backend. If creation is successful, navigates
-  /// back to the home screen. If there is an error, displays the error message.
-  /// </summary>
+  /**
+   * Creates a new task list for the user with the given name. Validates the name
+   * before sending the request to the backend. If creation is successful, navigates
+   * back to the home screen. If there is an error, displays the error message.
+   */
   async function GetList() {
     try {
       loading = true;
@@ -98,8 +130,30 @@
       loading = false;
     }
   }
+
+  /**
+   * Sends ordering information to backend to persist dnd changes.
+   */
+  async function reorderReloadTasks(): void {
+    try {
+      await fetchWithCsrf(resolve('/api/taskItem/order'), {
+        method: "PATCH",
+        credentials: "include",
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify(taskRefs)
+      });
+    } catch (err) {
+      console.error(err);
+      addToast("An error occurred.", "error");
+    }
+  }
   
+  /**
+   * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
+   */
   async function toggleBoardView() {
+    clearSnapshotHistory();
+    GetTasks();
     if (boardView) {
       boardView = false;
     } else {
@@ -107,16 +161,7 @@
     }
   }
 
-  /**
-   * shorten the length of the displayed description to 'number' characters, add '...' onto the end of the description to indicate more.
-   * @param text the description to shorten
-   * @param length length of description to cut down too
-   */
-  function shortenDesc(text: string | null, length: number) {
-    if (!text) return "No Description";
-    if (text.length <= length) return text;
-    return text.slice(0, length) + "...";
-  }
+  
 </script>
 
 <div class="container">
@@ -136,12 +181,21 @@
         goto(resolve(`/home/task-list/${params.slug}/create-task`))}
       >Add Task
     </button>
-    <button type="button"
-            class="btn btn-secondary"
-            on:click={toggleBoardView}
-    >
-      See Task List
-    </button>
+    <div>
+      <button type="button"
+              class="btn btn-outline-info"
+              on:click={toggleBoardView}
+      >
+        See Task List
+      </button>
+      <button type="button"
+              class="btn btn-outline-warning"
+              on:click={handleUndo}
+      >
+        Undo Last Sorting
+      </button>
+      
+    </div>
   </div>
   {#if loading && Object.keys(tasks).length === 0}
     <div class="text-center text-muted py-4">Loading tasks...</div>
@@ -157,11 +211,13 @@
       <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
         <ul class="list">
           {#each taskRefs as taskRef, index (taskRef)}
-            <TaskItemComponent id={taskRef} task={tasks[taskRef]} {index} />
+            <div animate:flip = {inUndoAnimation ? { duration: 200 } : { duration: 0 }}>
+              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
+            </div>
           {/each}
         </ul>
       </DragDropProvider>
-      {/if}
+    {/if}
     </div>
   {/if}
 </div>

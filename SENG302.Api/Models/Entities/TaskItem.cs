@@ -30,4 +30,5 @@ public class TaskItem
     public DateTime? DueDate { get; set; }
     public CurrentTaskStatus CurrentStatus { get; set; } = CurrentTaskStatus.Todo;
     public DateTimeOffset creationTime { get; set; }
+    public int OrderPosition { get; set; }
 }

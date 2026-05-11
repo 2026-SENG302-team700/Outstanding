@@ -148,6 +148,24 @@ public class UserServiceTest : BaseIntegrationTestFixture
         errors.Errors.Keys.ShouldContain("displayName");
         errors.Errors.Values.ShouldContain("Display name must only include letters, spaces, hyphens or apostrophes");
     }
+    
+    [Fact]
+    public async Task CreateNewUser_ProfanitiesInDisplayName_MultipleValidationException()
+    {
+        var errors = await Should.ThrowAsync<MultipleValidationException>(async () =>
+        {
+            await ServiceUnderTest.CreateNewUserAsync(
+                "vlad@nistor.me",
+                "fuck", // Should throw exception
+                "12345678Ab$",
+                "12345678Ab$", 
+                "RO"
+            );
+        });
+        
+        errors.Errors.Keys.ShouldContain("displayName");
+        errors.Errors.Values.ShouldContain("Display Name Contains Profanities! Remove Profanities!");
+    }
 
     [Theory]
     [InlineData("vlad.nistor.email")]
