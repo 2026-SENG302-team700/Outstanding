@@ -55,12 +55,6 @@
         confirmPassword: "",
     });
 
-    $effect(() => {
-        if (userCode.length === 6) {
-            checkCode();
-        }
-    });
-
     onMount(async () => {
         const { Modal: BootstrapModal } = await import("bootstrap");
 
