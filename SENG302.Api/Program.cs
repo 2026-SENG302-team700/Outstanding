@@ -5,6 +5,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
 
 namespace SENG302.Api;
@@ -28,7 +29,11 @@ public class Program
         }
 
         // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddControllersWithViews(options =>
+        {
+            // tells browsers to not cache API responses (was breaking deployment on firefox)
+            options.Filters.Add(new ResponseCacheAttribute { NoStore = true, Location = ResponseCacheLocation.None });
+        });
 
         // Add authorization service
         builder.Services.AddAuthorization();
