@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Helpers;
 using Shouldly;
 
 namespace SENG302.Api.Tests.Unit.Helpers;
