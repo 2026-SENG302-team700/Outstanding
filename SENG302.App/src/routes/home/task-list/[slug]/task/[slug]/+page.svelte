@@ -11,6 +11,7 @@
   import DatePicker from "$lib/datepicker/datepicker.svelte";
   import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
     import { addToast } from "$lib/toast/toast.js";
+    import CancelButton from "$lib/components/cancel-button.svelte";
 
   let loading = $state(false);
   let error = $state("");
@@ -157,22 +158,17 @@
 <div class="container">
   <div class="mb-3 card-body d-flex justify-content-between align-items-center">
     {#if editMode}
-      <button
-        type="button"
-        class="btn btn-secondary"
-        on:click={() => goto("../../..")}
-        >Cancel
-      </button>
+    <CancelButton path={"/home"}/>
     {:else}
       <button
         type="button"
         class="btn btn-secondary"
-        on:click={() => history.back()}
+        onclick={() => history.back()}
         >Back
       </button>
     {/if}
 
-    <button type="button" class="btn btn-primary" on:click={toggleEditMode}>
+    <button type="button" class="btn btn-primary" onclick={toggleEditMode}>
       {#if editMode}
         Update
       {:else}
