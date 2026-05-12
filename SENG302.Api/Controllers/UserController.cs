@@ -387,13 +387,13 @@ public class UserController : ControllerBase
             new Claim(ClaimTypes.PostalCode, code)
         };
 
-        var principle = new ClaimsPrincipal(
+        var principal = new ClaimsPrincipal(
             new ClaimsPrincipal(
                 new ClaimsIdentity(claims, "PasswordResetScheme")
             )
         );
 
-        await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
+        await HttpContext.SignInAsync("PasswordResetScheme", principal, new AuthenticationProperties
         {
             IsPersistent = false,
             ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
@@ -411,6 +411,11 @@ public class UserController : ControllerBase
         if (user != null)
         {
             await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
+        }
+        else
+        {
+            // Hacky, but to disguise that this email does not exist
+            Thread.Sleep(4000);
         }
 
         // return ok no matter if there is a user or not
@@ -443,7 +448,7 @@ public class UserController : ControllerBase
         if (result.Principal == null)
         {
             await HttpContext.SignOutAsync("PasswordResetScheme");
-            return BadRequest(new { message = "Code is no longer valid." });
+            return Ok("Code has already expired");
         }
 
         // If the reset scheme is still active, make sure the user email matches the claimed email
@@ -472,10 +477,11 @@ public class UserController : ControllerBase
         }
         else
         {
-            return BadRequest(new { message = "User does not exist" });
+            // Hacky, but to disguise that this email does not exist
+            Thread.Sleep(4000);
         }
 
-        return Ok();
+        return Ok("Code cancelled");
     }
 
 
