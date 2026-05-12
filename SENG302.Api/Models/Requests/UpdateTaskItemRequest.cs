@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
+using SENG302.Api.Models.Interfaces;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -8,7 +7,7 @@ namespace SENG302.Api.Models.Entities;
 /// Represents updates to a pre-existing task.
 /// TaskId needs to be present, everything else optional.
 /// </summary>
-public class UpdateTaskItemRequest
+public class UpdateTaskItemRequest : ITaskItemRequest
 {
     public required int taskId { get; set; }
 

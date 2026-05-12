@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
+using SENG302.Api.Models.Interfaces;
 
 namespace SENG302.Api.Models.Entities;
 
@@ -10,7 +9,7 @@ namespace SENG302.Api.Models.Entities;
 /// and should not be set after the case, so therefore it does not 
 /// have a setter (and therefore, it cannot be set as required).
 /// </summary>
-public class NewTaskItemRequest
+public class NewTaskItemRequest : ITaskItemRequest
 {
     public required int TaskListId { get; set; }
 

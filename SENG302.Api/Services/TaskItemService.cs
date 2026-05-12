@@ -3,6 +3,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Resources.Helpers;
 using SENG302.Api.Models.Requests;
+using SENG302.Api.Models.Interfaces;
 
 
 namespace SENG302.Api.Services;
@@ -128,6 +129,29 @@ public class TaskItemService : ITaskItemService
         }
     }
 
+    public Dictionary<string, string> ValidateTaskItemFields(ITaskItemRequest taskItem, bool profanityFiltering) {
+        var errors = new Dictionary<string, string>();
+
+        foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
+        {
+            errors.Add(key, value);
+        }
+
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
+        {
+            errors.Add(key, value);
+        }
+
+        foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
+        {
+            errors.Add(key, value);
+        }
+
+        ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
+
+        return errors;
+    }
+
     /// <summary>
     /// Adds a new task to the task list given owned by the given user. All parameters
     /// must be present (except description, dueDate and currentStatus), otherwise it fails. 
@@ -157,24 +181,12 @@ public class TaskItemService : ITaskItemService
         taskItem.DueDate = taskItem.DueDate == DateTime.MinValue ? null : taskItem.DueDate;
 
         // Validation
-        var errors = new Dictionary<string, string>();
+        var errors = ValidateTaskItemFields(taskItem, user.ProfanityFiltering);
 
-        foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
+        if (errors.Count > 0)
         {
-            errors.Add(key, value);
+            throw new MultipleValidationException(errors);
         }
-
-        foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
-        {
-            errors.Add(key, value);
-        }
-
-        foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
-        {
-            errors.Add(key, value);
-        }
-
-        ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
         
         // gets order position of task attached to a certain user.
         var orderPosition = await context.Set<TaskItem>()
@@ -271,24 +283,8 @@ public class TaskItemService : ITaskItemService
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
 
-        var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in ValidateTaskItemName(taskItemUpdates.Name, profanityFiltering))
-        {
-            errors[key] = value;
-        }
-
-        foreach (var (key, value) in ValidateTaskItemDescription(taskItemUpdates.Description))
-        {
-            errors[key] = value;
-        }
-
-        foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
-        {
-            errors[key] = value;
-        }
-
-        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus); // should not occur naturally, therefore handled differently.
+        var errors = ValidateTaskItemFields(taskItemUpdates, user.ProfanityFiltering);
 
         if (errors.Count > 0)
         {

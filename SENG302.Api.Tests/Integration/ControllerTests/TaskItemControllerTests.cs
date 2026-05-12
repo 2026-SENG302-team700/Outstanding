@@ -114,7 +114,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
         {
             taskListId = 1,
-            name = name,
+            name,
             description = "test",
             dueDate = "2030-01-01",
             currentTaskStatus = 0
@@ -154,7 +154,7 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         {
             taskListId = 1,
             name = "name",
-            description = description,
+            description,
             dueDate = "2030-01-01",
             currentTaskStatus = 0
         });
