@@ -131,7 +131,9 @@ public class Program
         builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        builder.Services.AddSingleton(new EmailSettings());
+        var emailSettings = new EmailSettings();
+        builder.Configuration.GetSection("EmailSettings").Bind(emailSettings);
+        builder.Services.AddSingleton(emailSettings);
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 
