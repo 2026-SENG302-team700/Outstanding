@@ -181,8 +181,11 @@ public class TaskItemService : ITaskItemService
             throw new MultipleValidationException(errors);
         }
         
-        // gets order position of task in a task list
-        var orderPosition = await context.Set<TaskItem>().Where(t => t.TaskListId == taskItem.TaskListId).MaxAsync(t => (int?)t.OrderPosition) + 1 ?? 0;
+        // gets order position of task attached to a certain user.
+        var orderPosition = await context.Set<TaskItem>()
+            .Join(context.Set<TaskList>()
+                .Where(tList => tList.UserId == userId), tItem => tItem.TaskListId, tList => tList.Id, (tItem, tList) => tItem.OrderPosition)
+            .MaxAsync(tItem => (int?)tItem) + 1 ?? 0;
         
         // Add task item
         var newTask = new TaskItem()

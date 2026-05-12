@@ -2,22 +2,28 @@
     import { formatDate } from "$lib/datepicker/formatDate";
     import { resolve } from "$app/paths";
     import { goto } from "$app/navigation";
+    import type { TaskItem } from "$lib/types.js";
+    import {createSortable} from '@dnd-kit/svelte/sortable';
+    
     
     let {
-        task
+        task,
+        id,
+        column,
+        index,
     }: {
-        task: {
-            taskId: number,
-            taskListId: number,
-            name: string,
-            description: string,
-            currentStatus: 0 | 1 | 2
-        }
+        task: TaskItem;
+        id: string;
+        column: string;
+        index: number;
     } = $props();
+    
 
+    
     /**
-     * Turns taskStatus number to string to representing a CSS stylesheet class.
-     * **/
+     * Returns the CSS stylesheet class name to apply the task card based on it's status
+     * @param taskStatus : Number representing the task status the column represents
+     */
     function taskStatusStyling(taskStatus: number): string {
         if (taskStatus == 0) {
             return "status-todo";
@@ -30,18 +36,33 @@
         }
     }
 
-    /** 
-     * Shortens description down for the item.
-     * **/
+    /**
+     * Shortens the description to be displayed on the task cards if it is too long, 
+     * replacing a slice of the description after a certain character count with '...'
+     * @param text - The text being displayed
+     * @param length - The character length up to which we display description, replacing everything after with '...'
+     */
     function shortenDesc(text: string | null, length: number) {
         if (!text) return "No description";
         if (text.length <= length) return text;
         return text.slice(0, length) + "...";
     }
+
+    const sortable = createSortable({
+        get id() { return id; },
+        get index() { return index; },
+        get group() { return column; },
+        accept: 'item',
+        type: 'item',
+        feedback: 'clone',
+        get data() { return {group: column}; },
+    });
     
 </script>
 
-<div class="board-task-card {taskStatusStyling(task.currentStatus)}"
+<div
+    {@attach sortable.attach}
+    class="board-task-card {taskStatusStyling(parseInt(column))}"
     tabindex="0"
     role="button"
     onclick={() => goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}
@@ -61,11 +82,13 @@
 
 <style>
     .board-task-card {
+        display: inherit;
         background: white;
         border: 1px solid lightgrey;
         border-left: 4px solid white;
         border-radius: 8px;
         padding: 8px 12px;
+        margin-bottom: 5px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
         transition:
                 box-shadow 0.2s ease,
