@@ -8,9 +8,8 @@
     <ContentPolicy/>
     <button
             class="btn btn-primary mt-3"
-            on:click={() => goto(resolve("/home"))}
+            on:click={() => goto(resolve("/register"))}
     >
-        Back to Home
+        Back to Register
     </button>
 </div>
-

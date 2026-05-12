@@ -16,7 +16,13 @@
     let password = $state("");
     let loading = $state(false);
     let error = $state("");
-    let currentModalStep = $state("verify");
+
+    const ModalStep = {
+        EMAIL_INPUT: "emailInput",
+        VERIFY: "verify",
+        RESET_PASSWORD: "resetPassword",
+    };
+    let currentModalStep = $state(ModalStep.EMAIL_INPUT);
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
@@ -40,6 +46,10 @@
     );
     let interval;
 
+    let newPassword = $state("");
+    let confirmPassword = $state("");
+    let updatingPassword = $state(false);
+
     let errors = $state({
         email: "",
         password: "",
@@ -47,7 +57,8 @@
         passwordErrorIndicator: false,
         resetEmail: "",
         codeFormEmail: "",
-        sendError: "",
+        newPassword: "",
+        confirmPassword: "",
     });
 
     onMount(async () => {
@@ -206,10 +217,7 @@
             return;
         }
 
-        loadingStatus = 1;
-
         try {
-            console.log("start");
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset/code/generation`),
                 {
@@ -226,8 +234,7 @@
             if (response.ok) {
                 addToast("Password reset email sent", "success");
 
-                console.log("end");
-                currentModalStep = "verify";
+                currentModalStep = ModalStep.VERIFY;
 
                 startTimerCountdown();
                 clearResetCodeModalFields();
@@ -267,7 +274,7 @@
         if (!response.ok) {
             errors.codeError = data?.message;
         } else {
-            currentModalStep = "update";
+            currentModalStep = ModalStep.EMAIL_INPUT;
             authModal.hide();
         }
 
@@ -276,7 +283,6 @@
 
     /**
      * Function that is called when all digits are entered.
-     *
      * Checks that the code is valid
      */
     async function checkCode() {
@@ -315,11 +321,9 @@
                 ) as HTMLInputElement;
                 firstInput?.focus();
             } else {
-                currentModalStep = "update";
-                authModal.hide();
+                currentModalStep = ModalStep.RESET_PASSWORD;
             }
         } catch (err) {
-            console.log(err);
             errors.codeError = "Connection error. Please try again later.";
         }
 
@@ -332,11 +336,107 @@
      */
     async function requestNewPassword() {
         errors.resetEmail = "";
-        currentModalStep = "emailInput";
-        authModal?.show();
+        errors.codeFormEmail = "";
+
         resetEmail = "";
         confirmResetEmail = "";
-        errors.codeFormEmail = "";
+        newPassword = "";
+        confirmResetEmail = "";
+
+        currentModalStep = ModalStep.EMAIL_INPUT;
+        authModal?.show();
+    }
+
+    /**
+     * Checks passwords match and are strong
+     */
+    function validateUpdatePasswordInputs() {
+        var isValid = true;
+
+        // checks feilds are filled
+        if (!newPassword) {
+            errors.newPassword = "field is required";
+            isValid = false;
+        }
+        if (!confirmPassword) {
+            errors.confirmPassword = "field is required";
+            isValid = false;
+        }
+        // checks passwords match
+        if (newPassword !== confirmPassword) {
+            isValid = false;
+            errors.confirmPassword = "Passwords do not match";
+            confirmPassword = "";
+        }
+
+        // check password is valid
+        const passwordRegex = new RegExp(regexPatterns.user.password);
+        if (!passwordRegex.test(newPassword)) {
+            isValid = false;
+            errors.newPassword =
+                "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters";
+            newPassword = "";
+            confirmPassword = "";
+        }
+        return isValid;
+    }
+
+    /**
+     * Validates and performs the update to the users password
+     */
+    async function resetPassword() {
+        errors.newPassword = "";
+        errors.confirmPassword = "";
+
+        if (!validateUpdatePasswordInputs()) {
+            return;
+        }
+
+        try {
+            updatingPassword = true;
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/reset`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        newPassword: newPassword,
+                        newPasswordConfirm: confirmPassword,
+                    }),
+                    credentials: "include",
+                },
+            );
+            if (response.ok) {
+                addToast("New password updated successfully");
+                authModal.hide();
+                return;
+            }
+
+            const data = await response.json().catch(() => null);
+            if (response.status === 400) {
+                switch (data.message) {
+                    case "Passwords do not match":
+                        errors.confirmPassword = "Password does not match";
+                        confirmPassword = "";
+                        break;
+                    case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                        errors.newPassword =
+                            "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                }
+            } else {
+                addToast("Failed to update password", "error");
+            }
+        } catch (err) {
+            addToast("Failed to update password", "error");
+        } finally {
+            updatingPassword = false;
+        }
     }
 </script>
 
@@ -389,116 +489,109 @@
 >
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">
-                    {currentModalStep === "verify"
-                        ? "Verify Your Identity"
-                        : "Set New Password"}
-                </h5>
-            </div>
-            <div class="modal-body">
-                {#if currentModalStep === "emailInput"}
-                    <div class="text-center">
-                        <p class="text-secondary">
-                            We'll send a verification code to your email
-                        </p>
+            <form
+                onsubmit={() => {
+                    if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                        sendVerificationCode();
+                    } else if (currentModalStep === ModalStep.VERIFY) {
+                        checkCode();
+                    } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
+                        resetPassword();
+                    }
+                }}
+            >
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">
+                        {currentModalStep === ModalStep.EMAIL_INPUT
+                            ? "Request Reset Code"
+                            : currentModalStep === ModalStep.VERIFY
+                              ? "Verify Your Identity"
+                              : "Reset Password"}
+                    </h5>
+                </div>
 
-                        <div class="mb-3 text-start">
-                            <input
-                                type="email"
-                                id="email"
-                                class="form-control"
-                                placeholder="Email *"
-                                bind:value={resetEmail}
-                                onkeydown={(e) =>
-                                    e.key === "Enter" && sendVerificationCode()}
-                            />
-                        </div>
+                <div class="modal-body">
+                    {#if currentModalStep === ModalStep.EMAIL_INPUT}
+                        <div class="text-center">
+                            <p class="text-secondary">
+                                We'll send a verification code to your email
+                            </p>
 
-                        {#if errors.resetEmail}
-                            <div class="text-danger mt-1">
-                                {errors.resetEmail}
+                            <div class="mb-3 text-start">
+                                <input
+                                    type="email"
+                                    id="email"
+                                    class="form-control"
+                                    placeholder="Email *"
+                                    bind:value={resetEmail}
+                                    onkeydown={(e) =>
+                                        e.key === "Enter" &&
+                                        sendVerificationCode()}
+                                />
                             </div>
-                        {/if}
-                    </div>
-                {:else if currentModalStep === "verify"}
-                    <div class="text-centre">
-                        <p class="small">
-                            Please check your inbox and enter the verification
-                            code below to verify your email address. The code
-                            will expire in <strong>{timeRemainingText}</strong>
-                        </p>
-                        <div>
-                            <p class="mb-2 small">
-                                Please re-enter your email here:
-                            </p>
-                            <EmailForm
-                                {loading}
-                                error={errors.codeFormEmail}
-                                bind:email={confirmResetEmail}
-                            />
+                            {#if errors.resetEmail}
+                                <div class="text-danger mt-1">
+                                    {errors.resetEmail}
+                                </div>
+                            {/if}
                         </div>
-                        <div>
-                            <p class="m-0 small">
-                                Please enter the verification code here:
-                            </p>
-                            <CodeForm
-                                bind:digit1
-                                bind:digit2
-                                bind:digit3
-                                bind:digit4
-                                bind:digit5
-                                bind:digit6
-                                error={errors.codeError}
-                            />
-                        </div>
-                    </div>
-                {/if}
-            </div>
-            <div class="modal-footer">
-                <button
-                    class="btn btn-primary w-100"
-                    disabled={loadingStatus != 0}
-                    onclick={() => {
-                        if (currentModalStep === "emailInput") {
-                            sendVerificationCode();
-                        } else if (currentModalStep === "verify") {
-                            checkCode();
-                        } else {
-                            authModal?.hide();
-                        }
-                    }}
-                >
-                    {#if loadingStatus == 1}
-                        Sending...
-                    {:else if loadingStatus == 3}
-                        Verifying...
                     {:else if currentModalStep === "verify"}
-                        Reset Password
-                    {:else if currentModalStep === "emailInput"}
-                        Get reset code
+                        <div class="text-centre">
+                            <p class="small">
+                                Please check your inbox and enter the
+                                verification code below to verify your email
+                                address. The code will expire in <strong
+                                    >{timeRemainingText}</strong
+                                >
+                            </p>
+                            <div>
+                                <p class="mb-2 small">
+                                    Please re-enter your email here:
+                                </p>
+                                <EmailForm
+                                    {loading}
+                                    error={errors.codeFormEmail}
+                                    bind:email={confirmResetEmail}
+                                />
+                            </div>
+                            <div>
+                                <p class="m-0 small">
+                                    Please enter the verification code here:
+                                </p>
+                                <CodeForm
+                                    bind:digit1
+                                    bind:digit2
+                                    bind:digit3
+                                    bind:digit4
+                                    bind:digit5
+                                    bind:digit6
+                                    error={errors.codeError}
+                                />
+                            </div>
+                        </div>
                     {/if}
-                </button>
-                <button
-                    class="btn btn-secondary w-100"
-                    disabled={loadingStatus != 0}
-                    onclick={() => {
-                        if (currentModalStep === "emailInput") {
-                            authModal?.hide();
-                        } else if (currentModalStep === "verify") {
-                            cancelCode();
-                        } else {
-                            authModal?.hide();
-                        }
-                    }}
-                >
-                    {#if loadingStatus == 2}
-                        Cancelling...
-                    {:else}
-                        Cancel
-                    {/if}
-                </button>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        class="btn btn-primary w-100"
+                        onclick={() => {
+                            if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                                sendVerificationCode();
+                            } else if (currentModalStep === ModalStep.VERIFY) {
+                                checkCode();
+                            } else {
+                                authModal?.hide();
+                            }
+                        }}
+                    >
+                        {#if currentModalStep === ModalStep.VERIFY}
+                            Reset Password
+                        {:else if currentModalStep === ModalStep.EMAIL_INPUT}
+                            Get reset code
+                        {/if}
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

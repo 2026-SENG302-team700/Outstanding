@@ -1,10 +1,19 @@
 <script lang="ts">
+    import {CollisionPriority} from '@dnd-kit/abstract';
+    import {createDroppable} from '@dnd-kit/svelte';
+    import type { TaskItem } from "$lib/types.js";
+    import TaskBoardItem from "$lib/components/task-board/task-board-item.svelte"
+
     let {
-        taskStatus,
-        children
+        id,
+        index,
+        row,
+        tasks,
     }: {
-        taskStatus: 0 | 1 | 2,
-        children: Snippet
+        id: string;
+        index: number;
+        row: number[];
+        tasks: Record<number, TaskItem>;
     } = $props();
     
     /** 
@@ -37,13 +46,34 @@
         }
     }
     
+    const droppable = createDroppable({
+        get id() { return id; },
+        get index() { return index; },
+        accept: ['column', 'item'],
+        collisionPriority: CollisionPriority.Low,
+        type: 'column',
+    });
+    
+
+    
 </script>
 
-<div class="board-column">
-    <div class="column-header {columnHeaderStyling(taskStatus)}">
-        {taskStatusToString(taskStatus)}
+<div class="board-column"
+     {@attach droppable.attach}>
+    <div class="column-header {columnHeaderStyling(id)}">
+        {taskStatusToString(id)}
     </div>
-    {@render children?.()}
+    <ul>
+        {#each row as itemId, itemIndex (itemId)}
+  
+            <TaskBoardItem
+                    task={tasks[itemId]}
+                    id={itemId}
+                    column={id}
+                    index={itemIndex}
+            />
+        {/each}
+    </ul>
 </div>
 
 <style>

@@ -138,7 +138,7 @@
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
-                    resolve(`/api/user/password/code/generation`),
+                    resolve(`/api/user/password/update/code/generation`),
                     {
                         method: "PUT",
                         headers: {
@@ -301,6 +301,7 @@
             } else {
                 const data = await response.json().catch(() => null);
                 if (data?.errors) {
+                    console.log(data.errors)
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
                 } else {
@@ -367,7 +368,7 @@
         try {
             codeError = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/update/code/validation`),
                 {
                     method: "POST",
                     headers: {
@@ -406,7 +407,7 @@
         updatingPassword = true;
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password`),
+                resolve(`/api/user/password/update`),
                 {
                     method: "PUT",
                     headers: {
@@ -574,6 +575,7 @@
                         <DisplayNameForm
                             bind:displayName
                             error={errors.displayName}
+                            registering={false}
                         />
                     </div>
                     <div class="mb-3">

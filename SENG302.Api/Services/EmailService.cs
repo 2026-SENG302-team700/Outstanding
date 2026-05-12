@@ -1,6 +1,5 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace SENG302.Api.Services;
@@ -28,9 +27,9 @@ public class EmailService : IEmailService
     private readonly EmailSettings _settings;
     private readonly ISmtpClientWrapper _smtpClient;
 
-    public EmailService(IOptions<EmailSettings> options, ISmtpClientWrapper smtpClient)
+    public EmailService(EmailSettings settings, ISmtpClientWrapper smtpClient)
     {
-        _settings = options.Value;
+        _settings = settings;
         _smtpClient = smtpClient;
     }
 
@@ -142,13 +141,14 @@ public class EmailService : IEmailService
     private static string StripHtml(string html) =>
         System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", string.Empty);
 }
+
 /// <summary>
 /// The class that secrets are injected into.
 /// </summary>
 public class EmailSettings
 {
-    public string Host { get; set; } = Environment.GetEnvironmentVariable("EMAIL_HOST");
+    public string Host { get; set; } = Environment.GetEnvironmentVariable("EMAIL_HOST") ?? "";
     public int Port { get; set; } = 587;
-    public string FromEmail { get; set; } = Environment.GetEnvironmentVariable("EMAIL");
-    public string Password { get; set; } = Environment.GetEnvironmentVariable("EMAIL_PASS");
+    public string FromEmail { get; set; } = Environment.GetEnvironmentVariable("EMAIL") ?? "";
+    public string Password { get; set; } = Environment.GetEnvironmentVariable("EMAIL_PASS") ?? "";
 }

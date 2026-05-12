@@ -11,6 +11,7 @@ public interface ITaskItemService
     Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem, int userId);
     Task<TaskItem?> GetTaskItemAsync(int id, int userId);
     Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates, int userId);
+    Task ReorderTaskItemsAsync(List<int> orderedIds);
 }
 
 
@@ -70,14 +71,15 @@ public class TaskItemService : ITaskItemService
     /// <summary>
     /// Get all the tasks from all the lists and check for censoring
     /// </summary>
-    /// <returns> a list of all the tasks </returns>
+    /// <returns> an ordered list of all the tasks </returns>
     public async Task<IEnumerable<TaskItem>> GetAllTaskItemsAsync(int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         // get all the task
         var tasks = await context.Set<TaskItem>()
                         .Where(t => context.Set<TaskList>()
-                            .Any(l => l.Id == t.TaskListId && l.UserId == userId))
+                        .Any(l => l.Id == t.TaskListId && l.UserId == userId))
+                        .OrderBy(t => t.OrderPosition)
                         .ToListAsync();
         // get user
         var user = await context.Users.FindAsync(userId);
@@ -178,7 +180,13 @@ public class TaskItemService : ITaskItemService
         {
             throw new MultipleValidationException(errors);
         }
-
+        
+        // gets order position of task attached to a certain user.
+        var orderPosition = await context.Set<TaskItem>()
+            .Join(context.Set<TaskList>()
+                .Where(tList => tList.UserId == userId), tItem => tItem.TaskListId, tList => tList.Id, (tItem, tList) => tItem.OrderPosition)
+            .MaxAsync(tItem => (int?)tItem) + 1 ?? 0;
+        
         // Add task item
         var newTask = new TaskItem()
         {
@@ -187,7 +195,8 @@ public class TaskItemService : ITaskItemService
             Description = taskItem.Description,
             CurrentStatus = taskItem.CurrentStatus,
             DueDate = taskItem.DueDate,
-            creationTime = DateTime.UtcNow
+            creationTime = DateTime.UtcNow,
+            OrderPosition = orderPosition
         };
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
@@ -203,7 +212,7 @@ public class TaskItemService : ITaskItemService
     public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
+        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).OrderBy(t => t.OrderPosition).ToListAsync();
 
         // check for user profanity status
         var user = await context.Users.FindAsync(userId);
@@ -300,6 +309,18 @@ public class TaskItemService : ITaskItemService
         context.TaskItems.Update(taskItem);
         await context.SaveChangesAsync();
         return taskItem;
+    }
+
+    public async Task ReorderTaskItemsAsync(List<int> orderedIds)
+    {
+        await using var context =  await _dbContextFactory.CreateDbContextAsync();
+        var orderingDict = orderedIds.Select((id, index) => (id, index)).ToDictionary(x => x.id, x => x.index);
+        var items = await context.TaskItems.Where(t => orderedIds.Contains(t.TaskId)).ToListAsync();
+        foreach (var item in items)
+        {
+            item.OrderPosition = orderingDict[item.TaskId];
+        }
+        await context.SaveChangesAsync();
     }
 }
 

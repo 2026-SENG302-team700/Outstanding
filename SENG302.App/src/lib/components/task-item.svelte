@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import type { TaskItem } from "../types";
     import { createSortable } from "@dnd-kit/svelte/sortable";
     import { formatDate } from "$lib/datepicker/formatDate";
@@ -13,7 +14,6 @@
         index: number;
         task: TaskItem;
     } = $props();
-
     const sortable = createSortable({
         get id() {
             return id;
@@ -45,10 +45,10 @@
     tabindex="0"
     role="button"
     onclick={() =>
-        goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`)}
+        goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}
     onkeydown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-            goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`);
+            goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`));
         }
     }}
 >
@@ -65,8 +65,6 @@
             {:else}Done{/if}
         </span>
     </div>
-
-    <!-- <button {@attach sortable.attachHandle}>Handle</button> -->
 
     <p class="task-description">{shortenDesc(task.description, 50)}</p>
 
