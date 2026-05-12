@@ -71,7 +71,7 @@
                 addToast("Failed to logout. Refresh Webpage", "error");
                 return;
             } else {
-                goto("/");
+                goto(resolve("/"));
             }
         } catch (err) {
             addToast(err.message, "error");

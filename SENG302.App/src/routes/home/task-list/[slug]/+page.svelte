@@ -4,12 +4,16 @@
   import { fetchWithCsrf } from "$lib/csrf";
   import { onMount, onDestroy } from "svelte";
   import { formatDate } from "$lib/datepicker/formatDate";
-  import TaskBoard from "$lib/components/task-board/task-board.svelte"
+  import TaskBoard from "$lib/components/task-board/task-board.svelte";
   import TaskItemComponent from "$lib/components/task-item.svelte";
   import { move } from "@dnd-kit/helpers";
   import { DragDropProvider } from "@dnd-kit/svelte";
   import type { TaskItem } from "$lib/types.js";
-  import { saveSnapshot, retrieveSnapshot, clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
+  import {
+    saveSnapshot,
+    retrieveSnapshot,
+    clearSnapshotHistory,
+  } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
   import { page } from "$app/state";
   import { flip } from "svelte/animate";
@@ -17,7 +21,7 @@
   let loading = $state(false);
   let boardView = $state(false);
   let inUndoAnimation = $state(false);
-  
+
   let listName = $state();
   let taskRefs: number[] = $state([]);
   let tasks: TaskItem[] = $state([]);
@@ -30,24 +34,23 @@
     GetList();
     GetTasks();
   });
-  
+
   onDestroy(() => {
     clearSnapshotHistory();
   });
 
   /**
    * Trigger when url changes, checks params to see what page view needs to be loaded
-  */
+   */
   $effect(() => {
     let query = page.url.searchParams.get("mode");
     if (query != "board-view") {
       boardView = false;
-    }
-    else {
+    } else {
       boardView = true;
     }
     GetTasks();
-  })
+  });
 
   /**
    * Creates a snapshot of the original ordering of list of items before the items are dragged
@@ -77,17 +80,17 @@
   }
 
   /**
-   * get the past history and show the corrosponding toast depending on the situation 
+   * get the past history and show the corrosponding toast depending on the situation
    */
   async function handleUndo() {
     let retrievedSnapshot = retrieveSnapshot();
-    if (retrievedSnapshot.snapshot.length === 0) { 
+    if (retrievedSnapshot.snapshot.length === 0) {
       if (retrievedSnapshot.snapshotFlag === false) {
-        addToast("No sorting to undo", "error")
+        addToast("No sorting to undo", "error");
         return;
       }
       if (retrievedSnapshot.snapshotFlag === true) {
-        addToast("Cannot undo more than 5 sorting", "error")
+        addToast("Cannot undo more than 5 sorting", "error");
         return;
       }
     }
@@ -97,7 +100,7 @@
     await reorderReloadTasks();
     inUndoAnimation = false;
   }
-  
+
   /**
    * Fetches tasks of the certain task list from the backend
    *  and stores them in the frontend as an array of objects
@@ -111,6 +114,9 @@
         {
           method: "GET",
           credentials: "include",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
         },
       );
       const data = await response.json();
@@ -119,7 +125,7 @@
         return;
       }
       tasks = data;
-      taskRefs = data.map(task => task.taskId);
+      taskRefs = data.map((task) => task.taskId);
     } catch (err) {
       error = "Failed to get tasks: " + (err as Error).message;
     } finally {
@@ -162,36 +168,32 @@
    */
   async function reorderReloadTasks(): void {
     try {
-      await fetchWithCsrf(resolve('/api/taskItem/order'), {
+      await fetchWithCsrf(resolve("/api/taskItem/order"), {
         method: "PATCH",
         credentials: "include",
-        headers: {'content-type': 'application/json'},
-        body: JSON.stringify(taskRefs)
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(taskRefs),
       });
     } catch (err) {
       console.error(err);
       addToast("An error occurred.", "error");
     }
-
   }
-  
+
   /**
    * Changes the url to add board view as a param
    * Gets updated task list (for task ordering) then toggles boardview on or off depending on its previous state.
    */
   async function toggleBoardView() {
-      clearSnapshotHistory();
-      GetTasks();
+    clearSnapshotHistory();
+    GetTasks();
     let query = page.url.searchParams.get("mode");
     if (query == "board-view") {
-      goto(resolve(`/home/task-list/${params.slug}`))
-    }
-    else {
-      goto(resolve(`/home/task-list/${params.slug}/?mode=board-view`))
+      goto(resolve(`/home/task-list/${params.slug}`));
+    } else {
+      goto(resolve(`/home/task-list/${params.slug}/?mode=board-view`));
     }
   }
-
-  
 </script>
 
 <div class="container">
@@ -212,19 +214,20 @@
       >Add Task
     </button>
     <div>
-      <button type="button"
-              class="btn btn-outline-info"
-              on:click={toggleBoardView}
+      <button
+        type="button"
+        class="btn btn-outline-info"
+        on:click={toggleBoardView}
       >
         See Task List
       </button>
-      <button type="button"
-              class="btn btn-outline-warning"
-              on:click={handleUndo}
+      <button
+        type="button"
+        class="btn btn-outline-warning"
+        on:click={handleUndo}
       >
         Undo Last Sorting
       </button>
-      
     </div>
   </div>
   {#if loading && Object.keys(tasks).length === 0}
@@ -235,19 +238,27 @@
     </div>
   {:else}
     <div class="mb-3">
-    {#if boardView}
-       <TaskBoard tasks="{tasks}" />
-    {:else}
-      <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
-        <ul class="list">
-          {#each taskRefs as taskRef, index (taskRef)}
-            <div animate:flip = {inUndoAnimation ? { duration: 200 } : { duration: 0 }}>
-              <TaskItemComponent id={taskRef} task={tasks.find(u => u.taskId === taskRef)} {index} />
-            </div>
-          {/each}
-        </ul>
-      </DragDropProvider>
-    {/if}
+      {#if boardView}
+        <TaskBoard {tasks} />
+      {:else}
+        <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
+          <ul class="list">
+            {#each taskRefs as taskRef, index (taskRef)}
+              <div
+                animate:flip={inUndoAnimation
+                  ? { duration: 200 }
+                  : { duration: 0 }}
+              >
+                <TaskItemComponent
+                  id={taskRef}
+                  task={tasks.find((u) => u.taskId === taskRef)}
+                  {index}
+                />
+              </div>
+            {/each}
+          </ul>
+        </DragDropProvider>
+      {/if}
     </div>
   {/if}
 </div>
@@ -385,8 +396,8 @@
     padding: 8px 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
     transition:
-            box-shadow 0.2s ease,
-            transform 0.1s ease;
+      box-shadow 0.2s ease,
+      transform 0.1s ease;
     cursor: pointer;
   }
 
@@ -394,15 +405,15 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
   }
-  
+
   .board-status-todo {
     border-left-color: grey;
   }
-  
+
   .board-status-inprogress {
     border-left-color: blue;
   }
-  
+
   .board-status-done {
     border-left-color: lightgreen;
   }

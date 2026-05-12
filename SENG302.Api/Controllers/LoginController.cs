@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [ApiController]
 [Route("api")]
 public class LoginController : ControllerBase
