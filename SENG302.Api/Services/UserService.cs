@@ -402,13 +402,13 @@ public class UserService : IUserService
     public void ValidateResetPasswordRequest(string newPassword, string newPasswordConfirm)
     {
         // Validate new passwords match
-        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        if (!UserCredentialsValidator.PasswordMatching(newPassword, newPasswordConfirm))
         {
             throw new MismatchedPasswordException("Passwords do not match");
         }
         
         // validate password is of valid form
-        if (!CheckPassword(newPassword))
+        if (!UserCredentialsValidator.CheckPassword(newPassword))
         {
             throw new InvalidPasswordException(
                 "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
