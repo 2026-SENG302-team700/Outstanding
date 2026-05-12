@@ -7,7 +7,6 @@
     import { addToast } from "$lib/toast/toast";
     import {move} from '@dnd-kit/helpers';
     import { fetchWithCsrf } from "$lib/csrf";
-    import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     
     let {
