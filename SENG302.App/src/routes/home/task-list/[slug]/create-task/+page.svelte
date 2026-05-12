@@ -156,7 +156,7 @@
         </h1>
     </div>
     <div class="mb-3">
-        <CancelButton path={"."} />
+        <CancelButton path={`/home/task-list/${params.slug}`} />
     </div>
     <form on:submit|preventDefault={createTask}>
         <div class="mb-3">
