@@ -1,7 +1,3 @@
-
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Shouldly;
 
@@ -9,17 +5,6 @@ namespace SENG302.Api.Tests.Unit.Helpers;
 
 public class TaskItemServiceTests
 {
-    private static readonly DateTimeOffset TestNow = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    public TaskItemServiceTests()
-    {
-        var options = new DbContextOptionsBuilder<DatabaseContext>().Options;
-        var dummyContextFactory = new PooledDbContextFactory<DatabaseContext>(options);
-
-        var fakeTimeProvider = new FakeTimeProvider(TestNow);
-
-    }
-
-    // Fake time provider defined INSIDE the test class
     private class FakeTimeProvider : TimeProvider
     {
         private readonly DateTimeOffset _utcNow;
