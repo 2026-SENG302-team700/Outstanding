@@ -31,6 +31,7 @@
     // '1' for sending reset email
     // '2' for sending cancel email
     // '3' for verifying code
+    // '4' for updating password
     let loadingStatus = $state(0);
     let confirmResetEmail = $state("");
     let digit1 = $state("");
@@ -48,7 +49,6 @@
 
     let newPassword = $state("");
     let confirmPassword = $state("");
-    let updatingPassword = $state(false);
 
     let errors = $state({
         email: "",
@@ -394,7 +394,7 @@
         }
 
         try {
-            updatingPassword = true;
+            loadingStatus = 4;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset`),
                 {
@@ -435,7 +435,7 @@
         } catch (err) {
             addToast("Failed to update password", "error");
         } finally {
-            updatingPassword = false;
+            loadingStatus = 0;
         }
     }
 </script>
@@ -491,12 +491,16 @@
         <div class="modal-content p-4">
             <form
                 onsubmit={() => {
+                    if (loadingStatus != 0) return;
+
                     if (currentModalStep === ModalStep.EMAIL_INPUT) {
                         sendVerificationCode();
                     } else if (currentModalStep === ModalStep.VERIFY) {
                         checkCode();
                     } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
                         resetPassword();
+                    } else {
+                        authModal.hide();
                     }
                 }}
             >
@@ -535,7 +539,7 @@
                                 </div>
                             {/if}
                         </div>
-                    {:else if currentModalStep === "verify"}
+                    {:else if currentModalStep === ModalStep.VERIFY}
                         <div class="text-centre">
                             <p class="small">
                                 Please check your inbox and enter the
@@ -568,26 +572,84 @@
                                     error={errors.codeError}
                                 />
                             </div>
+
+                            {#if errors.codeError}
+                                <div
+                                    class="text-danger small mb-3 animate-fade-in"
+                                >
+                                    <i
+                                        class="bi bi-exclamation-circle-fill me-1"
+                                    ></i>
+                                    {errors.codeError}
+                                </div>
+                            {/if}
+                        </div>
+                    {:else}
+                        <div class="mb-3">
+                            <label
+                                for="newPassword"
+                                class="form-label small fw-bold text-secondary"
+                            >
+                                New Password *
+                            </label>
+                            <PasswordForm
+                                bind:password={newPassword}
+                                error={errors.newPassword}
+                            />
+                        </div>
+
+                        <div class="mb-3">
+                            <label
+                                for="newPasswordRepeat"
+                                class="form-label small fw-bold text-secondary"
+                            >
+                                Confirm New Password *
+                            </label>
+                            <PasswordForm
+                                bind:password={confirmPassword}
+                                error={errors.confirmPassword}
+                            />
                         </div>
                     {/if}
                 </div>
                 <div class="modal-footer">
                     <button
+                        type="submit"
                         class="btn btn-primary w-100"
-                        onclick={() => {
-                            if (currentModalStep === ModalStep.EMAIL_INPUT) {
-                                sendVerificationCode();
-                            } else if (currentModalStep === ModalStep.VERIFY) {
-                                checkCode();
-                            } else {
-                                authModal?.hide();
-                            }
-                        }}
+                        disabled={loadingStatus != 0}
                     >
-                        {#if currentModalStep === ModalStep.VERIFY}
+                        {#if loadingStatus == 1}
+                            Sending...
+                        {:else if loadingStatus == 3}
+                            Verifying...
+                        {:else if loadingStatus == 4}
+                            Updating Password...
+                        {:else if currentModalStep === ModalStep.VERIFY}
                             Reset Password
                         {:else if currentModalStep === ModalStep.EMAIL_INPUT}
                             Get reset code
+                        {:else if currentModalStep === ModalStep.RESET_PASSWORD}
+                            Update Password
+                        {/if}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-secondary w-100"
+                        disabled={loadingStatus != 0}
+                        onclick={() => {
+                            if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                                authModal.hide();
+                            } else if (currentModalStep === ModalStep.VERIFY) {
+                                cancelCode();
+                            } else {
+                                authModal.hide();
+                            }
+                        }}
+                    >
+                        {#if loadingStatus == 2}
+                            Cancelling...
+                        {:else}
+                            Cancel
                         {/if}
                     </button>
                 </div>
