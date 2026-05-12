@@ -4,6 +4,6 @@
     let { path = "/" } = $props();
 </script>
 
-<button type="button" class="btn btn-secondary" onclick={() => goto(path)}
+<button type="button" class="btn btn-secondary" onclick={() => goto(resolve(path))}
     >Cancel</button
 >
