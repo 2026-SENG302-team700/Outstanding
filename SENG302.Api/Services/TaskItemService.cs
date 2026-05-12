@@ -135,6 +135,7 @@ public class TaskItemService : ITaskItemService
     /// can be up to 2048 characters.
     /// dueDate must be in the future, and currentStatus will be automatically set to
     /// ToDo if not present.
+    /// Returns errors if the profanity filter is on and profanity is found in the text
     /// </summary>
     /// <param name="user"></param>
     /// <param name="taskListId"></param>

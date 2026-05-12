@@ -139,9 +139,26 @@ public class TaskItemController : ControllerBase
     [HttpPut("item/{id:int}")]
     public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
     {
+        var errors = new Dictionary<string, string>();
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Description, user.ProfanityFiltering))
+            {
+                errors["description"] = "Description cannot contain profanity.";
+            }
+            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Name, user.ProfanityFiltering))
+            {
+                errors["name"] = "Name cannot contain profanity.";
+            }
+            if (errors.Count > 0)
+            {
+                return BadRequest(new BadRequestValidationResponse
+                {
+                    Errors = errors
+                });
+            }
 
             var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
             return Ok(taskItem);

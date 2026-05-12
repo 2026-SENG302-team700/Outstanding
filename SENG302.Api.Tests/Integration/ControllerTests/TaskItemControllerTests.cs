@@ -83,6 +83,84 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
+    [Theory]
+    [InlineData("crap")] 
+    [InlineData("in this sentence, crap is present")]
+    [InlineData("Crap")] 
+    public async Task CreateTaskItem_ProfaneNameFilterOn_BadRequest(string name)
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            ProfanityFiltering = true,
+            
+        });
+        context.TaskLists.Add(new TaskList
+        {
+            Id = 1,
+            Name = "test tasklist",
+            UserId = 1
+        });
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        {
+            taskListId = 1,
+            name = name,
+            description = "test",
+            dueDate = "2030-01-01",
+            currentTaskStatus = 0
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("crap")] 
+    [InlineData("in this sentence, crap is present")]
+    [InlineData("Crap")] 
+    public async Task CreateTaskItem_ProfaneDescriptionFilterOn_BadRequest(string description)
+    {
+        // Create DB
+        await using var context = DbContextFactory.CreateDbContext();
+
+        // Add user to DB
+        context.Users.Add(new User
+        {
+            Id = 1,
+            Email = "test@example.com",
+            DisplayName = "Test User",
+            PasswordKey = "password",
+            Country = "Test Country",
+            ProfanityFiltering = true,
+            
+        });
+        context.TaskLists.Add(new TaskList
+        {
+            Id = 1,
+            Name = "test tasklist",
+            UserId = 1
+        });
+        await context.SaveChangesAsync();
+
+        var message = await HttpClient.PostAsJsonAsync("/api/taskItem", new
+        {
+            taskListId = 1,
+            name = "name",
+            description = description,
+            dueDate = "2030-01-01",
+            currentTaskStatus = 0
+        });
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
     [Fact]
     public async Task CreateTaskItem_NoDescription_DefaultDescriptionSet()
     {

@@ -10,6 +10,7 @@
 
   import DatePicker from "$lib/datepicker/datepicker.svelte";
   import StatusDropdown from "$lib/statusdropdown/statusdropdown.svelte";
+    import { addToast } from "$lib/toast/toast.js";
 
   let loading = $state(false);
   let error = $state("");
@@ -120,9 +121,9 @@
           errors.description = data.errors.description ?? "";
           errors.dueDate = data.errors.dueDate ?? "";
         } else {
-          error =
+          addToast(
             data?.message ||
-            "Failed to update task (Internal Server Error occurred).";
+            "Failed to update task (Internal Server Error occurred).", "error");
         }
         return;
       }
@@ -131,7 +132,7 @@
       error = `Failed to update task: ${err.message}`;
     } finally {
       loading = false;
-      goto("..");
+
     }
   }
 

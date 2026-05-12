@@ -6,7 +6,6 @@ namespace SENG302.Api.Tests.Unit.Services;
 
 public class ProfanityToolsTests
 {
-    private ProfanityTools _toolUnderTest = new();
 
     [Theory]
     [InlineData("Crap")]
@@ -16,7 +15,7 @@ public class ProfanityToolsTests
     public void ContainsProfanity_ProfaneText_FilterOn_ReturnTrue(string text)
     {
 
-        var result = _toolUnderTest.ContainsProfanity(text, true);
+        var result = ProfanityTools.ContainsProfanity(text, true);
         result.ShouldBeTrue();
     }
 
@@ -27,7 +26,7 @@ public class ProfanityToolsTests
     [InlineData("You are an arse")]
     public void ContainsProfanity_ProfaneText_FilterOff_ReturnFalse(string text)
     {
-        var result = _toolUnderTest.ContainsProfanity(text, false);
+        var result = ProfanityTools.ContainsProfanity(text, false);
         result.ShouldBeFalse();
     }
 
@@ -38,7 +37,7 @@ public class ProfanityToolsTests
     [InlineData("You are a lovely person!")]
     public void ContainsProfanity_HarmlessText_FilterOff_ReturnFalse(string text)
     {
-        var result = _toolUnderTest.ContainsProfanity(text, false);
+        var result = ProfanityTools.ContainsProfanity(text, false);
         result.ShouldBeFalse();
     }
 
@@ -49,7 +48,7 @@ public class ProfanityToolsTests
     [InlineData("You are a lovely person!")]
     public void ContainsProfanity_HarmlessText_FilterOn_ReturnFalse(string text)
     {
-        var result = _toolUnderTest.ContainsProfanity(text, true);
+        var result = ProfanityTools.ContainsProfanity(text, true);
         result.ShouldBeFalse();
     }
 }
