@@ -100,6 +100,9 @@ public class UpdatePasswordController : ControllerBase
     {
         try
         {
+            updatePasswordRequest.OldPassword = updatePasswordRequest.OldPassword.Trim();
+            updatePasswordRequest.NewPassword = updatePasswordRequest.NewPassword.Trim();
+            updatePasswordRequest.NewPasswordConfirm = updatePasswordRequest.NewPasswordConfirm.Trim();
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userDisplayName = User.FindFirstValue(ClaimTypes.Name);
             var userEmail = User.FindFirstValue(ClaimTypes.Email);

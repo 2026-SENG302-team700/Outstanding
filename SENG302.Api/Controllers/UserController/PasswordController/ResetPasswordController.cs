@@ -136,6 +136,8 @@ public class ResetPasswordController : ControllerBase
     {
         try
         {
+            resetPasswordRequest.NewPassword = resetPasswordRequest.NewPassword.Trim();
+            resetPasswordRequest.NewPasswordConfirm = resetPasswordRequest.NewPasswordConfirm.Trim();
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
 
             if (string.IsNullOrEmpty(userEmail))
