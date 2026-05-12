@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
-    import type { Modal } from "bootstrap"
+    import type { Modal } from "bootstrap";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
     import { addToast } from "$lib/toast/toast";
@@ -39,7 +39,7 @@
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
     let interval;
-    
+
     let newPassword = $state("");
     let confirmPassword = $state("");
     let updatingPassword = $state(false);
@@ -252,8 +252,8 @@
     async function checkCode() {
         try {
             errors.codeError = "";
-            errors.codeFormEmail = ""
-            
+            errors.codeFormEmail = "";
+
             if (resetEmail !== confirmResetEmail) {
                 errors.codeFormEmail = "Emails do not match";
                 return;
@@ -297,7 +297,7 @@
     async function requestNewPassword() {
         errors.resetEmail = "";
         errors.codeFormEmail = "";
-        
+
         resetEmail = "";
         confirmResetEmail = "";
         newPassword = "";
@@ -312,7 +312,7 @@
      */
     function validateUpdatePasswordInputs() {
         var isValid = true;
-        
+
         // checks feilds are filled
         if (!newPassword) {
             errors.newPassword = "field is required";
@@ -341,14 +341,14 @@
         }
         return isValid;
     }
-    
+
     /**
      * Validates and performs the update to the users password
      */
     async function resetPassword() {
         errors.newPassword = "";
         errors.confirmPassword = "";
-        
+
         if (!validateUpdatePasswordInputs()) {
             return;
         }
@@ -366,7 +366,7 @@
                         newPassword: newPassword,
                         newPasswordConfirm: confirmPassword,
                     }),
-                    credentials: "include"
+                    credentials: "include",
                 },
             );
             if (response.ok) {
@@ -398,7 +398,6 @@
             updatingPassword = false;
         }
     }
-    
 </script>
 
 <div class="container">
@@ -451,23 +450,23 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-4">
             <form
-                    onsubmit={() => {
-            if (currentModalStep === ModalStep.EMAIL_INPUT) {
-                sendVerificationCode();
-            } else if (currentModalStep === ModalStep.VERIFY) {
-                checkCode();
-            } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
-                resetPassword();
-            }
-        }}
+                onsubmit={() => {
+                    if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                        sendVerificationCode();
+                    } else if (currentModalStep === ModalStep.VERIFY) {
+                        checkCode();
+                    } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
+                        resetPassword();
+                    }
+                }}
             >
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold">
                         {currentModalStep === ModalStep.EMAIL_INPUT
                             ? "Request Reset Code"
                             : currentModalStep === ModalStep.VERIFY
-                                ? "Verify Your Identity"
-                                : "Reset Password"}
+                              ? "Verify Your Identity"
+                              : "Reset Password"}
                     </h5>
                 </div>
 
@@ -479,28 +478,20 @@
                             </p>
 
                             <div class="mb-3 text-start">
-                                <input
-                                        type="email"
-                                        id="email"
-                                        class="form-control"
-                                        placeholder="Email *"
-                                        bind:value={resetEmail}
+                                <EmailForm
+                                    bind:email={resetEmail}
+                                    error={errors.resetEmail}
                                 />
                             </div>
-
-                            {#if errors.resetEmail}
-                                <div class="text-danger mt-1">
-                                    {errors.resetEmail}
-                                </div>
-                            {/if}
                         </div>
-
                     {:else if currentModalStep === ModalStep.VERIFY}
                         <div class="text-centre">
                             <p class="small">
-                                Please check your inbox and enter the verification
-                                code below to verify your email address. The code
-                                will expire in <strong>{timeRemainingText}</strong>
+                                Please check your inbox and enter the
+                                verification code below to verify your email
+                                address. The code will expire in <strong
+                                    >{timeRemainingText}</strong
+                                >
                             </p>
 
                             <div>
@@ -508,9 +499,9 @@
                                     Please re-enter your email here:
                                 </p>
                                 <EmailForm
-                                        {loading}
-                                        error={errors.codeFormEmail}
-                                        bind:email={confirmResetEmail}
+                                    {loading}
+                                    error={errors.codeFormEmail}
+                                    bind:email={confirmResetEmail}
                                 />
                             </div>
 
@@ -519,47 +510,51 @@
                                     Please enter the verification code here:
                                 </p>
                                 <CodeForm
-                                        bind:digit1
-                                        bind:digit2
-                                        bind:digit3
-                                        bind:digit4
-                                        bind:digit5
-                                        bind:digit6
-                                        error={errors.codeError}
+                                    bind:digit1
+                                    bind:digit2
+                                    bind:digit3
+                                    bind:digit4
+                                    bind:digit5
+                                    bind:digit6
+                                    error={errors.codeError}
                                 />
                             </div>
 
                             {#if errors.codeError}
-                                <div class="text-danger small mb-3 animate-fade-in">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+                                <div
+                                    class="text-danger small mb-3 animate-fade-in"
+                                >
+                                    <i
+                                        class="bi bi-exclamation-circle-fill me-1"
+                                    ></i>
+                                    {codeError}
                                 </div>
                             {/if}
                         </div>
-
                     {:else}
                         <div class="mb-3">
                             <label
-                                    for="newPassword"
-                                    class="form-label small fw-bold text-secondary"
+                                for="newPassword"
+                                class="form-label small fw-bold text-secondary"
                             >
                                 New Password *
                             </label>
                             <PasswordForm
-                                    bind:password={newPassword}
-                                    error={errors.newPassword}
+                                bind:password={newPassword}
+                                error={errors.newPassword}
                             />
                         </div>
 
                         <div class="mb-3">
                             <label
-                                    for="newPasswordRepeat"
-                                    class="form-label small fw-bold text-secondary"
+                                for="newPasswordRepeat"
+                                class="form-label small fw-bold text-secondary"
                             >
                                 Confirm New Password *
                             </label>
                             <PasswordForm
-                                    bind:password={confirmPassword}
-                                    error={errors.confirmPassword}
+                                bind:password={confirmPassword}
+                                error={errors.confirmPassword}
                             />
                         </div>
                     {/if}
@@ -567,9 +562,9 @@
 
                 <div class="modal-footer">
                     <button
-                            class="btn btn-primary w-100"
-                            type="submit"
-                            disabled={updatingPassword}
+                        class="btn btn-primary w-100"
+                        type="submit"
+                        disabled={updatingPassword}
                     >
                         {#if currentModalStep === ModalStep.EMAIL_INPUT}
                             Get reset code
