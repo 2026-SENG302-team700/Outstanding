@@ -47,7 +47,6 @@
         if (dueDate.getFullYear() > 9999) {
             dueDate = new Date(`9999-${dueDate.getMonth()+1}-${dueDate.getDate()}`);
         }
-        console.log(dueDate)
 
         if (dueDate.getFullYear() !== 1) {
             dueDate.setHours(23, 59, 59, 999);
