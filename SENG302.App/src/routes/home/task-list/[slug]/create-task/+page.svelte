@@ -43,7 +43,6 @@
      * issues with the query, and reloads the page once the the query has been excepted.
      */
     async function createTask() {
-        console.log(taskDue);
         const dueDate = new Date(taskDue);
 
         if (dueDate.getFullYear() !== 1) {
