@@ -47,25 +47,28 @@ public class TaskItemValidator {
     /// <param name="taskItem"></param>
     /// <param name="profanityFiltering"></param>
     /// <returns>Dictionary<string, string></returns>
-    public static Dictionary<string, string> ValidateTaskItemFields(ITaskItemRequest taskItem, bool profanityFiltering) {
+    public static Dictionary<string, string> ValidateTaskItemFields(ITaskItemRequest taskItemRequest, bool profanityFiltering, TaskItem? taskItem = null) {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
+        foreach (var (key, value) in ValidateTaskItemName(taskItemRequest.Name, profanityFiltering))
         {
             errors.Add(key, value);
         }
 
-        foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItemRequest.Description))
         {
             errors.Add(key, value);
         }
-
-        foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
+        if (taskItemRequest != taskItem)
         {
-            errors.Add(key, value);
+            foreach (var (key, value) in ValidateTaskItemDueDate(taskItemRequest.DueDate))
+            {
+                errors.Add(key, value);
+            }
         }
 
-        ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
+
+        ValidateTaskItemCurrentStatus(taskItemRequest.CurrentStatus); // should not occur naturally, therefore handled differently.
 
         return errors;
     }

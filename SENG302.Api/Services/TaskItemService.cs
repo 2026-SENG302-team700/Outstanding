@@ -188,7 +188,7 @@ public class TaskItemService : ITaskItemService
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
 
 
-        var errors = TaskItemValidator.ValidateTaskItemFields(taskItemUpdates, user.ProfanityFiltering);
+        var errors = TaskItemValidator.ValidateTaskItemFields(taskItemUpdates, user.ProfanityFiltering, taskItem);
 
         if (errors.Count > 0)
         {
