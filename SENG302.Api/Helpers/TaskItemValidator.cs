@@ -38,6 +38,15 @@ public class TaskItemValidator {
         }
     }
 
+    /// <summary>
+    /// given a TaskItemRequest interface and a bool to determine whether profanity is on,
+    /// this method invokes validation methods on all taskItem fields to ensure they
+    /// meet ACs, and do not contain profanity. Every violation of the task rules is added
+    /// to a dictionary, and returned, containing all errors.
+    /// </summary>
+    /// <param name="taskItem"></param>
+    /// <param name="profanityFiltering"></param>
+    /// <returns>Dictionary<string, string></returns>
     public static Dictionary<string, string> ValidateTaskItemFields(ITaskItemRequest taskItem, bool profanityFiltering) {
         var errors = new Dictionary<string, string>();
 
