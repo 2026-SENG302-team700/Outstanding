@@ -25,15 +25,14 @@
         <button
                 type="button"
                 class="btn btn-outline-secondary"
-                on:click={() => (showPassword = !showPassword)}
+                onclick={() => (showPassword = !showPassword)}
                 disabled={loading}
                 aria-label="Toggle password visibility"
         >
             <i class={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
         </button>
-    </div>
-
-    {#if error}
+            {#if error}
         <div class="invalid-feedback">{error}</div>
     {/if}
+    </div>
 </div>

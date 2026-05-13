@@ -1,7 +1,7 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
+using SENG302.Api.Resources.Helpers;
 namespace SENG302.Api.Services;
 
 public interface ITaskListService
@@ -14,12 +14,12 @@ public interface ITaskListService
 public class TaskListService : ITaskListService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
-    private readonly TimeProvider _timeProvider;
+
 
     public TaskListService(IDbContextFactory<DatabaseContext> dbContextFactory, TimeProvider timeProvider)
     {
         _dbContextFactory = dbContextFactory;
-        _timeProvider = timeProvider;
+
     }
 
     /// <summary>
@@ -80,14 +80,9 @@ public class TaskListService : ITaskListService
         }
 
         // check for profanity in the name
-        if (user.ProfanityFiltering)
+        if (ProfanityTools.ContainsProfanity(name, user.ProfanityFiltering))
         {
-            var profanityFilter = new ProfanityFilter.ProfanityFilter();
-            var swearList = profanityFilter.DetectAllProfanities(name);
-            if (swearList.Count > 0)
-            {
-                throw new ArgumentException("List name cannot contain profanity.");
-            }
+            throw new ArgumentException("List name cannot contain profanity.");
         }
 
         // Create the new task list

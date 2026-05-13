@@ -2,12 +2,11 @@
 </script>
 
 <div class="card shadow-sm p-4">
-
     <h1 class="mb-3">Content Policy</h1>
 
     <p>
-        <strong>Outstanding</strong> is designed to support safe, organised, and productive task tracking.
-        All content must comply with the rules below.
+        <strong>Outstanding</strong> is designed to support safe, organised, and
+        productive task tracking. All content must comply with the rules below.
     </p>
 
     <hr />
@@ -44,21 +43,21 @@
 
     <h4>Display Names</h4>
     <p>
-        Display names must not include offensive or inappropriate content.
-        If the profanity filter is enabled, such names will be rejected.
+        Display names must not include offensive or inappropriate content. If
+        the profanity filter is enabled, such names will be rejected.
     </p>
 
     <h4>Enforcement</h4>
     <p>
-        Violations may result in content removal, account restrictions, or suspension.
+        Violations may result in content removal, account restrictions, or
+        suspension.
     </p>
-
-    <hr />
-
 </div>
 
 <style>
-    h1, h4, h5 {
+    h1,
+    h4,
+    h5 {
         font-weight: 600;
     }
 

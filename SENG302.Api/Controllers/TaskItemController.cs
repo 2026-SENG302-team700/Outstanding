@@ -5,7 +5,7 @@ using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
 using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
-using System.Security.Claims;
+using SENG302.Api.Resources.Helpers;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -14,11 +14,13 @@ namespace SENG302.Api.Controllers;
 [Route("api/taskItem")]
 public class TaskItemController : ControllerBase
 {
+    private readonly IUserService _userService;
     private readonly ITaskItemService _taskItemService;
 
-    public TaskItemController(ITaskItemService taskItemService)
+    public TaskItemController(ITaskItemService taskItemService, IUserService userService)
     {
         _taskItemService = taskItemService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -78,11 +80,29 @@ public class TaskItemController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItemRequest)
     {
+        var errors = new Dictionary<string, string>();
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (ProfanityTools.ContainsProfanity(taskItemRequest.Description, user.ProfanityFiltering))
+            {
+                errors["description"] = "Description cannot contain profanity.";
+            }
+            if (ProfanityTools.ContainsProfanity(taskItemRequest.Name, user.ProfanityFiltering))
+            {
+                errors["name"] = "Name cannot contain profanity.";
+            }
+            if (errors.Count > 0)
+            {
+                return BadRequest(new BadRequestValidationResponse
+                {
+                    Errors = errors
+                });
+            }
             var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest, userId);
             return Ok(response);
+
         }
         catch (MultipleValidationException e)
         {
@@ -91,10 +111,7 @@ public class TaskItemController : ControllerBase
                 Errors = e.Errors
             });
         }
-        catch (Exception e)
-        {
-            return BadRequest(e.Message);
-        }
+
     }
 
     [Authorize]
@@ -126,10 +143,27 @@ public class TaskItemController : ControllerBase
     [HttpPut("item/{id:int}")]
     public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
     {
+        var errors = new Dictionary<string, string>();
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        User? user = await _userService.GetUserByIdAsync(userId);
         try
         {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            
+            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Description, user.ProfanityFiltering))
+            {
+                errors["description"] = "Description cannot contain profanity.";
+            }
+            if (ProfanityTools.ContainsProfanity(taskItemUpdates.Name, user.ProfanityFiltering))
+            {
+                errors["name"] = "Name cannot contain profanity.";
+            }
+            if (errors.Count > 0)
+            {
+                return BadRequest(new BadRequestValidationResponse
+                {
+                    Errors = errors
+                });
+            }
+
             var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
             return Ok(taskItem);
         }
@@ -160,6 +194,5 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest(e.Message);
         }
-
     }
 }

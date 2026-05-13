@@ -1,28 +1,10 @@
-using System.Runtime.InteropServices;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Services;
 using Shouldly;
 
-namespace SENG302.Api.Tests.Unit;
+namespace SENG302.Api.Tests.Unit.Helpers;
 
 public class TaskItemServiceTests
 {
-    private static readonly DateTimeOffset TestNow = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
-    private readonly TaskItemService ServiceUnderTest;
-    public TaskItemServiceTests()
-    {
-        var options = new DbContextOptionsBuilder<DatabaseContext>().Options;
-        var dummyContextFactory = new PooledDbContextFactory<DatabaseContext>(options);
-
-        var fakeTimeProvider = new FakeTimeProvider(TestNow);
-
-        ServiceUnderTest = new TaskItemService(dummyContextFactory, fakeTimeProvider);
-    }
-
-    // Fake time provider defined INSIDE the test class
     private class FakeTimeProvider : TimeProvider
     {
         private readonly DateTimeOffset _utcNow;
@@ -40,7 +22,7 @@ public class TaskItemServiceTests
     [InlineData("Tēst")] // macron
     public void ValidateName_ValidName_ReturnsNothing(string name)
     {
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemName(name, false));
+        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemName(name, false));
     }
 
     [Theory]
@@ -50,7 +32,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemName(name, false))
+        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemName(name, false))
         {
             errors[key] = value;
         }        
@@ -66,7 +48,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDescription(new string('a', 2049)))
+        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDescription(new string('a', 2049), false))
         {
             errors[key] = value;
         }        
@@ -82,7 +64,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
         
-        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1))))
+        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDueDate(DateTime.UtcNow.Add(TimeSpan.FromDays(1))))
         {
             errors[key] = value;
         }        
@@ -95,7 +77,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
         
-        foreach (var (key, value) in ServiceUnderTest.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))))
+        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDueDate(DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))))
         {
             errors[key] = value;
         }        
@@ -109,8 +91,8 @@ public class TaskItemServiceTests
     [Fact]
     public void ValidateCurrentStatus_Valid_NoProblems()
     {
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Todo));                            
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.InProgress));                      
-        Should.NotThrow(() => ServiceUnderTest.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Done));  
+        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Todo));                            
+        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.InProgress));                      
+        Should.NotThrow(() => TaskItemValidator.ValidateTaskItemCurrentStatus(CurrentTaskStatus.Done));  
     }
 }
