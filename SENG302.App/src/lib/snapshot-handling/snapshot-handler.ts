@@ -1,19 +1,26 @@
-let taskListSnapshots: Array<Array<number>> = [];
-let hasHistoryHappened: boolean = false;
+export type TaskSnapshot = {
+  taskId: number;
+  status: number;
+};
+
 type snapshotRetrieval = {
-  snapshot: Array<number>;
+  snapshot: Array<TaskSnapshot>;
   snapshotFlag: boolean;
 };
+
+let taskListSnapshots: Array<Array<TaskSnapshot>> = [];
+let hasHistoryHappened: boolean = false;
+
 /**
  * Adds the snapshot to the taskListSnapshots and also maintains that the list is only 5 items long
  * @param snapshot number array at a point in history
  */
-export function saveSnapshot(snapshot: Array<number>): void {
+export function saveSnapshot(snapshot: Array<TaskSnapshot>): void {
   if (taskListSnapshots.length > 4) {
     taskListSnapshots.shift();
   }
 
-  taskListSnapshots.push(snapshot);
+  taskListSnapshots.push(snapshot.map((s) => ({ ...s })));
   hasHistoryHappened = true;
 }
 /**
@@ -33,6 +40,6 @@ export function retrieveSnapshot(): snapshotRetrieval {
  * Clears snapshot history
  */
 export function clearSnapshotHistory(): void {
-  hasHistoryHappened = false; 
+  hasHistoryHappened = false;
   taskListSnapshots = [];
 }
