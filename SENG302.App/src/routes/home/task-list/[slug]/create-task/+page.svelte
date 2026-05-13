@@ -16,7 +16,7 @@
     let listName = $state("");
     let error = $state("");
     let name = $state("");
-    let taskDue = $state(new Date("0001-01-01"));
+    let taskDue = $state(new Date("9999-99-99"));
     let description = $state("");
     let { params } = $props();
     let errors = $state({
@@ -43,6 +43,7 @@
      * issues with the query, and reloads the page once the the query has been excepted.
      */
     async function createTask() {
+        console.log(taskDue);
         const dueDate = new Date(taskDue);
 
         if (dueDate.getFullYear() !== 1) {

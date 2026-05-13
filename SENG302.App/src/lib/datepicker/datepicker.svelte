@@ -1,4 +1,5 @@
 <script lang="ts">
+
     let {
         value = $bindable(new Date("0001-01-01")),
         error = "",
@@ -10,6 +11,8 @@
         disabled?: boolean;
         date?: HTMLInputElement;
     } = $props();
+
+
 </script>
 
 <div class="d-flex align-items-center gap-2">
