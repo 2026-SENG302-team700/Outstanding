@@ -15,13 +15,14 @@ public interface IUserService
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
-    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country, bool profanityFiltering);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, bool profanityFiltering);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
+    Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
 }
 
 public enum UserVerificationResult
@@ -87,6 +88,13 @@ public class UserService : IUserService
         if (!DisplayNameChars(displayName))
         {
             errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
+        }
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
         }
 
         return errors;
@@ -337,7 +345,8 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user;
     }
 
     /// <summary>
@@ -362,6 +371,7 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+
         return user;
     }
 
@@ -470,6 +480,7 @@ public class UserService : IUserService
         {
             foreach (var (field, message) in ValidateEmail(context, newEmail))
             {
+               
                 errors[field] = message;
             }
         }        
@@ -646,6 +657,55 @@ public class UserService : IUserService
         
         // validate inputs
         if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
+        
+        // Perform update
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Validates the inputs and throws exceptions with relevant error messages
+    /// </summary>
+    /// <param name="newPassword"></param>
+    /// <param name="newPasswordConfirm"></param>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public void ValidateResetPasswordRequest(string newPassword, string newPasswordConfirm)
+    {
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+    }
+    
+    /// <summary>
+    /// Validates and performs the request to reset the users password
+    /// </summary>
+    /// <param name="userEmail">The users email</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task ResetPasswordAsync(string userEmail, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserFromEmailAsync(userEmail);
+        if  (user == null) throw new UnauthorizedAccessException("email didn't match any user");
+        
+        // validate inputs
+        ValidateResetPasswordRequest(newPassword, newPasswordConfirm);
         
         // Perform update
         PasswordHasher<User> passwordHasher = new();

@@ -32,12 +32,29 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
         message.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
     
+    [Fact]
+    public async Task RegisterUser_ProfanitiesInDisplayName_ReturnBadRequest()
+    {
+        var data = new PostUserRequest
+        {
+            Email = "great.person@gmail.com",
+            DisplayName = "Fuck",
+            PasswordString = "Gre@tPerson69",
+            PasswordConfirm = "Gre@tPerson69",
+            Country = "NZ",
+        };
+
+        var message = await HttpClient.PostAsJsonAsync("/api/register", data);
+
+        message.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+    
     [Theory]
     [InlineData("shiv.sheep@gmail.com", "ShivSheep", "", "ES")]
     [InlineData("swag.mint@gmail.com", "SwagMintt", "Sheeep", "")]
     [InlineData("trad.horse@gmail.com", "", "TradTrad", "US")]
     [InlineData("", "Porcupine", "JohnPork", "US")]
-    public async Task RegisterUser_MissingFields_ReturnMissingInfo(string userEmail, string userDisplayName, string passwordString, string userCountry)
+    public async Task RegisterUser_MissingFields_ReturnBadRequest(string userEmail, string userDisplayName, string passwordString, string userCountry)
     {
         var data = new
         {
@@ -55,7 +72,7 @@ public class RegistrationControllerTest : BaseIntegrationTestFixture
 
 
     [Fact]
-    public async Task RegisterUser_SameEmailTwice_ReturnMissingEmail()
+    public async Task RegisterUser_SameEmailTwice_ReturnBadRequest()
     {
         var data = new
         {

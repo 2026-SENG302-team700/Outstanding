@@ -325,4 +325,94 @@ public class TaskItemControllerTests : BaseIntegrationTestFixture
         var tasks = await response.Content.ReadFromJsonAsync<List<TaskItem>>();
         tasks!.ShouldBeEmpty();
     }
+    
+    [Fact]
+    public async Task OrderTaskItems_ValidIds_ReturnsOk()
+    {                                                                                                                             
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User 
+            { 
+                Id = 1, 
+                Email = "test@example.com", 
+                DisplayName = "test",
+                PasswordKey = "password",
+                Country = "NZ" 
+            }
+        );                                                                                                                           
+        context.TaskLists.Add(new TaskList
+            {
+                Id = 1, 
+                Name = "test list",
+                UserId = 1
+            }
+        );
+        context.TaskItems.AddRange(                                                                                               
+            new TaskItem 
+            { 
+                TaskId = 1, 
+                TaskListId = 1, 
+                Name = "task 1", 
+                Description = ""  
+            },                                                                                                                            
+            new TaskItem
+            {
+                TaskId = 2, 
+                TaskListId = 1, 
+                Name = "task 2", 
+                Description = "",
+            }
+        );                                                                                                                        
+        await context.SaveChangesAsync();
+                                                                                                                                
+        var response = await HttpClient.PatchAsJsonAsync("/api/taskItem/order", new List<int> { 2, 1 });                          
+   
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);                                                                          
+    }    
+    
+    [Fact]          
+    public async Task OrderTaskItems_ReorderTasks_ReturnsNewOrder()
+    {
+        await using var context = DbContextFactory.CreateDbContext();
+        context.Users.Add(new User 
+            { 
+                Id = 1, 
+                Email = "test@example.com", 
+                DisplayName = "test", 
+                PasswordKey = "password", 
+                Country = "NZ" 
+            }
+        );                                                                                                                           
+        context.TaskLists.Add(new TaskList
+            {
+                Id = 1, 
+                Name = "test list", 
+                UserId = 1
+            }
+        );                                             
+        context.TaskItems.AddRange(                                                                                               
+            new TaskItem
+            {
+                TaskId = 1, 
+                TaskListId = 1, 
+                Name = "task 1",
+                Description = ""
+            },
+            new TaskItem
+            {
+                TaskId = 2, 
+                TaskListId = 1, 
+                Name = "task 2",
+                Description = ""
+            }  
+        );                                                                                                                        
+        await context.SaveChangesAsync();                                                                                         
+                                                                                                                                
+        await HttpClient.PatchAsJsonAsync("/api/taskItem/order", new List<int> { 2, 1 });                                         
+   
+        var getResponse = await HttpClient.GetAsync("/api/taskItem");                                                             
+        var tasks = await getResponse.Content.ReadFromJsonAsync<List<TaskItem>>();
+        tasks[0].TaskId.ShouldBe(2);
+        tasks[1].TaskId.ShouldBe(1);
+    }
+
 }

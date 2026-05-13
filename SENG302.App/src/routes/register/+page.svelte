@@ -130,11 +130,6 @@
             valid = false;
         }
 
-        // clears password fields if the data is not valid
-        if (!valid) {
-            password = "";
-            passwordConfirm = "";
-        }
         return valid;
     }
     /**
@@ -181,8 +176,10 @@
                     );
                 }
 
-                password = "";
-                passwordConfirm = "";
+                if (errors.password || errors.passwordConfirm) {
+                    password = "";
+                    passwordConfirm = "";
+                }
 
                 return;
             }
@@ -190,7 +187,6 @@
             localStorage.setItem("email", email);
             goto(resolve(`/register/verification`));
         } catch (err) {
-            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
@@ -216,6 +212,7 @@
                 bind:displayName
                 error={errors.displayName}
                 {loading}
+                registering={true}
             />
         </div>
         <div class="mb-3">
