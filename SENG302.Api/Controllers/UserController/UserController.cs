@@ -251,4 +251,29 @@ public class UserController : ControllerBase
 
         return File(fileBytes, customFile.MimeType);
     }
+    
+    /// <summary>
+    /// API Endpoint for toggling the profanity filter on and off.
+    /// </summary>
+    /// <param name="profanityFilter">A boolean with true representing profanity filtering on and false representing off</param>
+    /// <returns>
+    /// Unauthorized - If user is unauthorized to change the profanity filter of the requested user
+    /// Ok - If profanity filter has been set.
+    /// </returns>
+    [Authorize]
+    [HttpPatch("profanity-filter")]
+    public async Task<ActionResult> ToggleProfanityFilter([FromBody] bool profanityFilter)
+    {
+        // get the logged in user id
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+        
+        var userId = int.Parse(userIdString);
+
+        await _userService.ToggleProfanityFilterAsync(userId, profanityFilter);
+        return Ok();
+    }
 }
