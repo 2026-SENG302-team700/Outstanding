@@ -103,7 +103,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
                 .Received(1)
                 .SendEmailAsync(
                     "login@example.com",
-                    EmailTemplate.ResetCancelledWarning,
+                    EmailTemplate.PasswordResetProcessCancelled,
                     Arg.Any<Dictionary<string, string>>()
                 );
         }
@@ -115,7 +115,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
                 .DidNotReceive()
                 .SendEmailAsync(
                     "login@example.com",
-                    EmailTemplate.ResetCancelledWarning,
+                    EmailTemplate.PasswordResetProcessCancelled,
                     Arg.Any<Dictionary<string, string>>()
                 );
         }
