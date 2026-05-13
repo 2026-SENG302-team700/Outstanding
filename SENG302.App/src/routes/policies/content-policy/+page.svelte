@@ -4,27 +4,16 @@
     import { page } from "$app/stores";
     import ContentPolicy from "$lib/policies/content-policy.svelte";
 
-    $: from = $page.url.searchParams.get("from") ?? "landing";
+    $: from = $page.url.searchParams.get("from") || "/";
 
-    const urls: Record<string, string> = {
-        home: "/home",
-        register: "/register",
-        landing: "/",
-    };
-
-    const buttons: Record<string, string> = {
-        home: "Back to Home",
-        register: "Back to Register",
-        landing: "Back",
-    };
 </script>
 
 <div class="container py-4">
     <ContentPolicy />
     <button
-        class="btn btn-primary mt-3"
-        onclick={() => goto(resolve((urls[from] ?? "/") as any))}
+        class="btn btn-secondary mt-3"
+        onclick={() => goto(resolve(from))}
     >
-        {buttons[from]}
+        Back
     </button>
 </div>

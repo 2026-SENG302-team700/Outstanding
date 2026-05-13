@@ -30,14 +30,14 @@
 			<button
 				class="btn btn-secondary"
 				onclick={() =>
-					goto(resolve("/policies/content-policy?from=home"))}
+					goto(resolve(`/policies/content-policy?from=${encodeURIComponent(page.url.pathname)}`))}
 			>
 				Content Policy
 			</button>
 			<button
 				class="btn btn-secondary"
 				onclick={() =>
-					goto(resolve("/policies/privacy-policy?from=home"))}
+					goto(resolve(`/policies/privacy-policy?from=${encodeURIComponent(page.url.pathname)}`))}
 			>
 				Privacy Policy
 			</button>
