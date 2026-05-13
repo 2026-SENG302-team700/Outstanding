@@ -4,6 +4,7 @@ export interface TaskValidityErrors {
     description: string,
     dueDate: string,
     taskStatus: string,
+    dateComparer:string,
 }
 
 /**
@@ -39,17 +40,19 @@ export function validateTaskInput(
         validityErrors.description = "Description must be 2048 characters or less";
         validityErrors.isValid = false;
     }
+
+    
     
     // Check date validity
     let taskDueDate = new Date(dueDate).getTime();
     let now = new Date().getTime();
-    let nullDate = new Date("0001-01-01").getTime();
+    let nullDate = new Date("9999-99-99").getTime();
     if (now > taskDueDate && taskDueDate != nullDate) {
         validityErrors.dueDate = "Invalid due date, date must be in the future";
         validityErrors.isValid = false;
     }
     
-    // Check task status -- Shouldn't occur without user modiyfing code.
+    // Check task status -- Shouldn't occur without user modifying code.
     if (![0, 1, 2].includes(taskStatus)) {
         console.log(taskStatus);
         validityErrors.taskStatus = "Invalid task status. Refresh Webpage";
