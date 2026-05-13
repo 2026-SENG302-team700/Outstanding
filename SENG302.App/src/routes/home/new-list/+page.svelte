@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
+    import TitleForm from "$lib/components/title-form.svelte";
     import { fetchWithCsrf } from "$lib/csrf";
     import regexPatterns from "../../../../../SENG302.Shared/regexPatterns.json";
 
@@ -83,25 +84,13 @@
         <button
             type="button"
             class="btn btn-secondary"
-            on:click={() => goto(resolve("/home"))}
+            onclick={() => goto(resolve("/home"))}
             >Cancel
         </button>
     </div>
-    <form on:submit={createList}>
+    <form onsubmit={createList}>
         <div class="mb-3">
-            <input
-                type="text"
-                class="form-control"
-                class:error
-                placeholder="Name *"
-                bind:value={name}
-                disabled={loading}
-            />
-            {#if error}
-                <div class="text-danger mt-1" style="white-space: pre-wrap">
-                    {error}
-                </div>
-            {/if}
+            <TitleForm {error} bind:name {loading} type={"list"} />
         </div>
         <div>
             <button
