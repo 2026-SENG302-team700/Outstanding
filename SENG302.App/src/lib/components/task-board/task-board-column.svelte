@@ -13,12 +13,14 @@
     row,
     tasks,
     taskLists = [],
+    inUndoAnimation = false
   }: {
     id: string;
     index: number;
     row: number[];
     tasks: Record<number, TaskItem>;
     taskLists?: { id: number; name: string }[];
+    inUndoAnimation?: boolean;
   } = $props();
 
   /**
@@ -70,16 +72,13 @@
   </div>
   <ul>
     {#each row as itemId, itemIndex (itemId)}
-      <div animate:flip={{ duration: 300, easing: cubicOut }}>
-        <div in:fly={{ y: -20, duration: 300 }}>
-          <TaskBoardItem
-            task={tasks[itemId]}
-            id={itemId}
-            column={id}
-            index={itemIndex}
-            {taskLists}
-          />
-        </div>
+      <div animate:flip={inUndoAnimation ? { duration: 300, easing: cubicOut } : { duration: 0 }}>
+        <TaskBoardItem task={tasks[itemId]} 
+                       id={itemId} 
+                       column={id} 
+                       index={itemIndex} 
+                       {taskLists}
+        />
       </div>
     {/each}
   </ul>
