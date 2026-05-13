@@ -26,6 +26,13 @@
     let modalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
     let resetEmail = $state("");
+    // The "reset password" modal has 4 statuses, stored in 'loadingStatus'
+    // '0' for when first opening up the modal
+    // '1' for sending reset email
+    // '2' for sending cancel email
+    // '3' for verifying code
+    // '4' for updating password
+    let loadingStatus = $state(0);
     let confirmResetEmail = $state("");
     let digit1 = $state("");
     let digit2 = $state("");
@@ -42,7 +49,6 @@
 
     let newPassword = $state("");
     let confirmPassword = $state("");
-    let updatingPassword = $state(false);
 
     let errors = $state({
         email: "",
@@ -189,6 +195,7 @@
     async function sendVerificationCode() {
         // reset error
         errors.resetEmail = "";
+        loadingStatus = 1;
 
         // Validate email on front end
         let valid = true;
@@ -206,14 +213,9 @@
         }
 
         if (!valid) {
+            loadingStatus = 0;
             return;
         }
-
-        // Send email to backend for further validation and sending of code
-        currentModalStep = ModalStep.VERIFY;
-
-        startTimerCountdown();
-        clearResetCodeModalFields();
 
         try {
             const response = await fetchWithCsrf(
@@ -231,18 +233,52 @@
 
             if (response.ok) {
                 addToast("Password reset email sent", "success");
+
+                currentModalStep = ModalStep.VERIFY;
+
+                startTimerCountdown();
+                clearResetCodeModalFields();
             } else {
                 const data = await response.json().catch(() => null);
-                errors.codeError = data?.message || "Failed to send code.";
+                errors.resetEmail = data?.message || "Failed to send code.";
             }
         } catch (err) {
-            /*
-             * This won't be displayed as we have already moved to the verify step
-             * However if we wait for confirmation that the email sent, then time taken
-             * can be used to work out what emails have accounts which we are trying to avoid
-             */
-            errors.codeError = "Failed to send code " + (err as Error).message;
+            errors.resetEmail = "Failed to send code " + (err as Error).message;
         }
+
+        loadingStatus = 0;
+    }
+
+    /**
+     * Cancel the password reset code
+     */
+    async function cancelCode() {
+        errors.codeError = "";
+        loadingStatus = 2;
+
+        const response = await fetchWithCsrf(
+            `/api/user/password/reset/code/cancel`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    Email: resetEmail,
+                }),
+            },
+        );
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            errors.codeError = data?.message;
+        } else {
+            currentModalStep = ModalStep.EMAIL_INPUT;
+            authModal.hide();
+        }
+
+        loadingStatus = 0;
     }
 
     /**
@@ -250,12 +286,14 @@
      * Checks that the code is valid
      */
     async function checkCode() {
+        loadingStatus = 3;
         try {
             errors.codeError = "";
             errors.codeFormEmail = "";
 
             if (resetEmail !== confirmResetEmail) {
                 errors.codeFormEmail = "Emails do not match";
+                loadingStatus = 0;
                 return;
             }
 
@@ -288,6 +326,8 @@
         } catch (err) {
             errors.codeError = "Connection error. Please try again later.";
         }
+
+        loadingStatus = 0;
     }
 
     /**
@@ -313,13 +353,13 @@
     function validateUpdatePasswordInputs() {
         var isValid = true;
 
-        // checks feilds are filled
+        // checks fields are filled
         if (!newPassword) {
-            errors.newPassword = "field is required";
+            errors.newPassword = "Field is required";
             isValid = false;
         }
         if (!confirmPassword) {
-            errors.confirmPassword = "field is required";
+            errors.confirmPassword = "Field is required";
             isValid = false;
         }
         // checks passwords match
@@ -354,7 +394,7 @@
         }
 
         try {
-            updatingPassword = true;
+            loadingStatus = 4;
             const response = await fetchWithCsrf(
                 resolve(`/api/user/password/reset`),
                 {
@@ -395,7 +435,7 @@
         } catch (err) {
             addToast("Failed to update password", "error");
         } finally {
-            updatingPassword = false;
+            loadingStatus = 0;
         }
     }
 </script>
@@ -443,6 +483,9 @@
 <!-- Reset password modal -->
 <div
     class="modal fade"
+    role="dialog"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
     bind:this={modalElement}
     tabindex="-1"
     aria-hidden="true"
@@ -451,12 +494,18 @@
         <div class="modal-content p-4">
             <form
                 onsubmit={() => {
-                    if (currentModalStep === ModalStep.EMAIL_INPUT) {
-                        sendVerificationCode();
-                    } else if (currentModalStep === ModalStep.VERIFY) {
-                        checkCode();
-                    } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
-                        resetPassword();
+                    if (loadingStatus == 0) {
+                        if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                            sendVerificationCode();
+                        } else if (currentModalStep === ModalStep.VERIFY) {
+                            checkCode();
+                        } else if (
+                            currentModalStep === ModalStep.RESET_PASSWORD
+                        ) {
+                            resetPassword();
+                        } else {
+                            authModal.hide();
+                        }
                     }
                 }}
             >
@@ -478,11 +527,18 @@
                             </p>
 
                             <div class="mb-3 text-start">
-                                <EmailForm
-                                    bind:email={resetEmail}
-                                    error={errors.resetEmail}
+                                <input
+                                    id="email"
+                                    class="form-control"
+                                    placeholder="Email *"
+                                    bind:value={resetEmail}
                                 />
                             </div>
+                            {#if errors.resetEmail}
+                                <div class="text-danger mt-1">
+                                    {errors.resetEmail}
+                                </div>
+                            {/if}
                         </div>
                     {:else if currentModalStep === ModalStep.VERIFY}
                         <div class="text-centre">
@@ -493,7 +549,6 @@
                                     >{timeRemainingText}</strong
                                 >
                             </p>
-
                             <div>
                                 <p class="mb-2 small">
                                     Please re-enter your email here:
@@ -504,7 +559,6 @@
                                     bind:email={confirmResetEmail}
                                 />
                             </div>
-
                             <div>
                                 <p class="m-0 small">
                                     Please enter the verification code here:
@@ -519,17 +573,6 @@
                                     error={errors.codeError}
                                 />
                             </div>
-
-                            {#if errors.codeError}
-                                <div
-                                    class="text-danger small mb-3 animate-fade-in"
-                                >
-                                    <i
-                                        class="bi bi-exclamation-circle-fill me-1"
-                                    ></i>
-                                    {codeError}
-                                </div>
-                            {/if}
                         </div>
                     {:else}
                         <div class="mb-3">
@@ -559,21 +602,44 @@
                         </div>
                     {/if}
                 </div>
-
                 <div class="modal-footer">
                     <button
-                        class="btn btn-primary w-100"
                         type="submit"
-                        disabled={updatingPassword}
+                        class="btn btn-primary w-100"
+                        disabled={loadingStatus != 0}
                     >
-                        {#if currentModalStep === ModalStep.EMAIL_INPUT}
-                            Get reset code
+                        {#if loadingStatus == 1}
+                            Sending...
+                        {:else if loadingStatus == 3}
+                            Verifying...
+                        {:else if loadingStatus == 4}
+                            Updating Password...
                         {:else if currentModalStep === ModalStep.VERIFY}
                             Reset Password
-                        {:else if currentModalStep === ModalStep.RESET_PASSWORD && !updatingPassword}
-                            Reset Password
-                        {:else if currentModalStep === ModalStep.RESET_PASSWORD && updatingPassword}
-                            Updating Password...
+                        {:else if currentModalStep === ModalStep.EMAIL_INPUT}
+                            Get reset code
+                        {:else if currentModalStep === ModalStep.RESET_PASSWORD}
+                            Update Password
+                        {/if}
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-secondary w-100"
+                        disabled={loadingStatus != 0}
+                        onclick={() => {
+                            if (currentModalStep === ModalStep.RESET_PASSWORD) {
+                                cancelCode();
+                            } else if (currentModalStep === ModalStep.VERIFY) {
+                                cancelCode();
+                            } else {
+                                authModal.hide();
+                            }
+                        }}
+                    >
+                        {#if loadingStatus == 2}
+                            Cancelling...
+                        {:else}
+                            Cancel
                         {/if}
                     </button>
                 </div>

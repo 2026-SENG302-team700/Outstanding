@@ -14,7 +14,7 @@ public enum EmailTemplate
     ResetPasswordCode,
     PasswordChangedConfirmation,
     PasswordResetConfirmation,
-    ResetCancelledWarning
+    PasswordResetProcessCancelled
 }
 
 public interface IEmailService
