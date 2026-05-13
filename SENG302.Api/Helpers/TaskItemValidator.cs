@@ -55,7 +55,7 @@ public class TaskItemValidator {
             errors.Add(key, value);
         }
 
-        foreach (var (key, value) in ValidateTaskItemDescription(taskItemRequest.Description))
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItemRequest.Description, profanityFiltering))
         {
             errors.Add(key, value);
         }
@@ -97,14 +97,14 @@ public class TaskItemValidator {
     /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="description">The description being tested</param>
-    public static Dictionary<string, string> ValidateTaskItemDescription(string description)
+    public static Dictionary<string, string> ValidateTaskItemDescription(string description, bool profanityFiltering)
     {
         var errors = new Dictionary<string, string>();
         if (description.Trim().Length > 2048)
         {
             errors["description"] = "Description must be 2048 characters or less";
         }
-
+    if (ProfanityTools.ContainsProfanity(description, profanityFiltering)) errors["name"] = "Description cannot contain profanity.";
         return errors;
     }
 }
