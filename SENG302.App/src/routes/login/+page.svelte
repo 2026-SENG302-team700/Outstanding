@@ -483,6 +483,9 @@
 <!-- Reset password modal -->
 <div
     class="modal fade"
+    role="dialog"
+    data-bs-backdrop="static"
+    data-bs-keyboard="false"
     bind:this={modalElement}
     tabindex="-1"
     aria-hidden="true"
