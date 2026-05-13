@@ -176,7 +176,7 @@
    */
   async function reorderReloadTasks(): void {
     try {
-      await fetchWithCsrf(resolve("/api/taskItem/order"), {
+      await fetchWithCsrf("/api/taskItem/order", {
         method: "PATCH",
         credentials: "include",
         headers: { "content-type": "application/json" },

@@ -138,7 +138,7 @@
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
-                    resolve(`/api/user/password/update/code/generation`),
+                    `/api/user/password/update/code/generation`,
                     {
                         method: "PUT",
                         headers: {
@@ -368,11 +368,7 @@
         try {
             codeError = "";
             const response = await fetchWithCsrf(
-<<<<<<< HEAD
-                `/api/user/password/code/validation`,
-=======
-                resolve(`/api/user/password/update/code/validation`),
->>>>>>> dev
+                `/api/user/password/update/code/validation`,
                 {
                     method: "POST",
                     headers: {
@@ -410,14 +406,8 @@
 
         updatingPassword = true;
         try {
-<<<<<<< HEAD
-            const response = await fetchWithCsrf(`/api/user/password`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-=======
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/update`),
+                `/api/user/password/update`,
                 {
                     method: "PUT",
                     headers: {
@@ -428,14 +418,13 @@
                         newPassword: newPassword,
                         newPasswordConfirm: confirmPassword,
                     }),
->>>>>>> dev
                 },
                 body: JSON.stringify({
                     oldPassword: oldPassword,
                     newPassword: newPassword,
                     newPasswordConfirm: confirmPassword,
                 }),
-            });
+            )};
             if (response.ok && valid) {
                 addToast("New password updated successfully");
                 authModal.hide();

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import { fetchWithCsrf } from "$lib/csrf";
-  import { resolve } from "$app/paths";
   import TaskBoard from "$lib/components/task-board/task-board.svelte";
   import { clearSnapshotHistory } from "$lib/snapshot-handling/snapshot-handler";
   import type { TaskItem } from "$lib/types.js";
@@ -62,7 +61,7 @@
    */
   async function fetchAllLists() {
     try {
-      const response = await fetchWithCsrf(resolve(`/api/taskList`), {
+      const response = await fetchWithCsrf(`/api/taskList`, {
         method: "GET",
         credentials: "include",
       });

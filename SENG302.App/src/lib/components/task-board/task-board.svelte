@@ -107,7 +107,7 @@
     let status: number = parseInt(curStatus);
     try {
       const response = await fetchWithCsrf(
-        resolve(`/api/taskItem/item/${task.taskId}` as any),
+        `/api/taskItem/item/${task.taskId}`,
         {
           method: "PUT",
           credentials: "include",
@@ -187,8 +187,6 @@
         addToast("Cannot undo more than 5 changes", "error");
       }
       return;
-      
-      
     }
 
     // restore the statuses

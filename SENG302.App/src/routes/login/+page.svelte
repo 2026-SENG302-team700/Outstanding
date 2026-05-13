@@ -360,20 +360,17 @@
 
         try {
             updatingPassword = true;
-            const response = await fetchWithCsrf(
-                resolve(`/api/user/password/reset`),
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        newPassword: newPassword,
-                        newPasswordConfirm: confirmPassword,
-                    }),
-                    credentials: "include",
+            const response = await fetchWithCsrf(`/api/user/password/reset`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            );
+                body: JSON.stringify({
+                    newPassword: newPassword,
+                    newPasswordConfirm: confirmPassword,
+                }),
+                credentials: "include",
+            });
             if (response.ok) {
                 addToast("New password updated successfully");
                 authModal.hide();
