@@ -108,17 +108,6 @@
   <div class="content">
     {@render children?.()}
   </div>
-
-  <footer class="footerBar">
-    <div class="footerContent">
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/content-policy"))}>
-        Content Policy
-      </button>
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/privacy-policy"))}>
-        Privacy Policy
-      </button>
-    </div>
-  </footer>
 </div>
 
 <style>
@@ -174,7 +163,7 @@
   }
 
   .page-wrapper {
-    min-height: 85vh; 
+    min-height: 80vh;
     display: flex;
     flex-direction: column;
   }

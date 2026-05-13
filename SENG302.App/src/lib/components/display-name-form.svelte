@@ -1,8 +1,13 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import {resolve} from "$app/paths"
-    
-    let { displayName = $bindable(""), error = "", loading = false, registering = false } = $props();
+    import { resolve } from "$app/paths";
+
+    let {
+        displayName = $bindable(""),
+        error = "",
+        loading = false,
+        registering = false,
+    } = $props();
     let displayPolicyLink = $state(false);
 
     /**
@@ -10,12 +15,12 @@
      * If so, then change the displayPolicyLink variable to thus make visible, the link to content policy page.
      */
     $effect(() => {
-        if (error === "Display Name Contains Profanities! Remove Profanities!") {
-            displayPolicyLink = true
+        if (
+            error === "Display Name Contains Profanities! Remove Profanities!"
+        ) {
+            displayPolicyLink = true;
         }
     });
-    
-    
 </script>
 
 <div class="mb-3">
@@ -33,13 +38,23 @@
             {error}
             {#if displayPolicyLink}
                 <a
-                        role="button"
-                        onclick={() => {registering ? goto(resolve("/content-policy")) : goto(resolve("/home/content-policy"))}}
-                        class="text-decoration-underline"
+                    role="button"
+                    onclick={() => {
+                        registering
+                            ? goto(
+                                  resolve(
+                                      "/policies/content-policy?from=register",
+                                  ),
+                              )
+                            : goto(
+                                  resolve("/policies/content-policy?from=home"),
+                              );
+                    }}
+                    class="text-decoration-underline"
                 >
                     Content Policy
                 </a>
-            {/if}    
+            {/if}
         </div>
     {/if}
 </div>
@@ -47,6 +62,6 @@
 <style>
     .policy-link {
         color: #1d4ed8;
-        text-decoration: underline
+        text-decoration: underline;
     }
 </style>
