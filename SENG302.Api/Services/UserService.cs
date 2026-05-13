@@ -23,6 +23,7 @@ public interface IUserService
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
     Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
+    Task ToggleProfanityFilterAsync(int userId, bool profanityFilter);
 }
 
 public enum UserVerificationResult
@@ -713,6 +714,19 @@ public class UserService : IUserService
         user.PasswordKey = passwordKey;
         await using var context = await _dbContextFactory.CreateDbContextAsync();
         context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Toggles the profanity filter
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <param name="profanityFilter">The requested state of the profanity filter</param>
+    public async Task ToggleProfanityFilterAsync(int userId, bool profanityFilter)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(userId);
+        user.ProfanityFiltering = profanityFilter;
         await context.SaveChangesAsync();
     }
 }
