@@ -167,9 +167,7 @@ public class LoginController : ControllerBase
             {
                 { "DISPLAY_NAME", user.DisplayName }
             };
-            // send email
-            // TODO: Uncomment when the email template has been made in AC9
-            //await _emailService.SendEmailAsync(user.Email, EmailTemplate.ResetCancelledWarning, emailDictionary);
+            await _emailService.SendEmailAsync(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
         }
     }
 }
