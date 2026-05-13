@@ -30,6 +30,8 @@
     onUndoReady?: (fn: () => Promise<void>) => void;
   } = $props();
 
+  let inUndoAnimation = $state(false);
+
   // pass the function up to the parent page
   onMount(() => {
     onUndoReady(handleUndo);
@@ -185,6 +187,8 @@
         addToast("Cannot undo more than 5 changes", "error");
       }
       return;
+      
+      
     }
 
     // restore the statuses
@@ -196,8 +200,10 @@
         }
       }
     }
+    inUndoAnimation = true;
     tasksForSnapshot = previous;
     await reorderReloadTasks();
+    inUndoAnimation = false;
   }
 
   /**
@@ -236,6 +242,7 @@
           row={tasksForSnapshot[parseInt(column)]}
           tasks={taskMap}
           {taskLists}
+          {inUndoAnimation}
         />
       {/each}
     </div>
