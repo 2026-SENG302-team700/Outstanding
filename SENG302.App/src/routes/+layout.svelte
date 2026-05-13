@@ -22,7 +22,7 @@
 
 <Toast />
 {#key page.url.pathname}
-	<div class="container-fluid bg-light min-vh-100 py-4">
+	<div class="container-fluid bg-light min-vh-footer py-4">
 		{@render children?.()}
 	</div>
 	<footer class="footerBar">
@@ -44,8 +44,12 @@
 		</div>
 	</footer>
 {/key}
-
+	
 <style>
+	.min-vh-footer {
+		min-height: 93vh;
+	}
+	
 	.footerBar {
 		margin-top: auto;
 		background-color: white;
