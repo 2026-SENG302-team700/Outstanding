@@ -13,10 +13,13 @@
     saveSnapshot,
     retrieveSnapshot,
     clearSnapshotHistory,
+    type TaskSnapshot,
   } from "$lib/snapshot-handling/snapshot-handler";
   import { addToast, toasts } from "$lib/toast/toast.js";
   import { page } from "$app/state";
   import { flip } from "svelte/animate";
+  let boardRef: TaskBoard;
+  let boardUndo: (() => Promise<void>) | null = null;
 
   let loading = $state(false);
   let boardView = $state(false);
@@ -28,7 +31,7 @@
   let error = $state("");
   let { params } = $props();
 
-  let snapshot: number[] = [];
+  let snapshot: TaskSnapshot[] = [];
 
   onMount(() => {
     GetList();
@@ -56,7 +59,10 @@
    * Creates a snapshot of the original ordering of list of items before the items are dragged
    */
   function onDragStart() {
-    snapshot = taskRefs.slice();
+    snapshot = taskRefs.map((id) => ({
+      taskId: id,
+      status: tasks.find((t) => t.taskId === id)?.currentStatus ?? 0,
+    }));
   }
 
   /**
@@ -73,7 +79,8 @@
    */
   async function onDragEnd(event: any) {
     if (event.canceled) {
-      taskRefs = snapshot;
+      taskRefs = snapshot.map((s) => s.taskId);
+      return;
     }
     saveSnapshot(snapshot);
     await reorderReloadTasks();
@@ -83,6 +90,10 @@
    * get the past history and show the corrosponding toast depending on the situation
    */
   async function handleUndo() {
+    if (boardView) {
+      if (boardUndo) await boardUndo();
+      return;
+    }
     let retrievedSnapshot = retrieveSnapshot();
     if (retrievedSnapshot.snapshot.length === 0) {
       if (retrievedSnapshot.snapshotFlag === false) {
@@ -96,7 +107,7 @@
     }
 
     inUndoAnimation = true;
-    taskRefs = retrievedSnapshot.snapshot;
+    taskRefs = retrievedSnapshot.snapshot.map((s) => s.taskId);
     await reorderReloadTasks();
     inUndoAnimation = false;
   }
@@ -226,7 +237,7 @@
         class="btn btn-outline-warning"
         on:click={handleUndo}
       >
-        Undo Last Sorting
+        {boardView ? "Undo Last Change" : "Undo Last Sorting"}
       </button>
     </div>
   </div>
@@ -239,7 +250,7 @@
   {:else}
     <div class="mb-3">
       {#if boardView}
-        <TaskBoard {tasks} />
+        <TaskBoard {tasks} onUndoReady={(fn) => (boardUndo = fn)} />
       {:else}
         <DragDropProvider {onDragStart} {onDragOver} {onDragEnd}>
           <ul class="list">

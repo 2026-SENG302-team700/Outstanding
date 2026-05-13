@@ -182,7 +182,7 @@ public class TaskItemService : ITaskItemService
         {
             return null;
         }
-
+        
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;

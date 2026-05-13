@@ -12,9 +12,9 @@ public interface IUserService
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
-    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country, bool profanityFiltering);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, bool profanityFiltering);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);

@@ -55,6 +55,7 @@ public class TaskItemController : ControllerBase
     /// </summary>
     /// <param name="listId = -1"></param>
     /// <returns>The list of tasks</returns>
+    [Authorize]
     [HttpGet("{listId:int}")]
     public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasksFromList(int listId = -1)
     {
@@ -75,6 +76,7 @@ public class TaskItemController : ControllerBase
     /// </summary>
     /// <param name="taskItem"></param>
     /// <returns>The list of tasks</returns>
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<TaskItem>> CreateTaskItem([FromBody] NewTaskItemRequest taskItemRequest)
     {
@@ -112,6 +114,7 @@ public class TaskItemController : ControllerBase
 
     }
 
+    [Authorize]
     [HttpGet("item/{id:int}")]
     public async Task<ActionResult<TaskItem>> GetTaskItem(int id)
     {
@@ -136,6 +139,7 @@ public class TaskItemController : ControllerBase
     /// The updated task item if ok
     /// A Bad Request if an error occured within (likely validation fail).
     /// </returns>
+    [Authorize]
     [HttpPut("item/{id:int}")]
     public async Task<ActionResult<TaskItem>> UpdateTaskItem([FromBody] UpdateTaskItemRequest taskItemUpdates)
     {
@@ -169,6 +173,15 @@ public class TaskItemController : ControllerBase
         }
     }
     
+    /// <summary>
+    /// Given a request to update the order position of a task, it will ask the task service to re-arrange the positions.
+    /// </summary>
+    /// <param name="orderedIds">A list of task id's in the user's requested order</param>
+    /// <returns>
+    /// OK with no info if updated succesfully
+    /// A bad request if an error occurs reordering task items
+    /// </returns>
+    [Authorize]
     [HttpPatch("order")]
     public async Task<ActionResult> OrderTaskItems([FromBody] List<int> orderedIds)
     {
