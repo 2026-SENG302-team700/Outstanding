@@ -61,7 +61,7 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         
         
         var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Test700!" };
-        var response = await _controller.resetPassword(request);
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<OkResult>();
         
         var verifyContext = await  DbContextFactory.CreateDbContextAsync();
@@ -83,7 +83,7 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         SetupTempSessionContext("test@example.com");
         
         var request = new ResetPasswordRequest{ NewPassword = "Test700!", NewPasswordConfirm = "Fail700!" };
-        var response = await _controller.resetPassword(request);
+        var response = await _controller.ResetPassword(request);
         response.ShouldBeOfType<BadRequestObjectResult>();
     }
 }

@@ -9,7 +9,6 @@ using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
 [ConditionalValidateAntiForgeryToken]
-[Authorize]
 [ApiController]
 [Route("api/user/password/reset")]
 public class ResetPasswordController : ControllerBase
@@ -39,24 +38,11 @@ public class ResetPasswordController : ControllerBase
     public async Task<ActionResult<int>> GenerateResetPasswordCode(
         [FromBody] NewOneTimeCodeRequest newOneTimeCodeRequest)
     {
-        long codeExpirationTime = _codeService.GetEpochTime() + 300;
         string code = _codeService.GenerateOneTimeCode();
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Email, newOneTimeCodeRequest.Email),
-            new Claim(ClaimTypes.Expiration, codeExpirationTime.ToString()),
-            new Claim(ClaimTypes.PostalCode, code)
-        };
-
-        var principle = new ClaimsPrincipal(
-            new ClaimsIdentity(claims, "PasswordResetScheme")
-        );
-
-        await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
-        {
-            IsPersistent = false,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
-        });
+        long timerStartTime = _codeService.GetEpochTime();
+        var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
+        if (user == null) return Ok();
+        await _userService.UpdateUserOneTimeCode(newOneTimeCodeRequest.Email, code,  timerStartTime, user.EmailVerified);
 
         // Create a dictionary of important values to send in the email, then call function to send email
         var emailDictionary = new Dictionary<string, string>
@@ -64,13 +50,7 @@ public class ResetPasswordController : ControllerBase
             {"MINUTES", "5"},
             {"CODE", code}
         };
-
-        // check if email in db
-        var user = await _userService.GetUserFromEmailAsync(newOneTimeCodeRequest.Email);
-        if (user != null)
-        {
-            await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
-        }
+        await _emailService.SendEmailAsync(newOneTimeCodeRequest.Email, EmailTemplate.ChangePasswordCode, emailDictionary);
 
         // return ok no matter if there is a user or not
         return Ok();
@@ -94,34 +74,48 @@ public class ResetPasswordController : ControllerBase
         {
             return BadRequest(new { message = "An email is required" });
         }
-        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
-
-        if (result.Principal == null)
+        
+        var user = await _userService.GetUserFromEmailAsync(validationRequest.Email);
+        if (user == null) return BadRequest(new { message = "Invalid Code" });
+        
+        long codeEnteredTime = _codeService.GetEpochTime();
+        CodeVerificationResult codeVerificationResult =
+            _codeService.VerfiyCode(user, codeEnteredTime, validationRequest.Code);
+        
+        if (codeVerificationResult == CodeVerificationResult.CodeExpired)
         {
-            await HttpContext.SignOutAsync("PasswordResetScheme");
             return BadRequest(new { message = "Code is no longer valid, please ask for a new code." });
         }
-        // check email and code in body
-        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
-        if (email != validationRequest.Email)
+        
+        if (codeVerificationResult == CodeVerificationResult.CodeIncorrect)
         {
-            // return some message
-            return BadRequest(new { message = "Emails do not match" });
+            return BadRequest(new { message = "Invalid Code" });
         }
-
-        var code = result.Principal.FindFirstValue(ClaimTypes.PostalCode);
-        if (code != validationRequest.Code)
+        
+        if (codeVerificationResult == CodeVerificationResult.CodeSuccessful)
         {
-            // return some message
-            return BadRequest(new { message = "Incorrect code" });
-        }
+            var userUpdated = await _userService.UpdateUserOneTimeCode(user.Email, "", 0, true);
+            if (userUpdated == null) return Problem();
+            
+            long codeExpirationTime = _codeService.GetEpochTime() + 300;
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Email, validationRequest.Email),
+                new Claim(ClaimTypes.Expiration, codeExpirationTime.ToString()),
+                new Claim(ClaimTypes.PostalCode, validationRequest.Code)
+            };
 
-        if (!result.Succeeded)
-        {
-            // return some message
-            return BadRequest(new { message = "Invalid Code or Email" });
-        }
+            var principle = new ClaimsPrincipal(
+                new ClaimsIdentity(claims, "PasswordResetScheme")
+            );
 
+            await HttpContext.SignInAsync("PasswordResetScheme", principle, new AuthenticationProperties
+            {
+                IsPersistent = false,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(5)
+            });
+        }
+        
         return Ok();
     }
     
@@ -132,7 +126,7 @@ public class ResetPasswordController : ControllerBase
     /// <returns>response to frontend based on status of request</returns>
     [Authorize(AuthenticationSchemes = "PasswordResetScheme")]
     [HttpPut]
-    public async Task<ActionResult> resetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest resetPasswordRequest)
     {
         try
         {
