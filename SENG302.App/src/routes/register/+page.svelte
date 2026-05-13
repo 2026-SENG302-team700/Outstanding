@@ -75,9 +75,7 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
-
-
-
+        
         // Check for empty fields
         if (!email) {
             errors.email = "Email is required.";
@@ -132,11 +130,6 @@
             valid = false;
         }
 
-        // clears password fields if the data is not valid
-        if (!valid) {
-            password = "";
-            passwordConfirm = "";
-        }
         return valid;
     }
     /**
