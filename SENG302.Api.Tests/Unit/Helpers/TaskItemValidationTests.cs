@@ -48,7 +48,7 @@ public class TaskItemServiceTests
     {
         var errors = new Dictionary<string, string>();
 
-        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDescription(new string('a', 2049)))
+        foreach (var (key, value) in TaskItemValidator.ValidateTaskItemDescription(new string('a', 2049), false))
         {
             errors[key] = value;
         }        
