@@ -16,6 +16,7 @@
     let loading = $state(false);
     let buttonDisabled = $state(false);
     let codeHasBeenSent = $state(false);
+    let resendingCode = $state(false);
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -207,6 +208,7 @@
                     email: email,
                     ResendingCode: true,
                 });
+                resendingCode = true;
             } else {
                 jsonBody = JSON.stringify({
                     email: email,
@@ -234,9 +236,14 @@
                 clearInterval(intervalId);
                 return;
             }
+            if (resendingCode) {
+                addToast("Code resent");
+            }
             codeHasBeenSent = true;
         } catch (err) {
             displayError(err.message, true);
+        } finally {
+            resendingCode = false;
         }
     }
 
@@ -324,7 +331,9 @@
                         <a
                             role="button"
                             class="text-decoration-underline"
-                            on:click={sendCode}>Resend Code</a
+                            on:click={sendCode} 
+                            disabled={resendingCode}>
+                            {resendingCode ? "Resending..." : "Resend Code"}</a
                         >
                     {/if}
                 {/key}
