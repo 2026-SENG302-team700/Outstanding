@@ -1,8 +1,10 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
     import type { TaskItem } from "../types";
     import { createSortable } from "@dnd-kit/svelte/sortable";
     import { formatDate } from "$lib/datepicker/formatDate";
+    
     let {
         id,
         index,
@@ -43,10 +45,10 @@
     tabindex="0"
     role="button"
     onclick={() =>
-        goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`)}
+        goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`))}
     onkeydown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-            goto(`/home/task-list/${task.taskListId}/task/${task.taskId}`);
+            goto(resolve(`/home/task-list/${task.taskListId}/task/${task.taskId}`));
         }
     }}
 >

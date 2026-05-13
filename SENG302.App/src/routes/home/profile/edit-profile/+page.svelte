@@ -138,7 +138,7 @@
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
-                    resolve(`/api/user/password/code/generation`),
+                    resolve(`/api/user/password/update/code/generation`),
                     {
                         method: "PUT",
                         headers: {
@@ -368,7 +368,7 @@
         try {
             codeError = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/update/code/validation`),
                 {
                     method: "POST",
                     headers: {
@@ -407,7 +407,7 @@
         updatingPassword = true;
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password`),
+                resolve(`/api/user/password/update`),
                 {
                     method: "PUT",
                     headers: {

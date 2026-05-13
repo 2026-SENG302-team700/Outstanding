@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Xunit;
 using NSubstitute;
 using SENG302.Api.Services;
@@ -13,10 +12,11 @@ public class EmailServiceUnitTests
 
     public EmailServiceUnitTests()
     {
-        var settings = Options.Create(new EmailSettings {
+        var settings = new EmailSettings
+        {
             FromEmail = "test@example.com",
             Host = "smtp.test.com"
-        });
+        };
         // inject the mock into the real service
         _service = new EmailService(settings, _smtpMock);
     }
@@ -43,9 +43,9 @@ public class EmailServiceUnitTests
             ["CODE"] = "654321",
             ["MINUTES"] = "10"
         };
-        
-        await _service.SendEmailAsync("JohnDoe@test.com",  EmailTemplate.VerifyEmailCode, model);
-        
+
+        await _service.SendEmailAsync("JohnDoe@test.com", EmailTemplate.VerifyEmailCode, model);
+
         await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg =>
             msg.HtmlBody.Contains("TestName") &&
             msg.HtmlBody.Contains("654321") &&
@@ -60,11 +60,11 @@ public class EmailServiceUnitTests
             ["DISPLAY_NAME"] = "TestName",
             ["CODE"] = "555555",
             ["MINUTES"] = "5"
-        }; 
-        await _service.SendEmailAsync("JohnDoe@test.com",  EmailTemplate.VerifyEmailCode, model);
-        
-        await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg => 
-            !msg.TextBody.Contains("<p>") && 
+        };
+        await _service.SendEmailAsync("JohnDoe@test.com", EmailTemplate.VerifyEmailCode, model);
+
+        await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg =>
+            !msg.TextBody.Contains("<p>") &&
             !msg.TextBody.Contains("</div>") &&
             msg.TextBody.Length > 0
         ));
@@ -78,17 +78,17 @@ public class EmailServiceUnitTests
             ["DISPLAY_NAME"] = "TestName",
             ["CODE"] = "111111",
             ["MINUTES"] = "12"
-        }; 
-        
+        };
+
         await _service.SendEmailAsync("JohnDoe@test.com", EmailTemplate.VerifyEmailCode, model);
-        
-        await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg => 
-                msg.Subject != null && 
+
+        await _smtpMock.Received(1).SendAsync(Arg.Is<MimeMessage>(msg =>
+                msg.Subject != null &&
                 msg.Subject.Equals("Your Outstanding verification code") &&
                 !msg.Subject.StartsWith("Subject:")
         ));
     }
-    
+
     [Fact]
     public async Task SendEmailAsync_TemplateFileNotFound_ShouldThrowFileNotFoundException()
     {
@@ -97,11 +97,11 @@ public class EmailServiceUnitTests
             ["DISPLAY_NAME"] = "TestName",
             ["CODE"] = "111111",
             ["MINUTES"] = "12"
-        }; 
-        
+        };
+
         var invalidTemplate = (EmailTemplate)1111;
-        
-        await Assert.ThrowsAsync<FileNotFoundException>(() => 
+
+        await Assert.ThrowsAsync<FileNotFoundException>(() =>
             _service.SendEmailAsync("JohnDoe@test.com", invalidTemplate, model));
     }
 }
