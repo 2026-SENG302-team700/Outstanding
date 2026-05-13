@@ -111,10 +111,16 @@
 
   <footer class="footerBar">
     <div class="footerContent">
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/content-policy"))}>
+      <button
+        class="btn btn-secondary"
+        onclick={() => goto(resolve("/policies/content-policy?from=home"))}
+      >
         Content Policy
       </button>
-      <button class="btn btn-secondary" onclick={() => goto(resolve("/home/privacy-policy"))}>
+      <button
+        class="btn btn-secondary"
+        onclick={() => goto(resolve("/policies/privacy-policy?from=home"))}
+      >
         Privacy Policy
       </button>
     </div>
@@ -174,7 +180,7 @@
   }
 
   .page-wrapper {
-    min-height: 85vh; 
+    min-height: 85vh;
     display: flex;
     flex-direction: column;
   }
