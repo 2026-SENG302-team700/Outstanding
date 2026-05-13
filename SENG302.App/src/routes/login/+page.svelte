@@ -627,8 +627,8 @@
                         class="btn btn-secondary w-100"
                         disabled={loadingStatus != 0}
                         onclick={() => {
-                            if (currentModalStep === ModalStep.EMAIL_INPUT) {
-                                authModal.hide();
+                            if (currentModalStep === ModalStep.RESET_PASSWORD) {
+                                cancelCode();
                             } else if (currentModalStep === ModalStep.VERIFY) {
                                 cancelCode();
                             } else {
