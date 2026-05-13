@@ -15,7 +15,7 @@
     let resendLinkVisible = $state(false);
     let loading = $state(false);
     let buttonDisabled = $state(false);
-    let codeHasBeenSent = $state(false)
+    let codeHasBeenSent = $state(false);
 
     let digit1 = $state("");
     let digit2 = $state("");
@@ -26,9 +26,8 @@
 
     onMount(async () => {
         email = localStorage.getItem("email") ?? "";
-       
+
         await getCountDownTime();
-        console.log("Server time: " + serverTime);
         countDownTimer();
         if (email) {
             if (serverTime === initialSeconds) {
@@ -50,16 +49,15 @@
             if (remainingSeconds > 0) {
                 remainingSeconds -= 1;
                 timeRemainingText = formatTime(remainingSeconds);
-                if (!resendLinkVisible && remainingSeconds < initialSeconds - 10) {
+                if (
+                    !resendLinkVisible &&
+                    remainingSeconds < initialSeconds - 10
+                ) {
                     resendLinkVisible = true;
                 }
             } else {
-                buttonDisabled = true;
-                displayError(
-                    "Code is no longer valid, account no longer exists",
-                    false,
-                );
-                checkCode();
+                timeRemainingText = formatTime(0);
+                resendLinkVisible = false;
             }
         }, 1000);
     }
@@ -140,15 +138,19 @@
 
     /**
      * Handles the event a key is pressed. If the key is backspace and the previous input field is empty,
-     * it moves it back by one. 
+     * it moves it back by one.
      * @param e - The event that an button is pressed
      */
     function handleKeyDown(e: KeyboardEvent) {
         const input = e.target as HTMLInputElement;
-        if (e.key === "Backspace" && !input.value && input.previousElementSibling) {
+        if (
+            e.key === "Backspace" &&
+            !input.value &&
+            input.previousElementSibling
+        ) {
             (input.previousElementSibling as HTMLInputElement).focus();
         }
-    }    
+    }
 
     /**
      * Checks that the user has input only a valid digit in all 6 fields and returns a boolean indicating if they have
@@ -193,25 +195,24 @@
     async function sendCode() {
         try {
             clearInputFields();
-            
-            if (remainingSeconds < initialSeconds-10) {
+
+            if (remainingSeconds < initialSeconds - 10) {
                 displayError("", true);
             }
             loading = true;
-            
+
             let jsonBody;
             if (codeHasBeenSent) {
                 jsonBody = JSON.stringify({
                     email: email,
                     ResendingCode: true,
-                })
+                });
             } else {
                 jsonBody = JSON.stringify({
                     email: email,
                     ResendingCode: false,
-                })
+                });
             }
-
             const response = await fetchWithCsrf(
                 resolve(`/api/register/code/generation`),
                 {
@@ -328,10 +329,10 @@
                     {/if}
                 {/key}
                 <p class="text-danger">{errorMessage}</p>
-                <div id="code-input" class="input-group">
+                <div id="code-input" class="input-group d-flex gap-2 mt-4 mb-4">
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit1}
                         on:input={handleInput}
@@ -339,7 +340,7 @@
                     />
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit2}
                         on:input={handleInput}
@@ -347,14 +348,15 @@
                     />
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit3}
                         on:input={handleInput}
+                        on:keydown={handleKeyDown}
                     />
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit4}
                         on:input={handleInput}
@@ -362,7 +364,7 @@
                     />
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit5}
                         on:input={handleInput}
@@ -370,7 +372,7 @@
                     />
                     <input
                         type="text"
-                        class="form-control text-center"
+                        class="form-control form-control-lg text-center"
                         maxlength="1"
                         bind:value={digit6}
                         on:input={handleInput}

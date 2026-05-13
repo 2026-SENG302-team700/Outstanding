@@ -1,8 +1,11 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Filters;
 using SENG302.Api.Models.Entities;
+using SENG302.Api.Models.Requests;
 using SENG302.Api.Services;
+using System.Security.Claims;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
@@ -18,6 +21,31 @@ public class TaskItemController : ControllerBase
         _taskItemService = taskItemService;
     }
 
+    /// <summary>
+    /// Fetchs all the task items for the current user
+    /// </summary>
+    /// <returns>All tasks belonging to that user</returns>
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TaskItem>>> GetAllTasks()
+    {
+        // get the logged in user id
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var tasks = await _taskItemService.GetAllTaskItemsAsync(int.Parse(userIdString));
+            return Ok(tasks);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
 
     /// <summary>
     /// Fetches all task items associated to the id of the given list. If
@@ -32,7 +60,8 @@ public class TaskItemController : ControllerBase
         {
             return BadRequest("List not provided");
         }
-        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId);
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var taskList = await _taskItemService.GetTaskItemsByListAsync(listId, int.Parse(userIdString));
         return Ok(taskList);
     }
 
@@ -49,12 +78,16 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var response = await _taskItemService.CreateNewTaskItemAsync(taskItemRequest, userId);
             return Ok(response);
         }
-        catch (InvalidLengthException e)
+        catch (MultipleValidationException e)
         {
-            return BadRequest(e.Message);
+            return BadRequest(new BadRequestValidationResponse
+            {
+                Errors = e.Errors
+            });
         }
         catch (Exception e)
         {
@@ -67,7 +100,8 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var response = await _taskItemService.GetTaskItemAsync(id);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var response = await _taskItemService.GetTaskItemAsync(id, userId);
             return Ok(response);
         }
         catch (Exception e)
@@ -90,12 +124,29 @@ public class TaskItemController : ControllerBase
     {
         try
         {
-            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            
+            var taskItem = await _taskItemService.UpdateTaskItemAsync(taskItemUpdates, userId);
             return Ok(taskItem);
         }
         catch (Exception e)
         {
             return BadRequest(e.Message);
         }
+    }
+    
+    [HttpPatch("order")]
+    public async Task<ActionResult> OrderTaskItems([FromBody] List<int> orderedIds)
+    {
+        try
+        {
+            await _taskItemService.ReorderTaskItemsAsync(orderedIds);
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+
     }
 }

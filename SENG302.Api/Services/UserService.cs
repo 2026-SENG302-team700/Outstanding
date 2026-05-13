@@ -15,13 +15,14 @@ public interface IUserService
     Task CreateNewUserAsync(string email, string displayName, string passwordString, string passwordConfirm, string country);
     Task<User?> GetUserByIdAsync(int id);
     Task<int?> GetUserIdFromEmailAsync(string email);
-    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string password);
+    Task<UserVerificationResponse> CheckUserCredentialsAsync(string email, string passwordString);
     Task<User?> SetUserProfilePicture(int userId, int fileId, float x = 0, float y = 0, float zoom = 1);
-    Task<User?> UpdateUser(int userId, string newEmail, string displayName, string country);
+    Task<User?> UpdateUser(int userId, string newEmail, string newDisplayName, string newCountry, bool profanityFiltering);
     Task<User?> UpdateUserOneTimeCode(string email, string oneTimeCode, long epochTime, bool userVerified);
     Task<User?> DeleteUserByIdAsync(int id);
     Task<User?> GetUserFromEmailAsync(string email);
     Task UpdatePasswordAsync(int userId, string oldPassword, string newPassword, string newPasswordConfirm);
+    Task ResetPasswordAsync(string userEmail, string newPassword, string confirmPassword);
 }
 
 public enum UserVerificationResult
@@ -40,16 +41,6 @@ public class UserVerificationResponse
     public User? user;
 }
 
-
-public class InvalidCodeException : Exception
-{
-    public InvalidCodeException() { }
-
-    public InvalidCodeException(string message) : base(message) { }
-
-    public InvalidCodeException(string message, Exception inner) : base(message, inner) { }
-}
-
 public class UserService : IUserService
 {
     private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
@@ -64,70 +55,78 @@ public class UserService : IUserService
     /// <summary>
     /// Runs all email validation checks and throws relavent exceptions
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="email"></param>
-    /// <exception cref="DuplicateEmailException"></exception>
-    /// <exception cref="InvalidEmailFormatException"></exception>
-    public void ValidateEmail(DatabaseContext context, string email)
+    /// <param name="context">The database - checks to see if email in db already.</param>
+    /// <param name="email">E-mail to be validated</param>
+    public Dictionary<string, string> ValidateEmail(DatabaseContext context, string email)
     {
+        var errors = new Dictionary<string, string>();
+        
         if (EmailAlreadyExists(context, email))
         {
-            throw new DuplicateEmailException("This email address is already in use by another account");
+            errors["email"] = "This email address is already in use by another account";
         }
 
         if (!CheckEmailFormat(email))
         {
-            throw new InvalidEmailFormatException("Invalid email address. Email must be in the format ‘jane@doe.nz’");
+            errors["email"] = "Invalid email address. Email must be in the format 'jane@doe.nz'";
         }
+        return errors;
     }
 
     /// <summary>
     /// Runs all display name validations and throws relavent exceptions
     /// </summary>
-    /// <param name="displayName"></param>
-    /// <exception cref="InvalidDisplayNameLengthException"></exception>
-    /// <exception cref="InvalidDisplayNameCharsException"></exception>
-    public void ValidateDisplayName(string displayName)
+    /// <param name="displayName">Display Name to be validated</param>
+    public Dictionary<string, string> ValidateDisplayName(string displayName)
     {
+        var errors = new Dictionary<string, string>();
         if (DisplayNameLength(displayName))
         {
-            throw new InvalidDisplayNameLengthException("Display name must be between 3 and 64 characters");
+            errors["displayName"] = "Display name must be between 3 and 64 characters";
         }
 
         if (!DisplayNameChars(displayName))
         {
-            throw new InvalidDisplayNameCharsException(
-                "Display name must only include letters, spaces, hyphens or apostrophes"
-                );
+            errors["displayName"] = "Display name must only include letters, spaces, hyphens or apostrophes";
         }
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var swearList = profanityFilter.DetectAllProfanities(displayName);
+        if (swearList.Count > 0)
+        {
+            errors["displayName"] = "Display Name Contains Profanities! Remove Profanities!";
+        }
+
+        return errors;
     }
+    
     /// <summary>
     /// Runs all password validations and throws relavent excpetions
     /// </summary>
-    /// <param name="passwordOne"></param>
-    /// <param name="passwordTwo"></param>
-    /// <exception cref="MismatchedPasswordException"></exception>
-    /// <exception cref="InvalidPasswordException"></exception>
-    public void ValidatePassword(string passwordOne, string passwordTwo)
+    /// <param name="passwordOne">The ACTUAL password field data</param>
+    /// <param name="passwordTwo">The password confirmation field data</param>
+    public Dictionary<string, string> ValidatePassword(string passwordOne, string passwordTwo)
     {
+        var errors = new Dictionary<string, string>();
+
         if (!PasswordMatching(passwordOne, passwordTwo))
         {
-            throw new MismatchedPasswordException("Passwords do not match");
+            errors["passwordConfirm"] = "Passwords do not match";
         }
 
         if (!CheckPassword(passwordOne))
         {
-            throw new InvalidPasswordException(
-                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
-            );
+            errors["password"] = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
         }
+
+        return errors;
     }
 
     /// <summary>
     /// Runs all country validations and throws relavent exceptions
     /// </summary>
-    /// <param name="country"></param>
-    /// <exception cref="InvalidCountryException"></exception>
+    /// <param name="country">2-letter country code</param>
+    /// <exception cref="InvalidCountryException">Throws if received country ISO is not in the country list.</exception>
     public void ValidateCountry(string country)
     {
         if (!ValidCountry(country))
@@ -180,12 +179,27 @@ public class UserService : IUserService
         string country)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var errors = new Dictionary<string, string>();
 
-        ValidateEmail(context, email);
-        ValidateDisplayName(displayName);
-        ValidatePassword(passwordString, passwordConfirm);
-        ValidateCountry(country);
+        foreach (var (field, message) in ValidateEmail(context, email))
+        {
+            errors[field] = message;
+        }
+        foreach (var (field, message) in ValidateDisplayName(displayName))
+        {
+            errors[field] = message;
+        }
+        foreach (var (field, message) in ValidatePassword(passwordString, passwordConfirm))
+        {
+            errors[field] = message;
+        }
+        
+        ValidateCountry(country); // not added to errors as causation differs and shouldn't naturally happen.
 
+        if (errors.Count > 0)
+            throw new MultipleValidationException(errors);
+        
         var user = await GenerateNewUserAsync(email, displayName, passwordString, country);
 
         context.Users.Add(user);
@@ -331,7 +345,8 @@ public class UserService : IUserService
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        return user;
     }
 
     /// <summary>
@@ -356,6 +371,7 @@ public class UserService : IUserService
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower().Equals(email.ToLower()));
+
         return user;
     }
 
@@ -445,11 +461,13 @@ public class UserService : IUserService
     /// <param name="newEmail">a string of the provided email</param>
     /// <param name="newDisplayName">a string of the users new display name</param>
     /// <param name="newCountry">a string of the users new country</param>
+    /// <param name="profanityFiltering">a boolean that represents whether profanity filtering is enabled or disabled</param>
     /// <returns>The new user that has been saved in the database</returns>
     public async Task<User?> UpdateUser(int userId,
         string newEmail,
         string newDisplayName,
-        string newCountry
+        string newCountry,
+        bool profanityFiltering
         )
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
@@ -457,13 +475,29 @@ public class UserService : IUserService
         if (user == null) return null;
 
         // Validation
-        if (user.Email != newEmail) ValidateEmail(context, newEmail);
-        if (user.DisplayName != newDisplayName) ValidateDisplayName(newDisplayName);
-        if (user.Country != newCountry) ValidateCountry(newCountry);
+        var errors = new Dictionary<string, string>();
+        if (newEmail != user.Email)
+        {
+            foreach (var (field, message) in ValidateEmail(context, newEmail))
+            {
+               
+                errors[field] = message;
+            }
+        }        
+        foreach (var (field, message) in ValidateDisplayName(newDisplayName))
+        {
+            errors[field] = message;
+        }
+        
+        ValidateCountry(newCountry);
 
+        if (errors.Count > 0)
+            throw new MultipleValidationException(errors);
+        
         user.Email = newEmail;
         user.DisplayName = newDisplayName;
         user.Country = newCountry;
+        user.ProfanityFiltering = profanityFiltering;
 
         context.Users.Update(user);
         await context.SaveChangesAsync();
@@ -623,6 +657,55 @@ public class UserService : IUserService
         
         // validate inputs
         if (!ValidateUpdatePasswordRequest(user, oldPassword, newPassword, newPasswordConfirm)) return;
+        
+        // Perform update
+        PasswordHasher<User> passwordHasher = new();
+        var passwordKey = passwordHasher.HashPassword(user, newPassword);
+        user.PasswordKey = passwordKey;
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        context.Users.Update(user);
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Validates the inputs and throws exceptions with relevant error messages
+    /// </summary>
+    /// <param name="newPassword"></param>
+    /// <param name="newPasswordConfirm"></param>
+    /// <exception cref="MismatchedPasswordException"></exception>
+    /// <exception cref="InvalidPasswordException"></exception>
+    public void ValidateResetPasswordRequest(string newPassword, string newPasswordConfirm)
+    {
+        // Validate new passwords match
+        if (!PasswordMatching(newPassword, newPasswordConfirm))
+        {
+            throw new MismatchedPasswordException("Passwords do not match");
+        }
+        
+        // validate password is of valid form
+        if (!CheckPassword(newPassword))
+        {
+            throw new InvalidPasswordException(
+                "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters"
+            );
+        }
+    }
+    
+    /// <summary>
+    /// Validates and performs the request to reset the users password
+    /// </summary>
+    /// <param name="userEmail">The users email</param>
+    /// <param name="newPassword">The password the user wishes to change to</param>
+    /// <param name="newPasswordConfirm">the new password repeated for confirmation purpses</param>
+    /// <returns>true on successful update</returns>
+    public async Task ResetPasswordAsync(string userEmail, string newPassword, string newPasswordConfirm)
+    {
+        // Get user from Id
+        User? user = await GetUserFromEmailAsync(userEmail);
+        if  (user == null) throw new UnauthorizedAccessException("email didn't match any user");
+        
+        // validate inputs
+        ValidateResetPasswordRequest(newPassword, newPasswordConfirm);
         
         // Perform update
         PasswordHasher<User> passwordHasher = new();

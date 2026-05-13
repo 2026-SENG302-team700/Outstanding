@@ -4,6 +4,7 @@
 
 - [ ] Unit tests are present and pass
 - [ ] Integration tests are present and pass
+- [ ] Acceptance tests are present and pass
 - [ ] Manual tests are created and tested
 - [ ] No code Smells
   - Readable and understandable

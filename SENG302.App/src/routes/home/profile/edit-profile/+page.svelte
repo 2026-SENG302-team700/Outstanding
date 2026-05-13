@@ -4,20 +4,28 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
-    import { countries } from "$lib/country/countries";
     import { addToast } from "$lib/toast/toast";
     import { user } from "$lib/stores/user";
     import regexPatterns from "../../../../../../SENG302.Shared/regexPatterns.json";
     import ProfilePic from "$lib/profilepic/profilepic.svelte";
     import ImageEditor from "$lib/image-editor/image-editor.svelte";
+    import CancelButton from "$lib/components/cancel-button.svelte";
+    import DisplayNameForm from "$lib/components/display-name-form.svelte";
+    import EmailForm from "$lib/components/email-form.svelte";
+    import CountrySelectForm from "$lib/components/country-select-form.svelte";
+    import AuthenticatorButton from "$lib/components/authenticator-button.svelte";
+    import PasswordForm from "$lib/components/password-form.svelte";
+    import ToggleForm from "$lib/components/toggle-form.svelte"
 
     let displayName = $state("");
     let email = $state("");
     let country = $state("");
     let files: FileList | null = $state(null);
     let pfpInput: HTMLInputElement;
-    let modalElement: HTMLElement | undefined = $state(); 
+    let modalElement: HTMLElement | undefined = $state();
+    let pfpModalElement: HTMLElement | undefined = $state();
     let authModal: Modal | undefined;
+    let pfpModal: Modal | undefined;
     let resendTimer = $state(0);
     let isSending = $state(false);
     let currentModalStep = $state("verify");
@@ -33,18 +41,23 @@
     let userCode = $derived(
         digit1 + digit2 + digit3 + digit4 + digit5 + digit6,
     );
-    let updatingPassword = $state(false)
+    let updatingPassword = $state(false);
+    
+    let profanityFiltering = $state(false);
 
     let codeError = $state("");
     let imageEditor: ImageEditor;
+    let pfpCancelButton: HTMLButtonElement;
 
     let errors = $state({
         email: "",
         displayName: "",
         oldPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        image: "",
     });
+    let imageError = $state("");
     // automatically trigger the checkCode when the length reaches 6
     $effect(() => {
         if (userCode.length === 6) {
@@ -60,6 +73,9 @@
         if (modalElement) {
             authModal = new BootstrapModal(modalElement);
         }
+        if (pfpModalElement) {
+            pfpModal = new BootstrapModal(pfpModalElement);
+        }
     });
 
     /**
@@ -71,6 +87,8 @@
         errors.oldPassword = "";
         errors.newPassword = "";
         errors.confirmPassword = "";
+        errors.image = "";
+        imageError = "";
     }
 
     /**
@@ -84,6 +102,15 @@
         digit4 = "";
         digit5 = "";
         digit6 = "";
+    }
+
+    /**
+     * Clears the all fields in the update password form
+     */
+    function clearPasswordFields() {
+        oldPassword = "";
+        newPassword = "";
+        confirmPassword = "";
     }
 
     /**
@@ -101,17 +128,17 @@
      * Method used to send a new code to the user. Check the conditions are right and send a PUT request to the backend
      */
     async function requestPasswordChange() {
-        clearModalData()
+        clearModalData();
         currentModalStep = "verify";
 
         authModal?.show();
-        
+
         if (!isSending && resendTimer == 0) {
             isSending = true;
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
-                    resolve(`/api/user/password/code/generation`),
+                    resolve(`/api/user/password/update/code/generation`),
                     {
                         method: "PUT",
                         headers: {
@@ -144,7 +171,7 @@
     /// </summary>
     async function retrieveUserData() {
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "GET",
                 credentials: "include",
             });
@@ -159,6 +186,7 @@
             email = data.email;
             displayName = data.displayName;
             country = data.country;
+            profanityFiltering = data.profanityFiltering;
         } catch (err) {
             email = "Failed to fetch email: " + (err as Error).message;
             displayName = "Failed to fetch username: " + (err as Error).message;
@@ -173,7 +201,7 @@
      * returns true if all fields are valid, false otherwise
      */
     function isValid() {
-        clearErrors()
+        clearErrors();
 
         // Front end Validation
         let valid = true;
@@ -248,7 +276,7 @@
         if (!isValid()) return;
 
         try {
-            const response = await fetchWithCsrf(`/api/user`, {
+            const response = await fetchWithCsrf(resolve(`/api/user`), {
                 method: "PUT",
                 credentials: "include",
                 headers: {
@@ -258,6 +286,7 @@
                     email,
                     displayName,
                     country,
+                    profanityFiltering
                 }),
             });
 
@@ -271,15 +300,15 @@
                 goto(resolve("/home"));
             } else {
                 const data = await response.json().catch(() => null);
-                switch (data.errorType) {
-                    // check for duplicate email, throws regular error rather than "something went wrong"
-                    case "DuplicateEmailException":
-                        email = "";
-                        errors.email = data.message;
-                        break;
-                    default:
-                        addToast(data?.message || "An error occured.", "error");
-                        break;
+                if (data?.errors) {
+                    console.log(data.errors)
+                    errors.email = data.errors.email ?? "";
+                    errors.displayName = data.errors.displayName ?? "";
+                } else {
+                    addToast(
+                        data?.message || "Internal server error occurred.",
+                        "error",
+                    );
                 }
                 return;
             }
@@ -294,9 +323,9 @@
      * returns whether result is valid or not
      */
     function validateChangePasswordInputs() {
-        clearErrors()
+        clearErrors();
         var isValid = true;
-        
+
         // Check not empty
         if (!oldPassword) {
             errors.oldPassword = "field is required";
@@ -310,11 +339,11 @@
             errors.confirmPassword = "field is required";
             isValid = false;
         }
-        
+
         // checks passwords match
         if (newPassword !== confirmPassword) {
             isValid = false;
-            errors.confirmPassword = "Passwords do not match"
+            errors.confirmPassword = "Passwords do not match";
             confirmPassword = "";
         }
 
@@ -322,12 +351,13 @@
         const passwordRegex = new RegExp(regexPatterns.user.password);
         if (!passwordRegex.test(newPassword)) {
             isValid = false;
-            errors.newPassword = "Password must be at least 8 characters long including at least one of each " +
-                "uppercase, lowercase, numbers and special characters"
+            errors.newPassword =
+                "Password must be at least 8 characters long including at least one of each " +
+                "uppercase, lowercase, numbers and special characters";
             newPassword = "";
             confirmPassword = "";
         }
-        
+
         return isValid;
     }
     /**
@@ -338,7 +368,7 @@
         try {
             codeError = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/update/code/validation`),
                 {
                     method: "POST",
                     headers: {
@@ -368,82 +398,111 @@
         }
     }
 
-        /**
-         * validates the input data and sends a request to the backend to update the users password
-         */
-        async function updatePassword() {
-            const valid = validateChangePasswordInputs();
-            if (!valid) return;
-            
-            updatingPassword = true;
-            try {
-                const response = await fetchWithCsrf(resolve(`/api/user/password`),
-                    {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            oldPassword: oldPassword,
-                            newPassword: newPassword,
-                            newPasswordConfirm: confirmPassword
-                        })
-                    }
-                );
-                if (response.ok) {
-                    addToast("New password updated successfully")
-                    authModal.hide()
-                    goto(resolve("/home/profile"));
-                    return;
-                }
-                
-                const data = await response.json().catch(() => null);
-                if (response.status === 400){
-                    switch (data.message) {
-                        case "Old password does not match password on file":
-                            errors.oldPassword = "Old password does not match password on file";
-                            oldPassword = "";
-                            break;
-                        case "Passwords do not match":
-                            errors.confirmPassword = "Password does not match";
-                            confirmPassword = "";
-                            break;
-                        case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
-                            errors.newPassword = "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
-                            newPassword = "";
-                            confirmPassword = "";
-                            break;
-                        case "New password can't be the same as old password":
-                            errors.newPassword = "New password can't be the same as old password";
-                            newPassword = "";
-                            confirmPassword = "";
-                            break;
-                    }
-                } else {
-                    addToast("Failed to update password ");
-                }
-            } catch (err) {
-                addToast("Failed to update password");
-            } finally {
-                updatingPassword = false;
+    /**
+     * validates the input data and sends a request to the backend to update the users password
+     */
+    async function updatePassword() {
+        const valid = validateChangePasswordInputs();
+
+        updatingPassword = true;
+        try {
+            const response = await fetchWithCsrf(
+                resolve(`/api/user/password/update`),
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        oldPassword: oldPassword,
+                        newPassword: newPassword,
+                        newPasswordConfirm: confirmPassword,
+                    }),
+                },
+            );
+            if (response.ok && valid) {
+                addToast("New password updated successfully");
+                authModal.hide();
+                goto(resolve("/home/profile"));
+                return;
             }
+
+            const data = await response.json().catch(() => null);
+            if (response.status === 400) {
+                switch (data.message) {
+                    case "Old password does not match password on file":
+                        if (oldPassword) {
+                            errors.oldPassword =
+                                "Old password does not match password on file";
+                        }
+                        oldPassword = "";
+                        break;
+                    case "Passwords do not match":
+                        errors.confirmPassword = "Password does not match";
+                        confirmPassword = "";
+                        break;
+                    case "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters":
+                        errors.newPassword =
+                            "Password must be at least 8 characters long including at least one of each uppercase, lowercase, numbers and special characters";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                    case "New password can't be the same as old password":
+                        errors.newPassword =
+                            "New password can't be the same as old password";
+                        newPassword = "";
+                        confirmPassword = "";
+                        break;
+                }
+            } else {
+                addToast("Failed to update password ");
+            }
+        } catch (err) {
+            addToast("Failed to update password");
+        } finally {
+            updatingPassword = false;
         }
-    
+    }
+
     /**
      * Sends an image to the image editor
      */
     async function sendToEditor() {
-        if (!files || files.length === 0) return;
-        imageEditor.setImg(files[0]);
+        clearErrors()
+        imageEditor.highlightError(false);
+        console.log("recieve file");
+        if (!files || files.length === 0) {
+            return;
+        }
+        if (await imageEditor.validateImg(files[0])) {
+            imageEditor.setImg(files[0]);
+            pfpModal.show();
+        }
     }
-
-
+    
     /**
      * Updates the profile picture on the back end
      * @param imageData the x, y and zoom of the new profile picture
      * @param imageFile the file to upload
      */
-    async function updatePfp(imageData: PfpData, imageFile: File) {
+    async function updatePfp() {
+        const data = imageEditor.exportData();
+        
+        if (!data) {
+            if (!imageError) {
+                imageError = "No file Selected";
+            }
+        }
+        errors.image = imageError;
+        
+        if (imageError) {
+            imageEditor.highlightError(true);
+            return;
+        }
+
+        let imageData = data.data;
+        let imageFile = data.file;
+
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -470,9 +529,11 @@
                     ...u,
                     pfpData: imageData,
                 }));
+                pfpModal.hide();
             }
         } catch (err) {
-            addToast((err as Error).message, "error");
+            errors.image = (err as Error).message;
+            imageEditor.highlightError(true);
         }
     }
 </script>
@@ -487,97 +548,79 @@
             <button
                 type="button"
                 class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-4 lh-1 d-flex align-items-center justify-content-center"
-                data-bs-toggle="modal"
-                data-bs-target="#pfpInputModal"
                 on:click={() => {
-                    imageEditor.reset();
+                    pfpInput.value = ""
+                    pfpInput.click();
                 }}
             >
                 <i class="bi bi-pencil-square fs-2"></i>
             </button>
         </div>
     </div>
-
-    <div class="flex-grow-1 m-3">
-        <form on:submit|preventDefault={updateUser}>
-            <div class="mb-4">
-                <h5 class="text-muted mb-2">Personal Information</h5>
-                <hr class="mt-0" style="opacity: 0.15;" />
-                <div class="mb-3">
-                    <label for="displayName" class="form-label"
-                        >Display Name</label
-                    >
-                    <input
-                            type="text"
-                            class="form-control"
-                            class:is-invalid={errors.displayName}
-                            bind:value={displayName}
-                            placeholder="Display Name *"
-                            id="displayName"
-                    />
-                    {#if errors.displayName}
-                    <div class="invalid-feedback">
-                        {errors.displayName}
+    
+    <div class="container d-flex flex-column flex-md-row">
+        <div class="flex-grow-1 m-3">
+            <form on:submit|preventDefault={updateUser}>
+                <div class="m-3" style="display: flex; ">
+                    <CancelButton path={"/home/profile"} />
+                    <div class="ms-auto"><AuthenticatorButton buttonType={"update"} /></div>
+                </div>
+                <div class="mb-4">
+                    <h5 class="text-muted mb-2">Personal Information</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div class="mb-3">
+                        <label for="displayName" class="form-label"
+                            >Display Name</label
+                        >
+                        <DisplayNameForm
+                            bind:displayName
+                            error={errors.displayName}
+                            registering={false}
+                        />
                     </div>
-                    {/if}
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email</label>
+                        <EmailForm bind:email error={errors.email} />
+                    </div>
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country</label>
+                        <CountrySelectForm bind:selectedCountryCode={country} />
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label for="userEmail" class="form-label">Email</label>
-                    <input
-                            type="text"
-                            class="form-control"
-                            class:is-invalid={errors.email}
-                            id="userEmail"
-                            placeholder="Email *"
-                            bind:value={email}
-                            
-                    />
-                    {#if errors.email}
-                        <div class="invalid-feedback">
-                            {errors.email}
-                        </div>
-                    {/if}
+
                 </div>
-                <div class="mb-3">
-                    <label for="country" class="form-label">Country</label>
-                    <select
-                        class="form-select"
-                        class:country-select={!country}
-                        bind:value={country}
-                        id="country"
+                <div class="mt-5 mb-4">
+                    <h5 class="text-muted mb-2">Preferences</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div
+                            class="d-flex align-items-center justify-content-between"
                     >
-                        {#each countries as country}
-                            <option value={country.code}>
-                                {country.name}
-                            </option>
-                        {/each}
-                    </select>
+                        <label for="profanityFiltering" class="form-label">Profanity Censor</label>
+                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} />
+                    </div>
                 </div>
-            </div>
-            <div class="mt-5 mb-4">
-                <h5 class="text-muted mb-2">Account Security</h5>
-                <hr class="mt-0" style="opacity: 0.15;" />
-                <div class="d-flex align-items-center justify-content-between">
-                    <p class="small text-secondary mb-0">
-                        Change your password to keep your account secure.
-                    </p>
-                    <button
-                        type="button"
-                        class="btn btn-outline-primary btn-sm"
-                        on:click={requestPasswordChange}
+            
+                <div class="mt-5 mb-4">
+                    <h5 class="text-muted mb-2">Account Security</h5>
+                    <hr class="mt-0" style="opacity: 0.15;" />
+                    <div
+                        class="d-flex align-items-center justify-content-between"
                     >
-                        Update Password
-                    </button>
+                        <p class="small text-secondary mb-0">
+                            Change your password to keep your account secure.
+                        </p>
+                        <button
+                            type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            on:click={requestPasswordChange}
+                        >
+                            Update Password
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button
-                    type="button"
-                    class="btn btn-secondary"
-                    on:click={() => {
-                goto(resolve("/home/profile"));
-            }}>Cancel</button>
-    </form>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -604,7 +647,6 @@
                             We've sent a 6-digit verification code to <br />
                             <span class="text-dark fw-bold">{email}</span>
                         </p>
-
                         <div id="code-input" class="d-flex gap-2 mt-4 mb-4">
                             <input
                                 type="text"
@@ -658,7 +700,8 @@
 
                         {#if codeError}
                             <div class="text-danger small mb-3 animate-fade-in">
-                                <i class="bi bi-exclamation-circle-fill me-1"></i> {codeError}
+                                <i class="bi bi-exclamation-circle-fill me-1" />
+                                {codeError}
                             </div>
                         {/if}
 
@@ -679,41 +722,58 @@
                 {:else}
                     <form on:submit|preventDefault={() => updatePassword()}>
                         <div class="mb-3">
-                            <label for="oldPassword" class="form-label small fw-bold text-secondary">Current Password</label>
-                            <input type="password" class="form-control {errors.oldPassword ? 'is-invalid' : ''}" id="oldPassword" bind:value={oldPassword}  />
-                            {#if errors.oldPassword}
-                                <div class="invalid-feedback">
-                                    {errors.oldPassword}
-                                </div>
-                            {/if}
+                            <label
+                                for="oldPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >Current Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={oldPassword}
+                                error={errors.oldPassword}
+                            />
                         </div>
                         <div class="mb-3">
-                            <label for="newPassword" class="form-label small fw-bold text-secondary">New Password</label>
-                            <input type="password" class="form-control {errors.newPassword ? 'is-invalid' : ''}" id="newPassword" bind:value={newPassword}  />
-                            {#if errors.newPassword}
-                                <div class="invalid-feedback">
-                                    {errors.newPassword}
-                                </div>
-                            {/if}
+                            <label
+                                for="newPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >New Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={newPassword}
+                                error={errors.newPassword}
+                            />
                         </div>
                         <div class="mb-3">
-                            <label for="confirmPassword" class="form-label small fw-bold text-secondary">Confirm New Password</label>
-                            <input type="password" class="form-control {errors.confirmPassword ? 'is-invalid' : ''}" id="confirmPassword" bind:value={confirmPassword}  />
-                            {#if errors.confirmPassword}
-                                <div class="invalid-feedback">
-                                    {errors.confirmPassword}
-                                </div>
-                            {/if}
+                            <label
+                                for="confirmPassword"
+                                class="form-label small fw-bold text-secondary"
+                                >Confirm New Password *</label
+                            >
+                            <PasswordForm
+                                bind:password={confirmPassword}
+                                error={errors.confirmPassword}
+                            />
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-2 mt-3" disabled={updatingPassword}>{updatingPassword ? "Updating..." : "Update Password"}</button>
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100 py-2 mt-3"
+                            disabled={updatingPassword}
+                            >{updatingPassword
+                                ? "Updating..."
+                                : "Update Password"}
+                        </button>
                     </form>
                 {/if}
-                <button
+                    <button
                         type="button"
                         class="btn btn-secondary w-100 py-2 mt-3"
-                        data-bs-dismiss="modal"
                         aria-label="Close"
-                >Cancel</button>
+                        on:click={() => {
+                            authModal.hide();
+                            clearErrors();
+                            clearPasswordFields();
+                        }}>Cancel</button
+                    >
             </div>
         </div>
     </div>
@@ -726,6 +786,7 @@
     data-bs-backdrop="static"
     data-bs-keyboard="false"
     tabindex="-1"
+    bind:this={pfpModalElement}
     aria-labelledby="pfpInputModalLabel"
     aria-hidden="true"
 >
@@ -738,51 +799,51 @@
                 <button
                     type="button"
                     class="btn-close"
-                    data-bs-dismiss="modal"
+                    on:click={() => pfpModal.hide()}
                     aria-label="Close"
                 ></button>
             </div>
             <div class="modal-body">
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    on:click={() => pfpInput.click()}
-                >
-                    Choose Image
-                </button>
-
-                <input
-                    accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
-                    bind:files
-                    bind:this={pfpInput}
-                    id="pfp"
-                    name="pfp"
-                    type="file"
-                    class="d-none"
-                    on:change={sendToEditor}
-                />
-
-                <ImageEditor bind:this={imageEditor} />
-            </div>
-            <div class="modal-footer">
-                <button
-                    type="button"
-                    on:click={() => {
-                        const data = imageEditor.exportData();
-                        if (data) {
-                            updatePfp(data.data, data.file);
-                        } else {
-                            addToast("No file selected!", "error");
-                        }
-                    }}
-                    class="btn btn-primary"
-                    data-bs-dismiss="modal">Submit</button
-                >
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                >Cancel</button>
+                <form on:submit|preventDefault={() => updatePfp()}>
+                    <input
+                            accept="image/webp, image/jpeg, image/png, image/gif, image/svg+xml"
+                            bind:files
+                            bind:this={pfpInput}
+                            id="pfp"
+                            name="pfp"
+                            type="file"
+                            class="d-none"
+                            on:change={async () => {
+                                    imageEditor.reset();
+                                    clearErrors();
+                                    await sendToEditor();
+                                    // Reset the value so that if we select the same image a second time the on:change event is triggered
+                                    pfpInput.value = '';
+                                }
+                            }
+                    />
+                    <ImageEditor
+                        bind:this={imageEditor}
+                    >
+                    </ImageEditor>
+                    {#if errors.image}
+                        <div class="text-danger small mt-1">
+                            {errors.image}
+                        </div>
+                    {/if}
+                    <div class="modal-footer">
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >Submit</button>
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            on:click={() => pfpModal.hide()}
+                            bind:this={pfpCancelButton}
+                        >Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

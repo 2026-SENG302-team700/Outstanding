@@ -1,18 +1,17 @@
 using SENG302.Api.DataAccess;
 using SENG302.Api.Models.Entities;
-using SENG302.Api.Models.Requests;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using System.Globalization;
 
 namespace SENG302.Api.Services;
 
 public interface ITaskItemService
 {
-    Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId);
-    Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem);
-    Task<TaskItem?> GetTaskItemAsync(int id);
-    Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates);
+    Task<IEnumerable<TaskItem>> GetAllTaskItemsAsync(int userId);
+    Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId, int userId);
+    Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem, int userId);
+    Task<TaskItem?> GetTaskItemAsync(int id, int userId);
+    Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates, int userId);
+    Task ReorderTaskItemsAsync(List<int> orderedIds);
 }
 
 
@@ -29,43 +28,89 @@ public class TaskItemService : ITaskItemService
 
     /// <summary>
     /// Checks the task item name is valid, returns nothing if valid
-    /// but throws error if invalid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="name">The name being tested</param>
-    /// <exception cref="InvalidLengthException"></exception>
-    public void ValidateTaskItemName(string name)
+    public Dictionary<string, string> ValidateTaskItemName(string name, bool profanityFiltering)
     {
-        if (name.Trim().Length < 3 || name.Trim().Length > 128)
+        var errors = new Dictionary<string, string>();
+        var taskItemName = name.Trim();
+        if (taskItemName.Length < 3 || taskItemName.Length > 128)
         {
-            throw new InvalidLengthException("Title is required and must be between 3 and 128 characters long");
+            errors["name"] = "Title is required and must be between 3 and 128 characters long";
         }
+
+        if (!profanityFiltering) return errors;
+        
+        var profanityFilter = new ProfanityFilter.ProfanityFilter(); 
+        var swearList = profanityFilter.DetectAllProfanities(taskItemName); 
+        if (swearList.Count > 0) 
+        { 
+            errors["name"] = "Title cannot contain profanity.";
+        }
+        
+        return errors;
     }
 
     /// <summary>
-    /// Checks the description is valid 
+    /// Checks the description is valid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="description">The description being tested</param>
-    /// <exception cref="InvalidLengthException"></exception>
-    public void ValidateTaskItemDescription(string description)
+    public Dictionary<string, string> ValidateTaskItemDescription(string description)
     {
+        var errors = new Dictionary<string, string>();
         if (description.Trim().Length > 2048)
         {
-            throw new InvalidLengthException("Description must be 2048 characters or less");
+            errors["description"] = "Description must be 2048 characters or less";
         }
+
+        return errors;
+    }
+
+    /// <summary>
+    /// Get all the tasks from all the lists and check for censoring
+    /// </summary>
+    /// <returns> an ordered list of all the tasks </returns>
+    public async Task<IEnumerable<TaskItem>> GetAllTaskItemsAsync(int userId)
+    {
+        await using var context = await _dbContextFactory.CreateDbContextAsync();
+        // get all the task
+        var tasks = await context.Set<TaskItem>()
+                        .Where(t => context.Set<TaskList>()
+                        .Any(l => l.Id == t.TaskListId && l.UserId == userId))
+                        .OrderBy(t => t.OrderPosition)
+                        .ToListAsync();
+        // get user
+        var user = await context.Users.FindAsync(userId);
+        
+        if (user?.ProfanityFiltering != true) return tasks;
+
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        foreach (TaskItem task in tasks)
+        {
+            task.Name = profanityFilter.CensorString(task.Name);
+            task.Description = profanityFilter.CensorString(task.Description);
+        }
+        return tasks;
     }
 
     /// <summary>
     /// Checks the due date is valid
+    /// adds error to dictionary when error occurs.
     /// </summary>
     /// <param name="dueDate"></param>
-    /// <exception cref="ArgumentException"></exception>
-    public void ValidateTaskItemDueDate(DateTime? dueDate)
+    public Dictionary<string, string> ValidateTaskItemDueDate(DateTime? dueDate)
     {
+        var errors = new Dictionary<string, string>();
         DateTime currentTime = DateTime.UtcNow;
+
         if (dueDate != null && currentTime > dueDate)
         {
-            throw new ArgumentException("Invalid due date, date must be in the future");
+            errors["dueDate"] = "Invalid due date, date must be in the future";
         }
+
+        return errors;
     }
 
     /// <summary>
@@ -99,24 +144,49 @@ public class TaskItemService : ITaskItemService
     /// <param name="currentStatus"></param>
     /// <param name="description"></param>
     /// <returns>the newly created TaskItem</returns>
-    public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem)
+    public async Task<TaskItem> CreateNewTaskItemAsync(NewTaskItemRequest taskItem, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
 
+        var user = await context.Users.FindAsync(userId);
+        var profanityFiltering = user?.ProfanityFiltering ?? false;
+        
         // Clean request
         taskItem.Name = taskItem.Name.Trim();
         taskItem.Description = taskItem.Description.Trim();
         taskItem.DueDate = taskItem.DueDate == DateTime.MinValue ? null : taskItem.DueDate;
 
         // Validation
-        ValidateTaskItemName(taskItem.Name);
-        ValidateTaskItemDescription(taskItem.Description);
-        ValidateTaskItemDueDate(taskItem.DueDate);
+        var errors = new Dictionary<string, string>();
+        
+        foreach (var (key, value) in ValidateTaskItemName(taskItem.Name, profanityFiltering))
+        {
+            errors[key] = value;
+        }
 
-        // Set default descriptiom
-        // removed temp for now
-        //if (taskItem.Description == "") taskItem.Description = "No Description";
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItem.Description))
+        {
+            errors[key] = value;
+        }
 
+        foreach (var (key, value) in ValidateTaskItemDueDate(taskItem.DueDate))
+        {
+            errors[key] = value;
+        }
+
+        ValidateTaskItemCurrentStatus(taskItem.CurrentStatus); // should not occur naturally, therefore handled differently.
+
+        if (errors.Count > 0)
+        {
+            throw new MultipleValidationException(errors);
+        }
+        
+        // gets order position of task attached to a certain user.
+        var orderPosition = await context.Set<TaskItem>()
+            .Join(context.Set<TaskList>()
+                .Where(tList => tList.UserId == userId), tItem => tItem.TaskListId, tList => tList.Id, (tItem, tList) => tItem.OrderPosition)
+            .MaxAsync(tItem => (int?)tItem) + 1 ?? 0;
+        
         // Add task item
         var newTask = new TaskItem()
         {
@@ -125,7 +195,8 @@ public class TaskItemService : ITaskItemService
             Description = taskItem.Description,
             CurrentStatus = taskItem.CurrentStatus,
             DueDate = taskItem.DueDate,
-            creationTime = DateTime.UtcNow
+            creationTime = DateTime.UtcNow,
+            OrderPosition = orderPosition
         };
         context.Set<TaskItem>().Add(newTask);
         await context.SaveChangesAsync();
@@ -136,22 +207,50 @@ public class TaskItemService : ITaskItemService
     /// Gets all task items from the given list.
     /// </summary>
     /// <param name="taskListId"></param>
+    /// <param name="userId"> id of the user making request</param>
     /// <returns>a list of all tasks found. Empty if no tasks exist.</returns>
-    public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId)
+    public async Task<IEnumerable<TaskItem>> GetTaskItemsByListAsync(int taskListId, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).ToListAsync();
+        var taskItems = await context.Set<TaskItem>().Where(t => t.TaskListId == taskListId).OrderBy(t => t.OrderPosition).ToListAsync();
+
+        // check for user profanity status
+        var user = await context.Users.FindAsync(userId);
+
+        if (user?.ProfanityFiltering != true) return taskItems;
+
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        
+        foreach (TaskItem task in taskItems)
+        {
+            task.Name = profanityFilter.CensorString(task.Name);
+            task.Description = profanityFilter.CensorString(task.Description);
+        }
 
         return taskItems;
     }
 
-    public async Task<TaskItem?> GetTaskItemAsync(int id)
+    public async Task<TaskItem?> GetTaskItemAsync(int id, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var user = await context.Users.FindAsync(userId);
+        var profanityFiltering = user?.ProfanityFiltering ?? false;
+        
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.TaskId == id);
+
+        if (!profanityFiltering) return taskItem;
+
+        var profanityFilter = new ProfanityFilter.ProfanityFilter();
+        var censoredName = profanityFilter.CensorString(taskItem.Name);
+        var censoredDescription = profanityFilter.CensorString(taskItem.Description);
+
+        taskItem.Name = censoredName;
+        taskItem.Description = censoredDescription;
+        
         return taskItem;
     }
-    
+
     /// <summary>
     /// Brings in an update task item request from the controller
     /// Strips the name and modifies the due date to be valid
@@ -160,33 +259,68 @@ public class TaskItemService : ITaskItemService
     /// </summary>
     /// <param name="taskItemUpdates">Incoming Task Item Request</param>
     /// <returns>The updated task item</returns>
-    public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates)
+    public async Task<TaskItem> UpdateTaskItemAsync(UpdateTaskItemRequest taskItemUpdates, int userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
+        
+        var user = await context.Users.FindAsync(userId);
+        var profanityFiltering = user?.ProfanityFiltering ?? false;
+        
         var taskItem = await context.TaskItems.FirstOrDefaultAsync(u => u.TaskId == taskItemUpdates.taskId);
         if (taskItem == null)
         {
             return null;
         }
-        
+
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
+
+        var errors = new Dictionary<string, string>();
         
-        ValidateTaskItemName(taskItemUpdates.Name);
-        ValidateTaskItemDescription(taskItemUpdates.Description);
-        ValidateTaskItemDueDate(taskItemUpdates.DueDate);
-        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus);
-        
+        foreach (var (key, value) in ValidateTaskItemName(taskItemUpdates.Name, profanityFiltering))
+        {
+            errors[key] = value;
+        }
+
+        foreach (var (key, value) in ValidateTaskItemDescription(taskItemUpdates.Description))
+        {
+            errors[key] = value;
+        }
+
+        foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
+        {
+            errors[key] = value;
+        }
+
+        ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus); // should not occur naturally, therefore handled differently.
+
+        if (errors.Count > 0)
+        {
+            throw new MultipleValidationException(errors);
+        }
+
         taskItem.Name = taskItemUpdates.Name;
         taskItem.Description = taskItemUpdates.Description;
         taskItemUpdates.DueDate = taskItemUpdates.DueDate == DateTime.MinValue ? null : taskItemUpdates.DueDate;
         taskItem.DueDate = taskItemUpdates.DueDate;
         taskItem.CurrentStatus = taskItemUpdates.CurrentStatus;
-        
+
         context.TaskItems.Update(taskItem);
         await context.SaveChangesAsync();
         return taskItem;
+    }
+
+    public async Task ReorderTaskItemsAsync(List<int> orderedIds)
+    {
+        await using var context =  await _dbContextFactory.CreateDbContextAsync();
+        var orderingDict = orderedIds.Select((id, index) => (id, index)).ToDictionary(x => x.id, x => x.index);
+        var items = await context.TaskItems.Where(t => orderedIds.Contains(t.TaskId)).ToListAsync();
+        foreach (var item in items)
+        {
+            item.OrderPosition = orderingDict[item.TaskId];
+        }
+        await context.SaveChangesAsync();
     }
 }
 

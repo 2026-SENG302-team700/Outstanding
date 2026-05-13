@@ -1,9 +1,12 @@
 <script lang="ts">
     import { addToast } from "$lib/toast/toast";
     import { onDestroy, onMount } from "svelte";
+    import mimeMagicNumbers from "../../../../SENG302.Shared/mimeTypes.json";
 
     const profileSize = $state(250.0);
-
+    
+    let { imageErrors = $bindable("") } = $props()
+    
     let imageSrc = $state("");
     let imageFile = $state();
 
@@ -39,25 +42,84 @@
     ];
 
     /**
-     * Insert an image into this ImageEditor object
-     * Also calculates which side of the image is the long side,
-     * and calculates the max size the image can be
+     * Validate an image file
+     * This checks the mime type, the mime type encoded at the start of the file,
+     * and if the size of the image is over 5MB
      * @param file the image file
+     * @returns true if valid, false if not
      */
-    export async function setImg(file: File) {
-        if (!mimeTypes.includes(file.type)) {
+    export async function validateImg(file: File) {
+        
+        var realMimeType = await getRealValidMime(file);
+
+        if (!mimeTypes.includes(file.type) || realMimeType == undefined) {
+            imageErrors = "Invalid image, supported file types are .jpeg, .png, .svg, .gif, .webp";
             addToast(
-                "Invalid image, supported file types are .jpeg, .png, .svg, .gif .webp",
+                imageErrors,
                 "error",
             );
-            return;
+            return false;
+        }
+
+        if (file.type != realMimeType) {
+            imageErrors = "Invalid image, file extension does not match file type";
+            addToast(
+                imageErrors,
+                "error",
+            );
+            return false;
         }
 
         if (file.size > 5000000) {
-            addToast("Image too large, maximum file size is 5MB", "error");
-            return;
+            imageErrors = "Image too large, maximum file size is 5MB";
+            addToast(
+                imageErrors,
+                "error",
+            )
+            return false;
         }
 
+        return true;
+    }
+
+    /**
+     * Check the start of the file to get the mime type
+     * and return it if it is a valid type
+     * @param file the image file
+     */
+    export async function getRealValidMime(file: File) {
+        const magicNumber = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+
+        const dict = Object.entries(mimeMagicNumbers);
+
+        for (let mimeI = 0; mimeI < dict.length; mimeI++) {
+            var mimeMagicNumber = dict[mimeI][0];
+            var valid = true;
+
+            for (var i = 0; i < magicNumber.length; i++) {
+                var fileByteStr = magicNumber[i].toString(16);
+                var mimeByteStr = mimeMagicNumber.slice(i * 2, i * 2 + 2);
+
+                if (mimeByteStr == "" || fileByteStr == "") break;
+
+                if (!(mimeByteStr == "??" || fileByteStr == mimeByteStr)) {
+                    valid = false;
+                    break;
+                }
+            }
+            
+            if (valid) {
+                return dict[mimeI][1];
+            }
+        }
+    }
+
+    /**
+     * Insert an image into this ImageEditor object
+     * Also calculates which side of the image is the long side
+     * @param file the image file
+     */
+    export async function setImg(file: File) {
         reset();
         try {
             imageFile = file;
@@ -77,9 +139,10 @@
                 newWidth = (newHeight / height) * width;
             }
         } catch (error) {
-            console.log("image not found");
+            console.log("image not found", error);
         }
     }
+    
 
     /**
      * Get the dimensions of an image
@@ -91,7 +154,6 @@
             img.src = url;
 
             await img.decode();
-
             return {
                 width: img.naturalWidth,
                 height: img.naturalHeight,
@@ -171,6 +233,15 @@
     }
 
     /**
+     * Changes the border color manually depending on whether error has occured or not
+     * @param errorOccured - Whether an error has occured or not
+     */
+    export function highlightError(errorOccured: Boolean) {
+        const editorElement = document.getElementById("image-editor-parent");
+        editorElement.style.borderColor = errorOccured ? "#FF0000" : "#000000";
+    }
+
+    /**
      * Translate the data into a more general format, one that the backend can understand
      */
     export function exportData(): { data: PfpData; file: File } | null {
@@ -205,6 +276,7 @@
         document.addEventListener("mousemove", (e: MouseEvent) => {
             imageMoveEvent(e);
         });
+        highlightError(false)
     });
 
     onDestroy(() => {
@@ -215,6 +287,7 @@
 <div class="image-editor-content">
     <div
         class="image-editor-image-parent"
+        id="image-editor-parent"
         role="button"
         tabindex="-1"
         style="width: {profileSize}px; height: {profileSize}px;"

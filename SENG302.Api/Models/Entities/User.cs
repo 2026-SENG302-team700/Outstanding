@@ -35,4 +35,6 @@ public class User
     public DateTimeOffset TimeCreated { get; set; }
 
     public bool EmailVerified { get; set; } = false;
+
+    public bool ProfanityFiltering { get; set; } = false;
 }

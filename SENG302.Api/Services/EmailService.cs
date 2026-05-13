@@ -1,6 +1,5 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace SENG302.Api.Services;
@@ -27,13 +26,13 @@ public class EmailService : IEmailService
 {
     private readonly EmailSettings _settings;
     private readonly ISmtpClientWrapper _smtpClient;
-    
-    public EmailService(IOptions<EmailSettings> options, ISmtpClientWrapper smtpClient)
+
+    public EmailService(EmailSettings settings, ISmtpClientWrapper smtpClient)
     {
-        _settings = options.Value;
+        _settings = settings;
         _smtpClient = smtpClient;
     }
-    
+
     /// <summary>
     /// This method is the main method for sending emails to users. I takes a html template, an email address and a dictionary that includes
     /// key information to about the email being sent.
@@ -45,10 +44,19 @@ public class EmailService : IEmailService
     public async Task SendEmailAsync(string toEmail, EmailTemplate template, Dictionary<string, string> model)
     {
         var (subject, htmlBody) = await RenderAsync(template, model);
-        
+
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Outstanding", _settings.FromEmail));
-        message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
+        // check for display name
+        if (model.ContainsKey("DISPLAY_NAME"))
+        {
+            message.To.Add(new MailboxAddress(model["DISPLAY_NAME"], toEmail));
+        }
+        else
+        {
+            message.To.Add(new MailboxAddress("Outstanding User", toEmail));
+        }
+
         message.Subject = subject;
 
         message.Body = new BodyBuilder
@@ -56,7 +64,7 @@ public class EmailService : IEmailService
             HtmlBody = htmlBody,
             TextBody = StripHtml(htmlBody)
         }.ToMessageBody();
-        
+
         await _smtpClient.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
         await _smtpClient.AuthenticateAsync(_settings.FromEmail, _settings.Password);
         await _smtpClient.SendAsync(message);
@@ -133,13 +141,14 @@ public class EmailService : IEmailService
     private static string StripHtml(string html) =>
         System.Text.RegularExpressions.Regex.Replace(html, "<.*?>", string.Empty);
 }
+
 /// <summary>
 /// The class that secrets are injected into.
 /// </summary>
 public class EmailSettings
 {
-    public string Host { get; set; } = "";
+    public string Host { get; set; } = Environment.GetEnvironmentVariable("EMAIL_HOST") ?? "";
     public int Port { get; set; } = 587;
-    public string FromEmail { get; set; } = "";
-    public string Password { get; set; } = "";
+    public string FromEmail { get; set; } = Environment.GetEnvironmentVariable("EMAIL") ?? "";
+    public string Password { get; set; } = Environment.GetEnvironmentVariable("EMAIL_PASS") ?? "";
 }

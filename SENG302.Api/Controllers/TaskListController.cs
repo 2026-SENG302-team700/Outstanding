@@ -28,7 +28,10 @@ public class TaskListController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskList>> getTaskList(int id)
     {
-        var taskList = await _taskListService.GetTaskListByIdAsync(id);
+        // get the user id
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var taskList = await _taskListService.GetTaskListByIdAsync(id, int.Parse(userIdString));
         if (taskList == null)
         {
             return NotFound();
