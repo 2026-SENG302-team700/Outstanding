@@ -26,8 +26,7 @@ public class ResetPasswordController : ControllerBase
     
     /// <summary>
     /// The endpoint called for generating the code for resetting the password. The code is sent to the user
-    /// via email. A new session cookie is created consisting of a 5 minute expiration timer (expires after 5 mins),
-    /// code generation time, user email and code which will be used to verify the user code. 
+    /// via email and set in the user database along with the creation time
     /// </summary>
     /// <param name="newOneTimeCodeRequest">A request object consisting of the users email</param>
     /// <returns>
@@ -57,9 +56,8 @@ public class ResetPasswordController : ControllerBase
     }
     
     /// <summary>
-    /// Validates the code entered by the user on the reset password forms. Retrieves the users session tokens and compares
-    /// the entered email and code to what is stored on the token, verifying it. If the session token does not exist,
-    /// then it is assumed it got deleted as more than 5 minutes have past.
+    /// Validates the code entered by the user on the reset password forms. Compares the provided code and email with
+    /// the database and if valid creates a temporary session cookie that can be used to reset the users password
     /// </summary>
     /// <param name="validationRequest">A validationRequest object consisting of the users entered code and email</param>
     /// <returns>Returns an OK object result if the code and email are correct and less than 5 minutes have passed.
