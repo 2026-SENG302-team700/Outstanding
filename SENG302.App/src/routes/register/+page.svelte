@@ -172,10 +172,12 @@
                 } else {
                     addToast(data?.message || "Internal server error occurred.", "error");
                 }
-
-                password = "";
-                passwordConfirm = "";
-
+                
+                if (errors.password || errors.passwordConfirm) {
+                    password = "";
+                    passwordConfirm = "";
+                }
+                
                 return;
             }
             // set email in local storage for validation page
