@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace SENG302.Api.Controllers;
 
 [ConditionalValidateAntiForgeryToken]
-[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 [ApiController]
 [Route("api")]
 public class LoginController : ControllerBase
@@ -30,6 +29,7 @@ public class LoginController : ControllerBase
     /// <param name="userCredentials"> a UserCredentials object provided by the frontend containing the details used for an attempted login</param>
     /// <returns>a Task<ActionResult<User></returns>
     [HttpPost("login")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<User>> CheckCredentials([FromBody] UserCredentials userCredentials)
     {
         userCredentials.Email = userCredentials.Email.ToLower();
@@ -127,6 +127,7 @@ public class LoginController : ControllerBase
     /// Internal Server Error 500: if SignOutAsync throws an error (if this occurs, SignOutAsync may be deprecated)
     /// </returns>
     [Authorize]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [HttpDelete("logout")]
     public async Task<ActionResult> LogoutUser()
     {

@@ -271,7 +271,7 @@ public class TaskItemService : ITaskItemService
         {
             return null;
         }
-
+        
         taskItemUpdates.Name = taskItemUpdates.Name.Trim();
         taskItemUpdates.Description = taskItemUpdates.Description.Trim();
         taskItemUpdates.DueDate = (taskItemUpdates.DueDate == DateTime.MinValue) ? null : taskItemUpdates.DueDate;
@@ -288,11 +288,14 @@ public class TaskItemService : ITaskItemService
             errors[key] = value;
         }
 
-        foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
+        if (taskItemUpdates.DueDate != taskItem.DueDate)
         {
-            errors[key] = value;
+            foreach (var (key, value) in ValidateTaskItemDueDate(taskItemUpdates.DueDate))
+            {
+                errors[key] = value;
+            }
         }
-
+        
         ValidateTaskItemCurrentStatus(taskItemUpdates.CurrentStatus); // should not occur naturally, therefore handled differently.
 
         if (errors.Count > 0)
