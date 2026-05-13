@@ -4,6 +4,8 @@ using Reqnroll;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.DataAccess;
+using SENG302.Api.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SENG302.Api.Tests.Acceptance.Setup;
 
@@ -13,6 +15,8 @@ public class AcceptanceTestFixture : BaseIntegrationTestFixture
     public int? CurrentUserId { get; set; }
     public new HttpClient HttpClient => base.HttpClient;
     public new IDbContextFactory<DatabaseContext> DbContextFactory => base.DbContextFactory;
+    public IEmailService EmailMock => ServiceProvider.GetRequiredService<IEmailService>();
+
 
     public AcceptanceTestFixture(WebApplicationFactory<Program> factory) : base(factory)
     {

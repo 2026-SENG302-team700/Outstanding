@@ -16,10 +16,12 @@ namespace SENG302.Api.Controllers;
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IEmailService _emailService;
 
-    public LoginController(IUserService userService)
+    public LoginController(IUserService userService, IEmailService emailService)
     {
         _userService = userService;
+        _emailService = emailService;
     }
 
 
@@ -70,13 +72,16 @@ public class LoginController : ControllerBase
         }
         else if (status == UserVerificationResult.Success && user != null)
         {
+            // check if user has reset password session
+            await CancelPasswordResetAsync(user);
+
             // Create the user claims
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.DisplayName)
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.DisplayName)
+            };
 
 
             var principle = new ClaimsPrincipal(
@@ -99,12 +104,15 @@ public class LoginController : ControllerBase
                 hashStatus = false
             });
         }
-        else if (status == UserVerificationResult.SuccessRehashNeeded)
+        else if (status == UserVerificationResult.SuccessRehashNeeded && user != null)
         {
+            // check if user has reset password session
+            await CancelPasswordResetAsync(user);
+
             return Ok(new
             {
                 login = true,
-                message = user != null ? user.DisplayName : "",
+                message = user.DisplayName,
                 hashStatus = true
             });
         }
@@ -139,6 +147,27 @@ public class LoginController : ControllerBase
         catch (Exception e)
         {
             return StatusCode(500, e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Method used for when a user requests to log in while they have an active
+    /// reset password token
+    /// </summary>
+    /// <param name="user"> user to check</param>
+    /// <returns></returns>
+    private async Task CancelPasswordResetAsync(User user)
+    {
+        var resetResult = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+        // check if the user has requested a reset password
+        if (resetResult.Succeeded && resetResult.Principal != null)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            var emailDictionary = new Dictionary<string, string>
+            {
+                { "DISPLAY_NAME", user.DisplayName }
+            };
+            await _emailService.SendEmailAsync(user.Email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
         }
     }
 }
