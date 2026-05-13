@@ -353,13 +353,13 @@
     function validateUpdatePasswordInputs() {
         var isValid = true;
 
-        // checks feilds are filled
+        // checks fields are filled
         if (!newPassword) {
-            errors.newPassword = "field is required";
+            errors.newPassword = "Field is required";
             isValid = false;
         }
         if (!confirmPassword) {
-            errors.confirmPassword = "field is required";
+            errors.confirmPassword = "Field is required";
             isValid = false;
         }
         // checks passwords match
@@ -491,16 +491,18 @@
         <div class="modal-content p-4">
             <form
                 onsubmit={() => {
-                    if (loadingStatus != 0) return;
-
-                    if (currentModalStep === ModalStep.EMAIL_INPUT) {
-                        sendVerificationCode();
-                    } else if (currentModalStep === ModalStep.VERIFY) {
-                        checkCode();
-                    } else if (currentModalStep === ModalStep.RESET_PASSWORD) {
-                        resetPassword();
-                    } else {
-                        authModal.hide();
+                    if (loadingStatus == 0) {
+                        if (currentModalStep === ModalStep.EMAIL_INPUT) {
+                            sendVerificationCode();
+                        } else if (currentModalStep === ModalStep.VERIFY) {
+                            checkCode();
+                        } else if (
+                            currentModalStep === ModalStep.RESET_PASSWORD
+                        ) {
+                            resetPassword();
+                        } else {
+                            authModal.hide();
+                        }
                     }
                 }}
             >
@@ -523,14 +525,10 @@
 
                             <div class="mb-3 text-start">
                                 <input
-                                    type="email"
                                     id="email"
                                     class="form-control"
                                     placeholder="Email *"
                                     bind:value={resetEmail}
-                                    onkeydown={(e) =>
-                                        e.key === "Enter" &&
-                                        sendVerificationCode()}
                                 />
                             </div>
                             {#if errors.resetEmail}
@@ -572,17 +570,6 @@
                                     error={errors.codeError}
                                 />
                             </div>
-
-                            {#if errors.codeError}
-                                <div
-                                    class="text-danger small mb-3 animate-fade-in"
-                                >
-                                    <i
-                                        class="bi bi-exclamation-circle-fill me-1"
-                                    ></i>
-                                    {errors.codeError}
-                                </div>
-                            {/if}
                         </div>
                     {:else}
                         <div class="mb-3">
