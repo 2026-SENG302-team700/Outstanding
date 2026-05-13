@@ -1,7 +1,8 @@
 <script lang="ts">
     let {
         id = $bindable(""),
-        checked = $bindable()
+        checked = $bindable(),
+        onchange
     } = $props();
 </script>
 
@@ -11,6 +12,7 @@
            role="switch"
            id={id}
            bind:checked
+           {onchange}
     />
     <label class="form-check-label">
         {checked? "Enabled" : "Disabled"}

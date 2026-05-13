@@ -77,6 +77,9 @@ namespace SENG302.Api.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<int>("OrderPosition")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TaskListId")
                         .HasColumnType("integer");
 

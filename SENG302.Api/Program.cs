@@ -5,6 +5,7 @@ using SENG302.Api.Models.Entities;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using SENG302.Api.Resources.DefaultDatabase;
 
 namespace SENG302.Api;
@@ -28,7 +29,11 @@ public class Program
         }
 
         // Add services to the container Using `WithViews` registers the Antiforgery filters required for [ValidateAntiForgeryToken]
-        builder.Services.AddControllersWithViews();
+        builder.Services.AddControllersWithViews(options =>
+        {
+            // tells browsers to not cache API responses (was breaking deployment on firefox)
+            options.Filters.Add(new ResponseCacheAttribute { NoStore = true, Location = ResponseCacheLocation.None });
+        });
 
         // Add authorization service
         builder.Services.AddAuthorization();
@@ -126,7 +131,9 @@ public class Program
         builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 
         // bind it in email service
-        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+        //var emailSettings = new EmailSettings();
+        //builder.Configuration.GetSection("EmailSettings").Bind(emailSettings);
+        builder.Services.AddSingleton(new EmailSettings());
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddTransient<ISmtpClientWrapper, SmtpClientWrapper>();
 

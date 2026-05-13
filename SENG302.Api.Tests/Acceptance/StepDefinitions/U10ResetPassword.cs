@@ -123,7 +123,7 @@ namespace SENG302.Api.Tests.Acceptance.StepDefinitions
         [When("I click send")]
         public async Task WhenIClickSend()
         {
-            _lastResponse = await _fixture.HttpClient.PutAsJsonAsync("/api/user/password/code/generation",
+            _lastResponse = await _fixture.HttpClient.PostAsJsonAsync("/api/user/password/reset/code/generation",
                 new { Email = "test@example.com" });
 
         }

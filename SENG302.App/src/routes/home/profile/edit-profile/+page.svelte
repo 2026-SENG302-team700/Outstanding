@@ -138,7 +138,7 @@
             resendTimer = 0;
             try {
                 const response = await fetchWithCsrf(
-                    resolve(`/api/user/password/code/generation`),
+                    resolve(`/api/user/password/update/code/generation`),
                     {
                         method: "PUT",
                         headers: {
@@ -301,6 +301,7 @@
             } else {
                 const data = await response.json().catch(() => null);
                 if (data?.errors) {
+                    console.log(data.errors)
                     errors.email = data.errors.email ?? "";
                     errors.displayName = data.errors.displayName ?? "";
                 } else {
@@ -367,7 +368,7 @@
         try {
             codeError = "";
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password/code/validation`),
+                resolve(`/api/user/password/update/code/validation`),
                 {
                     method: "POST",
                     headers: {
@@ -406,7 +407,7 @@
         updatingPassword = true;
         try {
             const response = await fetchWithCsrf(
-                resolve(`/api/user/password`),
+                resolve(`/api/user/password/update`),
                 {
                     method: "PUT",
                     headers: {
@@ -535,6 +536,33 @@
             imageEditor.highlightError(true);
         }
     }
+
+    /**
+     * Requests backend to change profanity filter on toggle
+     * @param profFilterState Requested state of profanity filter
+     */
+    async function updateProfanityFilter(profFilterState: boolean) {
+        try {
+            const response = await fetchWithCsrf(resolve(`/api/user/profanity-filter`),
+                {
+                    method: "PATCH",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(
+                        profFilterState
+                    )
+                }
+            )
+            
+            if (!response.ok) {
+                addToast("Failed to update profanity filter");
+                profanityFiltering = !profFilterState;
+            }
+        } catch (error) {
+            addToast("Failed to update profanity filter", "error");
+            profanityFiltering = !profFilterState;
+        }
+    }
 </script>
 
 <div class="container d-flex flex-column flex-md-row">
@@ -574,6 +602,7 @@
                         <DisplayNameForm
                             bind:displayName
                             error={errors.displayName}
+                            registering={false}
                         />
                     </div>
                     <div class="mb-3">
@@ -595,7 +624,9 @@
                             class="d-flex align-items-center justify-content-between"
                     >
                         <label for="profanityFiltering" class="form-label">Profanity Censor</label>
-                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} />
+                        <ToggleForm id="profanityFiltering" bind:checked={profanityFiltering} onchange="{
+                        () => updateProfanityFilter(profanityFiltering)
+                        }"/>
                     </div>
                 </div>
             

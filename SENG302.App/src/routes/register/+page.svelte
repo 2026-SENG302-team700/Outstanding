@@ -75,9 +75,7 @@
                 "Display name must only include letters, spaces, hyphens or apostrophes.";
             valid = false;
         }
-
-
-
+        
         // Check for empty fields
         if (!email) {
             errors.email = "Email is required.";
@@ -132,11 +130,6 @@
             valid = false;
         }
 
-        // clears password fields if the data is not valid
-        if (!valid) {
-            password = "";
-            passwordConfirm = "";
-        }
         return valid;
     }
     /**
@@ -179,17 +172,18 @@
                 } else {
                     addToast(data?.message || "Internal server error occurred.", "error");
                 }
-
-                password = "";
-                passwordConfirm = "";
-
+                
+                if (errors.password || errors.passwordConfirm) {
+                    password = "";
+                    passwordConfirm = "";
+                }
+                
                 return;
             }
             // set email in local storage for validation page
             localStorage.setItem("email", email);
             goto(resolve(`/register/verification`));
         } catch (err) {
-            console.error(err);
             addToast(
                 "Failed to register user: " + (err as Error).message,
                 "error",
@@ -215,6 +209,7 @@
                     bind:displayName
                     error={errors.displayName}
                     {loading}
+                    registering={true}
             />
         </div>
         <div class="mb-3">
