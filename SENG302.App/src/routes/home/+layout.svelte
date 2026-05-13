@@ -163,7 +163,7 @@
   }
 
   .page-wrapper {
-    min-height: 85vh;
+    min-height: 80vh;
     display: flex;
     flex-direction: column;
   }
