@@ -143,6 +143,7 @@
   async function toggleEditMode() {
     if (editMode) {
       await updateTask();
+      goto(`../`);
     } else {
       editedTask.editedStatus = taskItem.currentStatus;
       editedTask.editedDueDate = taskItem.dueDate
