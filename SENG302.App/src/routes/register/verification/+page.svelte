@@ -212,7 +212,7 @@
             } else {
                 jsonBody = JSON.stringify({
                     email: email,
-                    ResendingCode: true,
+                    ResendingCode: false,
                 });
             }
             const response = await fetchWithCsrf(
