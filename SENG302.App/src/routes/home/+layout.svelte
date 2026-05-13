@@ -108,23 +108,6 @@
   <div class="content">
     {@render children?.()}
   </div>
-
-  <footer class="footerBar">
-    <div class="footerContent">
-      <button
-        class="btn btn-secondary"
-        onclick={() => goto(resolve("/policies/content-policy?from=home"))}
-      >
-        Content Policy
-      </button>
-      <button
-        class="btn btn-secondary"
-        onclick={() => goto(resolve("/policies/privacy-policy?from=home"))}
-      >
-        Privacy Policy
-      </button>
-    </div>
-  </footer>
 </div>
 
 <style>
