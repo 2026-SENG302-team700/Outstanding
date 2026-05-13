@@ -13,6 +13,7 @@ using Shouldly;
 using Microsoft.EntityFrameworkCore;
 using SENG302.Api.Controllers.UserController.PasswordController;
 using SENG302.Api.Models.Requests.Password;
+using SENG302.Api.Models.Requests;
 
 namespace SENG302.Api.Tests.Integration.ControllerTests;
 
@@ -31,7 +32,7 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         _controller =
             new ResetPasswordController(ServiceUnderTest, _mockOneTimeCodeService, _mockEmailService);
     }
-    
+
     private void SetupTempSessionContext(string email)
     {
         var claims = new List<Claim>
@@ -42,20 +43,20 @@ public class ResetPasswordTests : BaseIntegrationTestFixture
         var principle = new ClaimsPrincipal(
             new ClaimsIdentity(claims, "PasswordResetScheme")
         );
-        
+
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = principle }
         };
     }
-    
+
     [Fact]
     public async Task ResetPassword_ValidData_PasswordReset()
     {
         var context = await DbContextFactory.CreateDbContextAsync();
-        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" }; 
-        context.Users.Add(user); 
-        await context.SaveChangesAsync(); 
+        var user = new User { Email = "test@example.com", DisplayName = "Test", Country = "NZ", PasswordKey = "hash" };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
         var userId = user.Id;
         SetupTempSessionContext("test@example.com");
         

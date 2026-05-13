@@ -3,6 +3,7 @@
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
     import { fetchWithCsrf } from "$lib/csrf";
+    import TasklistItem from "$lib/components/tasklist-item.svelte";
 
     let loading = $state(false);
     let error = $state("");
@@ -11,7 +12,6 @@
     onMount(() => {
         fetchLists();
     });
-
 
     /// <summary>
     /// Fetches the logged-in user's task lists from the server
@@ -25,7 +25,7 @@
             });
             const data = await response.json();
             if (!response.ok) {
-                error = data.message || "Failed to fetch task lists.";
+                error = "Failed to fetch task lists.";
                 return;
             }
             taskLists = data;
@@ -48,7 +48,7 @@
         <h5 class="card-title mb-0">Your Task Lists</h5>
         <button
             class="btn btn-primary"
-            on:click={() => goto(resolve("/home/new-list"))}
+            onclick={() => goto(resolve("/home/new-list"))}
         >
             Add Task List
         </button>
@@ -60,25 +60,14 @@
             No task lists yet. Create your first task list above!
         </div>
     {:else}
-        <div class="overflow-y-auto bg-white text-dark mt-2" style="max-height: 400px;">
+        <div
+            class="overflow-y-auto bg-white text-dark mt-2"
+            style="max-height: 400px;"
+        >
             <span class="fs-5 p-2 mb-2"><b>Name</b></span>
             {#each taskLists as taskList}
-                    <div
-                            class="text-break border-bottom task-item-box p-2"
-                            tabindex="0"
-                            role="button"
-                            style="width: 1270px;"
-                            on:click={() => 
-                                goto(resolve(`/home/task-list/${taskList.id}`))}
-                            on:keydown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                    goto(resolve(`/home/task-list/${taskList.id}`));
-                                }
-                            }}
-                    >
-                        <span class="fs-5">{taskList.name}</span>
-                    </div>
-                {/each}
+                <TasklistItem {taskList} />
+            {/each}
         </div>
     {/if}
 </div>
@@ -87,14 +76,13 @@
     .cursor-pointer {
         cursor: pointer;
     }
-    
+
     .task-item-box {
         background-color: transparent;
         transition: background-color 0.2s ease;
     }
-    
+
     .task-item-box:hover {
         background-color: #f8f8f8;
     }
-    
 </style>

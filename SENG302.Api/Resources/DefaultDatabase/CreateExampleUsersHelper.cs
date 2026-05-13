@@ -112,7 +112,7 @@ public static class CreateExampleUsersHelper
             var hasher = new PasswordHasher<User>();
             user.PasswordKey = hasher.HashPassword(user, "P4$$word");
             dbContext.Users.Add(user);
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
         }
     }
 }

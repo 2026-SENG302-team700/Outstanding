@@ -9,6 +9,7 @@ using SENG302.Api.Filters;
 namespace SENG302.Api.Controllers.UserController.PasswordController;
 
 [ConditionalValidateAntiForgeryToken]
+[Authorize]
 [ApiController]
 [Route("api/user/password/reset")]
 public class ResetPasswordController : ControllerBase
@@ -23,7 +24,7 @@ public class ResetPasswordController : ControllerBase
         _codeService = codeService;
         _emailService = emailService;
     }
-    
+
     /// <summary>
     /// The endpoint called for generating the code for resetting the password. The code is sent to the user
     /// via email and set in the user database along with the creation time
@@ -116,7 +117,69 @@ public class ResetPasswordController : ControllerBase
         
         return Ok();
     }
-    
+
+    /// <summary>
+    /// Recieves a POST at "password/reset/code/cancel" with an object that has one property "Email"
+    /// The function runs through several checks then eventually cancels the password reset code
+    /// </summary>
+    /// <param name="cancelRequest">
+    /// This object bears only an "Email" property - 
+    /// the email for which we are cancelling the reset password request
+    /// </param>
+    /// <returns>Different responses based on the validity of the information</returns>
+    [AllowAnonymous]
+    [HttpPost("code/cancel")]
+    public async Task<ActionResult<int>> CancelResetPasswordCode([FromBody] CancelResetOneTimeCodeRequest cancelRequest)
+    {
+        // Confirm the email exists and is not simply white space
+        if (string.IsNullOrWhiteSpace(cancelRequest.Email))
+        {
+            return BadRequest(new { message = "An email is required" });
+        }
+
+        // Authenticate this context based on the password reset scheme
+        var result = await HttpContext.AuthenticateAsync("PasswordResetScheme");
+
+        // Using the results from the authentication, if it is null therefore the password reset has expired
+        if (result.Principal == null)
+        {
+            await HttpContext.SignOutAsync("PasswordResetScheme");
+            return Ok("Code has already expired");
+        }
+
+        // If the reset scheme is still active, make sure the user email matches the claimed email
+        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
+        if (email != cancelRequest.Email)
+        {
+            // Return an error message if they do not match
+            return BadRequest(new { message = "Emails do not match" });
+        }
+
+        // Sign the user out from the password reset scheme, cancelling the code
+        await HttpContext.SignOutAsync("PasswordResetScheme");
+
+        // Retrieve the user from the user service - this is to get the name of the user
+        var user = await _userService.GetUserFromEmailAsync(email);
+
+        // If the user exists, send an email saying the password reset process has been cancelled
+        if (user != null)
+        {
+            var emailDictionary = new Dictionary<string, string>
+            {
+                {"DISPLAY_NAME", user.DisplayName}
+            };
+
+            await _emailService.SendEmailAsync(email, EmailTemplate.PasswordResetProcessCancelled, emailDictionary);
+        }
+        else
+        {
+            // Hacky, but to disguise that this email does not exist
+            Thread.Sleep(4000);
+        }
+
+        return Ok("Code cancelled");
+    }
+
     /// <summary>
     /// Sends a request to update the users email
     /// </summary>
@@ -144,7 +207,7 @@ public class ResetPasswordController : ControllerBase
                 userEmail,
                 resetPasswordRequest.NewPassword,
                 resetPasswordRequest.NewPasswordConfirm);
-            
+
             // Create a dictionary of important values to send in the email, then call function to send email
             var user = await _userService.GetUserFromEmailAsync(userEmail);
             var emailDictionary = new Dictionary<string, string>
@@ -156,7 +219,7 @@ public class ResetPasswordController : ControllerBase
         }
         catch (UnauthorizedAccessException e)
         {
-            return Unauthorized(new { message = e.Message + "Unauthorized"});
+            return Unauthorized(new { message = e.Message + "Unauthorized" });
         }
         catch (MismatchedPasswordException e)
         {
@@ -175,6 +238,6 @@ public class ResetPasswordController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
-    
-    
+
+
 }
