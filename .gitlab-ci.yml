@@ -161,14 +161,14 @@ deploy-production:
     - chmod u+x /home/gitlab-runner/production.sh
 
     # create .env and add env vars
-    - echo "export DB_HOST=${DB_HOST}" > /home/gitlab-runner/staging/.env
-    - echo "export DB_NAME=${PROD_DB_NAME}" >> /home/gitlab-runner/staging/.env
-    - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/staging/.env
-    - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/staging/.env
+    - echo "export DB_HOST=${DB_HOST}" > /home/gitlab-runner/production/.env
+    - echo "export DB_NAME=${PROD_DB_NAME}" >> /home/gitlab-runner/production/.env
+    - echo "export DB_USER=${DB_USER}" >> /home/gitlab-runner/production/.env
+    - echo "export DB_PASS=${DB_PASS}" >> /home/gitlab-runner/production/.env
 
-    - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/staging/.env
-    - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/staging/.env
-    - echo "export EMAIL_PASS=${EMAIL_PASS}" >> /home/gitlab-runner/staging/.env
+    - echo "export EMAIL_HOST=${EMAIL_HOST}" >> /home/gitlab-runner/production/.env
+    - echo "export EMAIL=${EMAIL}" >> /home/gitlab-runner/production/.env
+    - echo "export EMAIL_PASS=${EMAIL_PASS}" >> /home/gitlab-runner/production/.env
 
     - sudo systemctl restart production
 
